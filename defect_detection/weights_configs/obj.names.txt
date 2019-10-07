@@ -1,0 +1,4 @@
+metal_pole
+concrete_pole
+insulator
+dumper
