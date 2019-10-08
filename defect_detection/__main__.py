@@ -1,12 +1,14 @@
 # python C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection
 
 #from defect_detection.preprocessing.preprocessing import *
-from neural_networks.neural_network import Neural_Network
+from neural_networks.neural_network import NeuralNetwork
+from neural_networks.detections import DetectionSection
 import cv2
 import os
 import sys
 import argparse
 import time
+import collections
 
 parser = argparse.ArgumentParser(description='Defect detection with YOLO and OpenCV')
 parser.add_argument('--image', help='Path to an image file.')
@@ -28,6 +30,10 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
     # For images the loop gets executed once, for videos till they last
     while cv2.waitKey(1) < 0:
         start_time = time.time()
+        # To keep track of all objects detected on a frame we use dictionary
+        # where keys - image section on which detection was performed, values -
+        # objects detected there (image:[pole1,pole2], pole1_coordinates:[insulator,dumper])
+        objects_detected = collections.defaultdict(list)
         frame = None
         # Process input: a single image or a cap - video object
         if all((cap, video_writer)):
@@ -44,11 +50,20 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
             frame = image
 
         # BLOCK 1
+        whole_image = DetectionSection(frame, "utility_poles")
         poles_detected = NN.get_predictions_block1(frame)
+        if poles_detected:
+            objects_detected[whole_image].append(poles_detected)
 
-        if not poles_detected:
-            # If no poles found, check for close-up components
+        # BLOCK 2
+        # If no poles found, check for close-up components. Send the whole image
+        # to the second set of NNs
+        if objects_detected:
             pass
+
+        else:
+            pass
+
 
 
 
@@ -68,7 +83,7 @@ def main():
         print("You have not provided a single source of data. Try again")
         sys.exit()
     # Class accommodating all neural networks and associated functions
-    NN = Neural_Network()
+    NN = NeuralNetwork()
     # Create window to display images/video frames
     window_name = "Defect detection"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)

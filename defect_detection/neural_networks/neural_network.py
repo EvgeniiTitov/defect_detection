@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
-from neural_networks.detections import Detected_Object
+from neural_networks.detections import DetectedObject
 
-class Neural_Network:
-    '''
+class NeuralNetwork:
+    """
     Class accommodating all neural networks involved plus any nn related functions
-    '''
+    """
     conf_threshold = 0.3
     NMS_threshold = 0.2
     input_width = 608  # lower value seems to be speeding up performance
@@ -23,9 +23,10 @@ class Neural_Network:
         #self.block_2_NN_concrete = self.setup_network(self.configuration_3_classes, self.block_2_weights_concrete)
 
     def load_files(self):
-        '''
-        Extracts configuration information from the txt files. 
-        '''
+        """
+        Extracts configuration information from the txt files.
+        :return: paths to the configuration files
+        """
         # ? Make this and setup NN uncallable from the outside
         with open(r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs\settings.txt", "rt") as f:
             content = [line.rstrip("\n") for line in f]
@@ -35,9 +36,12 @@ class Neural_Network:
         return (content, classes)
 
     def setup_network(self, configuration, weights):
-        '''
-        Sets up a neural network using the configuration and weights provided 
-        '''
+        """
+        Sets up a neural network using the configurations and weights provided
+        :param configuration: YOLO configuration file
+        :param weights: YOLO pretrained weights for custom object detection
+        :return: neural net initialized and ready for detection
+        """
         neural_net = cv2.dnn.readNetFromDarknet(configuration, weights)
         neural_net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
         neural_net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
@@ -52,9 +56,11 @@ class Neural_Network:
                                      [0,0,0], 1, crop=False)
         
     def get_output_names(self, NN):
-        '''
-        Returns names of the output YOLO layers: ['yolo_82', 'yolo_94', 'yolo_106'] 
-        '''
+        """
+        Returns names of the output YOLO layers: ['yolo_82', 'yolo_94', 'yolo_106']
+        :param NN: neural net
+        :return: YOLO outputting layers
+        """
         layers_names = NN.getLayerNames()
         
         return [layers_names[i[0]-1] for i in NN.getUnconnectedOutLayers()]
@@ -78,9 +84,11 @@ class Neural_Network:
 
 
     def get_predictions_block1(self, image):
-        '''
+        """
         works with plain images (np arrays straight away) 
-        '''
+        :param image: image or video frame to perform utility pole detection
+        :return: images detected
+        """
         # Memorize image's size, will be used in postprocess and for widening BBs
         self.image_height, self.image_width = image.shape[0], image.shape[1]
         # Create a blob from the image
@@ -104,6 +112,7 @@ class Neural_Network:
                 # Dynamically specify what object it is just to ease my life
                 pole.object_class = "metal"
             else:
+                # ! SQUEZZE COORDINATES FOR POLE DETECTION ON CONCRETE POLES
                 pole.object_class = "concrete"
         
         return poles
@@ -149,7 +158,7 @@ class Neural_Network:
             width = box[2]
             height = box[3]
             # For convenience each object detected gets represented as a class object
-            object = Detected_Object(class_ids[i],confidences[i], left, top, left+width, top+height)
+            object = DetectedObject(class_ids[i],confidences[i], left, top, left+width, top+height)
             objects_detected.append(object)
             
         return objects_detected
