@@ -1,7 +1,7 @@
 # python C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection
 
-from defect_detection.preprocessing import preprocessing
-from defect_detection.neural_networks.neural_networks import Neural_Network
+#from defect_detection.preprocessing.preprocessing import *
+from neural_networks.neural_networks import Neural_Network
 import cv2
 import os
 import sys
@@ -23,14 +23,18 @@ def detecting_on_images(image, NN):
     :param NN: 
     :return: 
     '''
-    poles_detected = NN.get_predictions_block_1_matrix(image)
-    
+    poles_detected = NN.get_predictions_block_1_images(image)
+    print("POLES DETECTED:")
+    print(poles_detected)
+    sys.exit()
 
-def detecting_on_video():
+def detecting_on_video(cap, NN):
     '''
     
     :return: 
     '''
+    # Will have while loop here to process all frames. This is why we need cap
+    # we keep reading it cap.read() till we have frames.
     pass
 
 def main():
