@@ -1,12 +1,15 @@
 import cv2
 import numpy as np
+from neural_networks.detections import Detected_Object
 
-class Neural_Network():
-    conf_threshold = 0.4
+class Neural_Network:
+    '''
+    Class accommodating all neural networks involved plus any nn related functions
+    '''
+    conf_threshold = 0.3
     NMS_threshold = 0.2
-    # MIGHT NEED TO CHANGE TO THE HIGHER (608)
-    input_width = 416
-    input_height = 416
+    input_width = 608  # lower value seems to be speeding up performance
+    input_height = 608
     
     def __init__(self):
         # Parse and load configuration data, weights, classes upon class initialization
@@ -42,11 +45,11 @@ class Neural_Network():
         return neural_net
 
     def create_blob(self, image):
-        '''
-        Creates a blob that gets fed to a neural network 
-        '''
-        return cv2.dnn.blobFromImage(image,1/255,(self.input_width,self.input_height),
-                                     [0,0,0],1,crop=False)
+        """
+        Creates and returns a blob that gets later fed to a neural network 
+        """
+        return cv2.dnn.blobFromImage(image,1 / 255, (self.input_width,self.input_height),
+                                     [0,0,0], 1, crop=False)
         
     def get_output_names(self, NN):
         '''
@@ -55,12 +58,31 @@ class Neural_Network():
         layers_names = NN.getLayerNames()
         
         return [layers_names[i[0]-1] for i in NN.getUnconnectedOutLayers()]
-        
-    
-    def get_predictions_block_1_images(self, image):
+
+    def widen_bounding_box(self, object):
+        '''
+        Widens bounding box and returns its new coordinates for METAL poles.
+        For instance, clear overlapping here: left, top, right, bottom
+        Object detected: [0, 0.6957460641860962, 431, 130, 603, 594]
+        344 130 723 594
+        Object detected: [0, 0.452914834022522, 675, 357, 768, 571]
+        540 357 921 571
+        '''
+        coef_1 = 0.8
+        coef_2 = 1.2
+        left_boundary = int(object.BB_left*coef_1)
+        right_boundary = int(object.BB_right*coef_2) if int(object.BB_right*coef_2) < \
+                             self.image_width else self.image_width
+
+        return (left_boundary, object.BB_top, right_boundary, object.BB_bottom)
+
+
+    def get_predictions_block1(self, image):
         '''
         works with plain images (np arrays straight away) 
         '''
+        # Memorize image's size, will be used in postprocess and for widening BBs
+        self.image_height, self.image_width = image.shape[0], image.shape[1]
         # Create a blob from the image
         blob = self.create_blob(image)
         # Pass the image to the neural network
@@ -70,14 +92,21 @@ class Neural_Network():
         # Run forward pass to get output from 3 output layers (BBs). List of 3 numpy
         # matrices of shape (507, 6),(2028, 6),(8112, 6)
         output = self.block_1_NN.forward(layers)
-
-        return self.postprocess(image, output)
+        poles = self.postprocess(image, output)
+        # If a pole detected is a metal pole. Widen (probably even heighten) coordinates
+        # of this object to address the issue when insulators sticking out horizontally
+        # do not get included in the object's bounding box.
+        for pole in poles:
+            if pole.class_id == 0: # metal
+                # CONDITION TO MAKE SURE NEW BB DO NOT OVERLAP!
+                left, top, right, bottom = self.widen_bounding_box(pole)
+                pole.update_object_coordinates(left, top, right, bottom)
+                # Dynamically specify what object it is just to ease my life
+                pole.object_class = "metal"
+            else:
+                pole.object_class = "concrete"
         
-    def get_predictions_block_1_video(self):
-        '''
-        processes every frame as a cap (instance of cv2.VideoCapture)
-        '''
-        pass
+        return poles
     
     def get_predictions_block_2_metal(self):
         pass
@@ -90,9 +119,6 @@ class Neural_Network():
         Processes data outputted from 3 YOLO layers. Removes BBs with low confidence using
         non-max suppression. 
         '''
-        frame_height = frame.shape[0]
-        frame_width = frame.shape[1]
-
         class_ids, confidences, boxes = [],[],[]
         # Check all detections from 3 YOLO layers. Discard bad ones.
         for out in outs:
@@ -101,10 +127,10 @@ class Neural_Network():
                 classId = np.argmax(scores)
                 confidence = scores[classId]
                 if confidence > self.conf_threshold:
-                    center_x = int(detection[0]*frame_width)
-                    center_y = int(detection[1]*frame_height)
-                    width = int(detection[2]*frame_width)
-                    height = int(detection[3]*frame_height)
+                    center_x = int(detection[0]*self.image_width)
+                    center_y = int(detection[1]*self.image_height)
+                    width = int(detection[2]*self.image_width)
+                    height = int(detection[3]*self.image_height)
                     left = abs(int(center_x - width / 2))
                     top = abs(int(center_y - height / 2))
 
@@ -122,6 +148,9 @@ class Neural_Network():
             top = box[1]
             width = box[2]
             height = box[3]
-            objects_detected.append([class_ids[i], confidences[i], left, top, left+width, top+height])
+            # For convenience each object detected gets represented as a class object
+            object = Detected_Object(class_ids[i],confidences[i], left, top, left+width, top+height)
+            objects_detected.append(object)
             
         return objects_detected
+    

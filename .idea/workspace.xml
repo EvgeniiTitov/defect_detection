@@ -4,16 +4,12 @@
     <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/../.idea/dictionaries/Evgenii.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/defect_detection.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/defect_detection/preprocessing/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/defect_detection/preprocessing/preprocessing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/Evgenii.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/Evgenii.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/defect_detection/__main__.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/__main__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/neural_networks.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/neural_networks.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/weights_configs/settings" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/initialization.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/neural_networks.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/neural_network.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/postprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/results_handling.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -22,14 +18,14 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.48394004">
+    <splitter split-orientation="horizontal" split-proportion="0.47537473">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/defect_detection/__main__.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="616">
-                  <caret line="28" column="14" selection-start-line="28" selection-start-column="14" selection-end-line="28" selection-end-column="14" />
+                <state relative-caret-position="174">
+                  <caret line="26" column="7" lean-forward="true" selection-start-line="26" selection-start-column="7" selection-end-line="26" selection-end-column="7" />
                   <folding>
                     <element signature="e#164#222#0" expanded="true" />
                   </folding>
@@ -42,10 +38,10 @@
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/neural_networks.py">
+            <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/neural_network.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="44">
-                  <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
+                <state relative-caret-position="550">
+                  <caret line="103" column="8" lean-forward="true" selection-start-line="103" selection-start-column="8" selection-end-line="103" selection-end-column="8" />
                   <folding>
                     <element signature="e#0#10#0" expanded="true" />
                   </folding>
@@ -54,10 +50,10 @@
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/defect_detection/weights_configs/settings.txt">
+            <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/detections.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="88">
-                  <caret line="4" column="3" selection-start-line="4" selection-start-column="3" selection-end-line="4" selection-end-column="3" />
+                <state relative-caret-position="528">
+                  <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="26" selection-end-column="57" />
                 </state>
               </provider>
             </entry>
@@ -90,8 +86,11 @@
         <option value="$PROJECT_DIR$/defect_detection/weights_configs/settings" />
         <option value="$PROJECT_DIR$/defect_detection/__init__.py" />
         <option value="$PROJECT_DIR$/defect_detection/weights_configs/settings.txt" />
-        <option value="$PROJECT_DIR$/defect_detection/__main__.py" />
         <option value="$PROJECT_DIR$/defect_detection/neural_networks/neural_networks.py" />
+        <option value="$PROJECT_DIR$/defect_detection/neural_networks/classes.py" />
+        <option value="$PROJECT_DIR$/defect_detection/neural_networks/detections.py" />
+        <option value="$PROJECT_DIR$/defect_detection/neural_networks/neural_network.py" />
+        <option value="$PROJECT_DIR$/defect_detection/__main__.py" />
       </list>
     </option>
   </component>
@@ -125,12 +124,6 @@
               <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
               <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
               <item name="neural_networks" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
-              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
-              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
-              <item name="weights_configs" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -227,7 +220,7 @@
     <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="1" visible="true" weight="0.12012645" />
+      <window_info active="true" content_ui="combo" id="Project" order="1" visible="true" weight="0.015806112" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="0" visible="true" weight="0.032502707" />
       <window_info anchor="bottom" id="Event Log" order="1" side_tool="true" />
@@ -280,20 +273,6 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/defect_detection/test.py" />
     <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/network_block1.py" />
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/initialization.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="242">
-          <caret line="11" column="4" lean-forward="true" selection-start-line="11" selection-start-column="4" selection-end-line="11" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/postprocessing.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="64" selection-start-column="64" selection-end-column="64" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/defect_detection/preprocessing/preprocessing.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1315">
@@ -321,22 +300,43 @@
     <entry file="file://$PROJECT_DIR$/defect_detection/weights_configs/yolo-obj.cfg">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/__main__.py">
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/initialization.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="616">
-          <caret line="28" column="14" selection-start-line="28" selection-start-column="14" selection-end-line="28" selection-end-column="14" />
+        <state relative-caret-position="352">
+          <caret line="16" column="22" selection-start-line="16" selection-start-column="22" selection-end-line="16" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/results_handling.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="64" selection-start-column="64" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/detections.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="528">
+          <caret line="24" column="8" selection-start-line="24" selection-start-column="8" selection-end-line="26" selection-end-column="57" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/neural_network.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="550">
+          <caret line="103" column="8" lean-forward="true" selection-start-line="103" selection-start-column="8" selection-end-line="103" selection-end-column="8" />
           <folding>
-            <element signature="e#164#222#0" expanded="true" />
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/neural_networks.py">
+    <entry file="file://$PROJECT_DIR$/defect_detection/__main__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="44">
-          <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
+        <state relative-caret-position="174">
+          <caret line="26" column="7" lean-forward="true" selection-start-line="26" selection-start-column="7" selection-end-line="26" selection-end-column="7" />
           <folding>
-            <element signature="e#0#10#0" expanded="true" />
+            <element signature="e#164#222#0" expanded="true" />
           </folding>
         </state>
       </provider>
