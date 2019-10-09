@@ -1,7 +1,7 @@
 class DetectedObject:
-    '''
+    """
     Represents an object detected. Keeps its coordinates, class name, confidence
-    '''
+    """
     def __init__(self, class_id, confidence, left, top, right, bottom):
         self.class_id = class_id
         self.confidence = confidence
@@ -9,20 +9,20 @@ class DetectedObject:
         self.BB_left = left
         self.BB_right = right
         self.BB_bottom = bottom
-        # Another set of coordinates to widen BB of metal pole's
-        # detected to address the insulators sticking out issue
+        # Another set of coordinates to widen BB of metal pole's detected to address 
+        # the insulators sticking out issue. By default they are the same
         self.top = top
         self.left = left
         self.right = right
         self.bottom = bottom
 
     def update_object_coordinates(self, left, top, right, bottom):
-        '''
+        """
         If a pole detected is a metal pole. Widen (probably even heighten) coordinates
         of this object to address the issue when insulators sticking out horizontally 
         do not get included in the object's bounding box, so they don't get detected by
         subsequent neural nets.
-        '''
+        """
         self.top = top
         self.left = left
         self.right = right
@@ -50,7 +50,7 @@ class DetectionSection:
         self.right = 0
         self.bottom = 0
         
-    def remember_imagesection_coordinates(self, top, left, right, bottom):
+    def save_relative_coordinates(self, top, left, right, bottom):
         """
         When it comes to drawing BBs and saving objects detected in order to do so with
         the components, we need to know their relative positive relatively not to the

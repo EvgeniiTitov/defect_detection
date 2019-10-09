@@ -20,7 +20,7 @@ parser.add_argument('--save_path', default=r'C:\Users\Evgenii\Desktop\Python_Pro
 arguments = parser.parse_args()
 
 
-def draw_bounding_box(objects_detected):
+def draw_bounding_boxes(objects_detected):
     """
     Functions that draws bb around the objects found by the neural nets
     :param objects_detected:
@@ -28,34 +28,34 @@ def draw_bounding_box(objects_detected):
     """
     original_image = frame  # frame made global
     for image_section, objects in objects_detected.items():
-        for object in objects:
-            cv2.rectangle(original_image, (image_section.left+object.left, image_section.top+object.top),
-                                          (image_section.right+object.right, image_section.bottom+object.bottom),
-                                          (0, 255, 0), 2)
-            label = "%.2f" % object.confidence
+        for element in objects:
+            cv2.rectangle(original_image, (image_section.left+element.left, image_section.top+element.top),
+                                          (image_section.left+element.right, image_section.top+element.bottom),
+                                          (0, 255, 0), 3)
+            label = "{}:{:1.2f}".format(element.object_class[:-4], element.confidence)
+            label_size, base_line = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1, 1)
+            top = max(element.top + image_section.top, label_size[1])
+            cv2.putText(original_image, label, (element.left + image_section.left, top),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,0,0), 3)
 
-
-        pass
-
-    pass
 
 def save_objects_detected(objects_detected):
     """
     Function that saves objects detected by the neural networks on the disk
-    :param objects: Dictionary with objects found
+    :param objects_detected: Dictionary with objects found
     :return: None
     """
     for image_section, objects in objects_detected.items():
-        for object in objects:
+        for element in objects:
             if arguments.video:
-                cropped_frame = image_section.frame[object.top + image_section.top:object.bottom + image_section.top,
-                                                    object.left + image_section.left:object.right + image_section.left]
+                cropped_frame = image_section.frame[element.top+image_section.top:element.bottom+image_section.top,
+                                                    element.left+image_section.left:element.right+image_section.left]
                 frame_name = "frame" + str(frame_counter) + ".jpg"
                 cv2.imwrite(os.path.join(save_path, frame_name), cropped_frame)
             else:
-                cropped_frame = image_section.frame[object.top+image_section.top:object.bottom+image_section.top,
-                                                    object.left+image_section.left:object.right+image_section.left]
-                image_name = object.object_class + '_' + os.path.split(path_to_image)[-1]
+                cropped_frame = image_section.frame[element.top+image_section.top:element.bottom+image_section.top,
+                                                    element.left+image_section.left:element.right+image_section.left]
+                image_name = element.object_class + '_' + os.path.split(path_to_image)[-1]
                 cv2.imwrite(os.path.join(save_path, image_name), cropped_frame)
 
 def object_detection(NN, image=None, cap=None, video_writer=None):
@@ -110,9 +110,9 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
             for pole in poles_detected:
                 # Get new image section - pole's coordinates. 
                 pole_image_section = np.array(frame[pole.top:pole.bottom, pole.left:pole.right])
-                pole_section = DetectionSection(pole_image_section, str(pole.object_class)) # second parameter is name
+                pole_section = DetectionSection(pole_image_section, "components") # second parameter is name
                 # Above we save the cropped frame, its size. Here, we save its coordinates relatively to the original image!
-                pole_section.remember_imagesection_coordinates(pole.top, pole.left, pole.right, pole.bottom)
+                pole_section.save_relative_coordinates(pole.top, pole.left, pole.right, pole.bottom)
                 # For different pole classes, we will be using different weights.
                 # FOR NOW WE USE THE SAME WEIGHT, SAME NN! GET NEW WEIGHTS FOR 3 CLASSES
                 if pole.class_id == 0:  # metal
@@ -140,11 +140,15 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
         pass
 
         # SAVE RESULTS, DRAW BOUNDING BOXES
-        save_objects_detected(objects_detected)
-        draw_bounding_box(objects_detected)
+        #save_objects_detected(objects_detected)
+        draw_bounding_boxes(objects_detected)
 
+        # Save a frame with BBs drawn on it
         if video_writer:
             video_writer.write(frame.astype(np.uint8))
+        elif any((arguments.image, arguments.folder)):
+            image_name = 'out_' + os.path.split(path_to_image)[-1]
+            cv2.imwrite(os.path.join(save_path, image_name), frame)
 
         cv2.imshow(window_name, frame)
 
@@ -153,6 +157,7 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
         print("FPS:", end_time - start_time)
 
         if len(image) > 0:
+            cv2.waitKey(3000)
             return
 
 
