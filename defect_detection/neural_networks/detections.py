@@ -9,11 +9,12 @@ class DetectedObject:
         self.BB_left = left
         self.BB_right = right
         self.BB_bottom = bottom
-        # To widen BB of metal pole's detected to address insulators sticking out
-        self.top = None
-        self.left = None
-        self.right = None
-        self.bottom = None
+        # Another set of coordinates to widen BB of metal pole's
+        # detected to address the insulators sticking out issue
+        self.top = top
+        self.left = left
+        self.right = right
+        self.bottom = bottom
 
     def update_object_coordinates(self, left, top, right, bottom):
         '''
@@ -44,6 +45,21 @@ class DetectionSection:
     def __init__(self, frame, name):
         self.frame = frame
         self.name = name
+        self.top = 0
+        self.left = 0
+        self.right = 0
+        self.bottom = 0
+        
+    def remember_imagesection_coordinates(self, top, left, right, bottom):
+        """
+        When it comes to drawing BBs and saving objects detected in order to do so with
+        the components, we need to know their relative positive relatively not to the
+        original image, but rather to the image section in which they were detected - on poles 
+        """
+        self.top = top
+        self.left = left
+        self.right = right
+        self.bottom = bottom
         
     def __str__(self):
-        return f"Image section featuring {self.name}, its size {self.frame.shape}"
+        return f"Image section for searching: {self.name}, its size: {self.frame.shape}"

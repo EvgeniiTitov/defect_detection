@@ -65,7 +65,7 @@ class NeuralNetwork:
         
         return [layers_names[i[0]-1] for i in NN.getUnconnectedOutLayers()]
 
-    def widen_bounding_box(self, object):
+    def widen_bounding_box(self, object, image_width, image_height):
         '''
         Widens bounding box and returns its new coordinates for METAL poles.
         For instance, clear overlapping here: left, top, right, bottom
@@ -76,12 +76,13 @@ class NeuralNetwork:
         '''
         coef_1 = 0.8
         coef_2 = 1.2
+        # Set new left boundary, move it 20% to the left
         left_boundary = int(object.BB_left*coef_1)
+        # Set new right boundary, move it 20% to the right if do not go beyond the image
         right_boundary = int(object.BB_right*coef_2) if int(object.BB_right*coef_2) < \
-                             self.image_width else self.image_width
+                             image_width else image_width
 
         return (left_boundary, object.BB_top, right_boundary, object.BB_bottom)
-
 
     def get_predictions_block1(self, image):
         """
@@ -89,15 +90,14 @@ class NeuralNetwork:
         :return: images detected
         """
         # Memorize image's size, will be used in postprocess and for widening BBs
-        self.image_height, self.image_width = image.shape[0], image.shape[1]
+        image_height, image_width = image.shape[0], image.shape[1]
         # Create a blob from the image
         blob = self.create_blob(image)
         # Pass the image to the neural network
         self.block_1_NN.setInput(blob)
         # Get output YOLO layers
         layers = self.get_output_names(self.block_1_NN)
-        # Run forward pass to get output from 3 output layers (BBs). List of 3 numpy
-        # matrices of shape (507, 6),(2028, 6),(8112, 6)
+        # Run forward pass to get output from 3 output layers (BBs). List of 3 numpy matrices of shape
         output = self.block_1_NN.forward(layers)
         poles = self.postprocess(image, output)
         # If a pole detected is a metal pole. Widen (probably even heighten) coordinates
@@ -107,7 +107,7 @@ class NeuralNetwork:
         for pole in poles:
             if pole.class_id == 0: # metal
                 # CONDITION TO MAKE SURE NEW BB DO NOT OVERLAP!
-                left, top, right, bottom = self.widen_bounding_box(pole)
+                left, top, right, bottom = self.widen_bounding_box(pole, image_width, image_height)
                 pole.update_object_coordinates(left, top, right, bottom)
                 # Dynamically specify what object it is just to ease my life
                 pole.object_class = "metal_{}".format(metal_counter)
@@ -132,6 +132,16 @@ class NeuralNetwork:
         output = self.block_2_NN_metal.forward(layers)
         components = self.postprocess(image, output)
         
+        insulator_counter, dumper_counter = 1,1
+        for component in components:
+            if component.class_id == 0:  # insulator?
+                # DO NORMALIZATION HERE?
+                component.object_class = "insulator_{}".format(insulator_counter)
+                insulator_counter += 1
+            else:
+                component.object_class = "dumper_{}".format(dumper_counter)
+                dumper_counter += 1        
+        
         return components
 
     def get_predictions_block2_concrete(self):
@@ -142,6 +152,9 @@ class NeuralNetwork:
         Processes data outputted from 3 YOLO layers. Removes BBs with low confidence using
         non-max suppression. 
         '''
+        # Get image width and height since object's location on an image is given as a 
+        # percent values which need to be multipled by the image's shape to get actual values
+        image_height, image_width = frame.shape[0], frame.shape[1]
         class_ids, confidences, boxes = [],[],[]
         # Check all detections from 3 YOLO layers. Discard bad ones.
         for out in outs:
@@ -150,10 +163,10 @@ class NeuralNetwork:
                 classId = np.argmax(scores)
                 confidence = scores[classId]
                 if confidence > self.conf_threshold:
-                    center_x = int(detection[0]*self.image_width)
-                    center_y = int(detection[1]*self.image_height)
-                    width = int(detection[2]*self.image_width)
-                    height = int(detection[3]*self.image_height)
+                    center_x = int(detection[0]*image_width)
+                    center_y = int(detection[1]*image_height)
+                    width = int(detection[2]*image_width)
+                    height = int(detection[3]*image_height)
                     left = abs(int(center_x - width / 2))
                     top = abs(int(center_y - height / 2))
 

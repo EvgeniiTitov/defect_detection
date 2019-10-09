@@ -16,8 +16,47 @@ parser.add_argument('--image', help='Path to an image file.')
 parser.add_argument('--video', help='Path to a video file.')
 parser.add_argument('--folder', help='Path to a folder containing images to get processed')
 parser.add_argument('--crop', default=False, help='Crop out and save objects detected')
-parser.add_argument('--save_path', default=r'\detection_outputs', help="Path to where save images afterwards")
+parser.add_argument('--save_path', default=r'C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\detection_outputs', help="Path to where save images afterwards")
 arguments = parser.parse_args()
+
+
+def draw_bounding_box(objects_detected):
+    """
+    Functions that draws bb around the objects found by the neural nets
+    :param objects_detected:
+    :return:
+    """
+    original_image = frame  # frame made global
+    for image_section, objects in objects_detected.items():
+        for object in objects:
+            cv2.rectangle(original_image, (image_section.left+object.left, image_section.top+object.top),
+                                          (image_section.right+object.right, image_section.bottom+object.bottom),
+                                          (0, 255, 0), 2)
+            label = "%.2f" % object.confidence
+
+
+        pass
+
+    pass
+
+def save_objects_detected(objects_detected):
+    """
+    Function that saves objects detected by the neural networks on the disk
+    :param objects: Dictionary with objects found
+    :return: None
+    """
+    for image_section, objects in objects_detected.items():
+        for object in objects:
+            if arguments.video:
+                cropped_frame = image_section.frame[object.top + image_section.top:object.bottom + image_section.top,
+                                                    object.left + image_section.left:object.right + image_section.left]
+                frame_name = "frame" + str(frame_counter) + ".jpg"
+                cv2.imwrite(os.path.join(save_path, frame_name), cropped_frame)
+            else:
+                cropped_frame = image_section.frame[object.top+image_section.top:object.bottom+image_section.top,
+                                                    object.left+image_section.left:object.right+image_section.left]
+                image_name = object.object_class + '_' + os.path.split(path_to_image)[-1]
+                cv2.imwrite(os.path.join(save_path, image_name), cropped_frame)
 
 def object_detection(NN, image=None, cap=None, video_writer=None):
     """
@@ -28,6 +67,7 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
     :param cap: When working with video input
     :param video_writer: When working with video input
     """
+    global frame_counter, frame
     frame_counter = 0
     # For images the loop gets executed once, for videos till they last (have frames)
     while cv2.waitKey(1) < 0:
@@ -52,8 +92,11 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
             frame = image
 
         # BLOCK 1
+        # First we consider the whole image. Create an instance reflecting this:
         whole_image = DetectionSection(frame, "utility_poles")
+        # Run neural net and see if we got any poles detected
         poles_detected = NN.get_predictions_block1(frame)
+        # Save poles detected along side the image section in which detection took place
         if poles_detected:
             for pole in poles_detected:
                 objects_detected[whole_image].append(pole)
@@ -68,42 +111,53 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
                 # Get new image section - pole's coordinates. 
                 pole_image_section = np.array(frame[pole.top:pole.bottom, pole.left:pole.right])
                 pole_section = DetectionSection(pole_image_section, str(pole.object_class)) # second parameter is name
-                
+                # Above we save the cropped frame, its size. Here, we save its coordinates relatively to the original image!
+                pole_section.remember_imagesection_coordinates(pole.top, pole.left, pole.right, pole.bottom)
                 # For different pole classes, we will be using different weights.
                 # FOR NOW WE USE THE SAME WEIGHT, SAME NN! GET NEW WEIGHTS FOR 3 CLASSES
                 if pole.class_id == 0:  # metal
                     components_detected += NN.get_predictions_block2_metal(pole_image_section) 
                 elif pole.class_id == 1:  # concrete
                     components_detected += NN.get_predictions_block2_metal(pole_image_section)
+
+                # Check if any components have been found. Save to the dictionary
+                if components_detected:
+                    for component in components_detected:
+                        objects_detected[pole_section].append(component)
         else:
-            pass
+            # No poles detected, send the whole frame to check for close-up instances of components
+            components_detected += NN.get_predictions_block2_metal(frame)
+            whole_image = DetectionSection(frame, "components_close_up")
+            if components_detected:
+                for component in components_detected:
+                    objects_detected[whole_image].append(component)
 
-        print("POLES DETECTED:")
-        print(poles_detected)
-        print("\nELEMENTS DETECTED:")
-        for component in components_detected:
-            print(component.class_id)
+        # BLOCK 3
+        # DEFECT DETECTION ON THE OBJECTS DETECTED
+        pass
 
-        
-        # Write else condition
-        # put results in the dictionary
-        # implement croping and bbs drawing
-        # check against the block scheme 
+        # SAVE DEFECTS IF FOUND TO A DATABASE
+        pass
 
+        # SAVE RESULTS, DRAW BOUNDING BOXES
+        save_objects_detected(objects_detected)
+        draw_bounding_box(objects_detected)
 
+        if video_writer:
+            video_writer.write(frame.astype(np.uint8))
 
-
+        cv2.imshow(window_name, frame)
 
         frame_counter += 1
         end_time = time.time()
-        print("FPS: ", end_time - start_time)
+        print("FPS:", end_time - start_time)
 
         if len(image) > 0:
             return
 
 
 def main():
-    global save_path, crop_path, window_name
+    global save_path, crop_path, window_name, path_to_image
     # Check if information (images, video) has been provided
     if not any((arguments.image, arguments.video, arguments.folder)):
         print("You have not provided a single source of data. Try again")
@@ -127,7 +181,8 @@ def main():
         if not os.path.isfile(arguments.image):
             print("The provided file is not an image")
             sys.exit()
-        image = cv2.imread(arguments.image)
+        path_to_image = arguments.image
+        image = cv2.imread(path_to_image)
         
         # BEFORE IMAGE MIGHT NEEDS TO BE PREPROCESSED (FILTERS)
         
@@ -155,13 +210,14 @@ def main():
         video_name = os.path.split(arguments.video)[-1][:-4]
         output_file = video_name + "_out.avi"
         video_writer = cv2.VideoWriter(output_file,
-                                       cv2.VideoWriter_fourcc('M','J','P','G'), 10,
+                                       cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
                                        (round(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                                         round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
         object_detection(NN, cap=cap, video_writer=video_writer)
 
     print("All input has been processed")
     sys.exit()
+
 
 if __name__ == "__main__":
     main()
