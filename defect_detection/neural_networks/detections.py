@@ -15,21 +15,22 @@ class DetectedObject:
         self.right = None
         self.bottom = None
 
-    def __str__(self):
-        return "Object detected: [{}, {}, {}, {}, {}, {}]".format(
-                self.class_id, self.confidence, self.BB_left, 
-                self.BB_top, self.BB_right, self.BB_bottom)
-
     def update_object_coordinates(self, left, top, right, bottom):
         '''
         If a pole detected is a metal pole. Widen (probably even heighten) coordinates
         of this object to address the issue when insulators sticking out horizontally 
-        do not get included in the object's bounding box.
+        do not get included in the object's bounding box, so they don't get detected by
+        subsequent neural nets.
         '''
         self.top = top
         self.left = left
         self.right = right
         self.bottom = bottom
+
+    def __str__(self):
+        return "Object detected: [{}, {}, {}, {}, {}, {}]".format(
+                self.class_id, self.confidence, self.BB_left,
+                self.BB_top, self.BB_right, self.BB_bottom)
         
         
 class DetectionSection:

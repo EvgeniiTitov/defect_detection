@@ -9,6 +9,7 @@ import sys
 import argparse
 import time
 import collections
+import numpy as np
 
 parser = argparse.ArgumentParser(description='Defect detection with YOLO and OpenCV')
 parser.add_argument('--image', help='Path to an image file.')
@@ -20,14 +21,15 @@ arguments = parser.parse_args()
 
 def object_detection(NN, image=None, cap=None, video_writer=None):
     """
-    Performs object detection and its postprocessing
+    Performs object detection and its postprocessing on images or video frames. On each frame
+    or one in N frames! (can we keep bb drawn for the frames we just show without detecting?)
     :param NN: neural network class featuring all neural networks and associated functions
     :param image:
     :param cap: When working with video input
     :param video_writer: When working with video input
     """
     frame_counter = 0
-    # For images the loop gets executed once, for videos till they last
+    # For images the loop gets executed once, for videos till they last (have frames)
     while cv2.waitKey(1) < 0:
         start_time = time.time()
         # To keep track of all objects detected on a frame we use dictionary
@@ -53,17 +55,40 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
         whole_image = DetectionSection(frame, "utility_poles")
         poles_detected = NN.get_predictions_block1(frame)
         if poles_detected:
-            objects_detected[whole_image].append(poles_detected)
+            for pole in poles_detected:
+                objects_detected[whole_image].append(pole)
 
         # BLOCK 2
         # If no poles found, check for close-up components. Send the whole image
         # to the second set of NNs
+        components_detected = list()
         if objects_detected:
-            pass
-
+            # Separately send each pole detected to components detecting neural net
+            for pole in poles_detected:
+                # Get new image section - pole's coordinates. 
+                pole_image_section = np.array(frame[pole.top:pole.bottom, pole.left:pole.right])
+                pole_section = DetectionSection(pole_image_section, str(pole.object_class)) # second parameter is name
+                
+                # For different pole classes, we will be using different weights.
+                # FOR NOW WE USE THE SAME WEIGHT, SAME NN! GET NEW WEIGHTS FOR 3 CLASSES
+                if pole.class_id == 0:  # metal
+                    components_detected += NN.get_predictions_block2_metal(pole_image_section) 
+                elif pole.class_id == 1:  # concrete
+                    components_detected += NN.get_predictions_block2_metal(pole_image_section)
         else:
             pass
 
+        print("POLES DETECTED:")
+        print(poles_detected)
+        print("\nELEMENTS DETECTED:")
+        for component in components_detected:
+            print(component.class_id)
+
+        
+        # Write else condition
+        # put results in the dictionary
+        # implement croping and bbs drawing
+        # check against the block scheme 
 
 
 
@@ -75,6 +100,7 @@ def object_detection(NN, image=None, cap=None, video_writer=None):
 
         if len(image) > 0:
             return
+
 
 def main():
     global save_path, crop_path, window_name
@@ -96,12 +122,15 @@ def main():
         crop_path = arguments.crop
 
     # FOR IMAGES HOW ARE WE GOING TO MAKE SURE WE WORK WITH jpg or JPG ONL?
+
     if arguments.image:
         if not os.path.isfile(arguments.image):
             print("The provided file is not an image")
             sys.exit()
-        # BEFORE IMAGE MIGHT NEEDS TO BE PREPROCESSED (FILTERS)
         image = cv2.imread(arguments.image)
+        
+        # BEFORE IMAGE MIGHT NEEDS TO BE PREPROCESSED (FILTERS)
+        
         object_detection(NN, image=image)
 
     elif arguments.folder:
@@ -112,8 +141,10 @@ def main():
             if not any(image.endswith(ext) for ext in [".jpg", ".JPG", ".jpeg", ".JPEG"]):
                 continue
             path_to_image = os.path.join(arguments.folder, image)
-            # BEFORE IMAGE MIGHT NEEDS TO BE PREPROCESSED (FILTERS)
             image = cv2.imread(path_to_image)
+                               
+            # BEFORE IMAGE MIGHT NEEDS TO BE PREPROCESSED 
+            
             object_detection(NN, image=image)
 
     elif arguments.video:

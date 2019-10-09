@@ -85,7 +85,6 @@ class NeuralNetwork:
 
     def get_predictions_block1(self, image):
         """
-        works with plain images (np arrays straight away) 
         :param image: image or video frame to perform utility pole detection
         :return: images detected
         """
@@ -104,23 +103,38 @@ class NeuralNetwork:
         # If a pole detected is a metal pole. Widen (probably even heighten) coordinates
         # of this object to address the issue when insulators sticking out horizontally
         # do not get included in the object's bounding box.
+        metal_counter, concrete_counter = 1,1
         for pole in poles:
             if pole.class_id == 0: # metal
                 # CONDITION TO MAKE SURE NEW BB DO NOT OVERLAP!
                 left, top, right, bottom = self.widen_bounding_box(pole)
                 pole.update_object_coordinates(left, top, right, bottom)
                 # Dynamically specify what object it is just to ease my life
-                pole.object_class = "metal"
+                pole.object_class = "metal_{}".format(metal_counter)
+                metal_counter += 1
             else:
                 # ! SQUEZZE COORDINATES FOR POLE DETECTION ON CONCRETE POLES
-                pole.object_class = "concrete"
+                pole.object_class = "concrete_{}".format(concrete_counter)
+                concrete_counter += 1
         
         return poles
     
-    def get_predictions_block_2_metal(self):
-        pass
+    def get_predictions_block2_metal(self, image):
+        """
+        Detects utility pole components
+        :param image: 
+        :return: 
+        """
+        self.image_height, self.image_width = image.shape[0], image.shape[1]
+        blob = self.create_blob(image)
+        self.block_2_NN_metal.setInput(blob)
+        layers = self.get_output_names(self.block_2_NN_metal)
+        output = self.block_2_NN_metal.forward(layers)
+        components = self.postprocess(image, output)
+        
+        return components
 
-    def get_predictions_block_2_concrete(self):
+    def get_predictions_block2_concrete(self):
         pass
     
     def postprocess(self, frame, outs):
