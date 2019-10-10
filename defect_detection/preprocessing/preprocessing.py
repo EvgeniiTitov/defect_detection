@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 def grayscale(image):
     """Converts image to grayscale. Returns the image converted"""
@@ -37,6 +38,13 @@ def median(image, kernel_size=9):
     new_img = cv2.cvtColor(new_img, cv2.COLOR_HSV2BGR)
     return new_img
 
+def custom_sharpening(image):
+    kernel = np.array([[-1,-1,-1],
+                       [-1,9,-1],
+                       [-1,-1,-1]])
+    img = cv2.filter2D(image, -1, kernel)
+    return img
+
 def metadata_cutoff(image_path):
     """
     image_path - path to an image
@@ -60,5 +68,4 @@ def metadata_cutoff(image_path):
                 pass
             
         else:
-            print("No metadata")
-
+            print("No metadata") 

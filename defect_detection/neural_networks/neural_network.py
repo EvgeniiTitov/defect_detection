@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from neural_networks.detections import DetectedObject
-import sys
 
 class NeuralNetwork:
     """
@@ -76,8 +75,8 @@ class NeuralNetwork:
         Object detected: [0, 0.452914834022522, 675, 357, 768, 571]
         540 357 921 571
         '''
-        coef_1 = 1
-        coef_2 = 1
+        coef_1 = 0.8
+        coef_2 = 1.2
         # Set new left boundary, move it 20% to the left
         left_boundary = int(element.BB_left * coef_1)
         # Set new right boundary, move it 20% to the right if it doesn't go beyond the edge

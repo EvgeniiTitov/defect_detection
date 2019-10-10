@@ -38,7 +38,7 @@ def draw_bounding_boxes(objects_detected, frame):
             label_size, base_line = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, text_size, 1)
             top = max(element.top + image_section.top, label_size[1])
             cv2.putText(frame, label, (element.left + image_section.left, top),
-                        cv2.FONT_HERSHEY_SIMPLEX, text_size, (0,0,0), text_boldness)
+                        cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 0, 0), text_boldness)
 
 
 def save_objects_detected(objects_detected):
@@ -53,12 +53,12 @@ def save_objects_detected(objects_detected):
                 cropped_frame = image_section.frame[element.top+image_section.top:element.bottom+image_section.top,
                                                     element.left+image_section.left:element.right+image_section.left]
                 frame_name = "frame" + str(frame_counter) + ".jpg"
-                cv2.imwrite(os.path.join(save_path, frame_name), cropped_frame)
+                cv2.imwrite(os.path.join(crop_path, frame_name), cropped_frame)
             else:
                 cropped_frame = image_section.frame[element.top+image_section.top:element.bottom+image_section.top,
                                                     element.left+image_section.left:element.right+image_section.left]
                 image_name = element.object_class + '_' + os.path.split(path_to_image)[-1]
-                cv2.imwrite(os.path.join(save_path, image_name), cropped_frame)
+                cv2.imwrite(os.path.join(crop_path, image_name), cropped_frame)
 
 
 def object_detection(image=None, cap=None, video_writer=None):
@@ -192,7 +192,7 @@ def main():
             sys.exit()
         path_to_image = arguments.image
         image = cv2.imread(path_to_image)
-        
+
         # ! BEFORE IMAGE MIGHT NEEDS TO BE PREPROCESSED (FILTERS)
         
         object_detection(image=image)

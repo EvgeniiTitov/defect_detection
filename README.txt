@@ -1,3 +1,9 @@
+TO DO:
+1. Complete proper saving of cropped images
+2. Check for video
+3. Perform BBs enlargement for both classes, check for overlapping
+
+
 Main logic:
 
 1. Parse user input, initialize things, create opencv window etc.
@@ -46,12 +52,10 @@ Main logic:
     check if there are frames left to process.
 
 Known issues performance:
-1. When i send plain components, somehow it detects pole as well wtf!
-On top, bb seems to be fucked, it goes beyond edges(right, bot)
-
-2. Confidence text look aweful, implement in the image section class some methods to
-   output text size and BB thickness.
-3. Experiment with threshold and image size 416 vs 608 etc.
+1. Performance depends on:
+   thresholds,
+   input width and size,
+   enlargement coefficient (where it searches for components)
 4. Fix importing issue for god sake
 
 Issues weights:
