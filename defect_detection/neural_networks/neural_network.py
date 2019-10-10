@@ -8,19 +8,20 @@ class NeuralNetwork:
     """
     conf_threshold = 0.2
     NMS_threshold = 0.2
-    input_width = 608  # lower value seems to be speeding up performance
-    input_height = 608
+    input_width = 416  # lower value seems to be speeding up performance
+    input_height = 416  # 320, 416, 512,
     
     def __init__(self):
         # Parse and load configuration data, weights, classes upon class initialization
-        self.configuration_2_classes, self.configuration_3_classes, self.block_1_weights,\
-        self.block_2_weights_metal, self.block_2_weights_concrete, self.classes_txt = self.load_files()[0]
+        self.config_2_classes, self.config_3_classes, self.pole_weights, \
+        self.components_weights_metal, self.components_weights_concrete, \
+        self.classes_txt = self.load_files()[0]
         self.classes = self.load_files()[1]
 
         # Initialize neural networks
-        self.block_1_NN = self.setup_network(self.configuration_2_classes, self.block_1_weights)
-        self.block_2_NN_metal = self.setup_network(self.configuration_2_classes, self.block_2_weights_metal)
-        #self.block_2_NN_concrete = self.setup_network(self.configuration_3_classes, self.block_2_weights_concrete)
+        self.poles_NN = self.setup_network(self.config_2_classes, self.pole_weights)
+        self.components_NN_metal = self.setup_network(self.config_2_classes, self.components_weights_metal)
+        #self.components_NN_concrete = self.setup_network(self.configuration_3_classes, self.block_2_weights_concrete)
 
     def load_files(self):
         """
@@ -52,8 +53,8 @@ class NeuralNetwork:
         """
         Creates and returns a blob that gets later fed to a neural network 
         """
-        return cv2.dnn.blobFromImage(image,1 / 255, (self.input_width,self.input_height),
-                                     [0,0,0], 1, crop=False)
+        return cv2.dnn.blobFromImage(image, 1 / 255, (self.input_width, self.input_height),
+                                     [0, 0, 0], 1, crop=False)
         
     def get_output_names(self, NN):
         """
@@ -65,7 +66,7 @@ class NeuralNetwork:
         
         return [layers_names[i[0]-1] for i in NN.getUnconnectedOutLayers()]
 
-    def widen_bounding_box(self, object, image_width, image_height):
+    def enlarge_bounding_box(self, element, image_width, image_height):
         '''
         Widens bounding box and returns its new coordinates for METAL poles.
         For instance, clear overlapping here: left, top, right, bottom
@@ -77,14 +78,14 @@ class NeuralNetwork:
         coef_1 = 0.8
         coef_2 = 1.2
         # Set new left boundary, move it 20% to the left
-        left_boundary = int(object.BB_left*coef_1)
+        left_boundary = int(element.BB_left * coef_1)
         # Set new right boundary, move it 20% to the right if it doesn't go beyond the edge
-        right_boundary = int(object.BB_right*coef_2) if int(object.BB_right*coef_2) < \
-                             image_width else image_width
+        right_boundary = int(element.BB_right * coef_2) if int(element.BB_right * coef_2) < \
+                                                           image_width else image_width
 
-        return (left_boundary, object.BB_top, right_boundary, object.BB_bottom)
+        return (left_boundary, element.BB_top, right_boundary, element.BB_bottom)
 
-    def get_predictions_block1(self, image):
+    def predict_poles(self, image):
         """
         :param image: image or video frame to perform utility pole detection and classification
         :return: images detected
@@ -94,11 +95,11 @@ class NeuralNetwork:
         # Create a blob from the image
         blob = self.create_blob(image)
         # Pass the image to the neural network
-        self.block_1_NN.setInput(blob)
+        self.poles_NN.setInput(blob)
         # Get output YOLO layers
-        layers = self.get_output_names(self.block_1_NN)
+        layers = self.get_output_names(self.poles_NN)
         # Run forward pass to get output from 3 output layers (BBs). List of 3 numpy matrices of shape
-        output = self.block_1_NN.forward(layers)
+        output = self.poles_NN.forward(layers)
         poles = self.postprocess(image, output)
         # If a pole detected is a metal pole. Widen (probably even heighten) coordinates
         # of this object to address the issue when insulators sticking out horizontally
@@ -110,7 +111,7 @@ class NeuralNetwork:
                 # ! CONDITION TO MAKE SURE NEW BB DO NOT OVERLAP
                 
                 # get new coordinates for the left and right boundaries
-                left, top, right, bottom = self.widen_bounding_box(pole, image_width, image_height)
+                left, top, right, bottom = self.enlarge_bounding_box(pole, image_width, image_height)
                 # updates object's left and right boundaries
                 pole.update_object_coordinates(left, top, right, bottom)
                 # Dynamically specify what object it is just to ease my life
@@ -124,10 +125,10 @@ class NeuralNetwork:
                 
                 pole.object_class = "concrete_{}".format(concrete_counter)
                 concrete_counter += 1
-        
+
         return poles
     
-    def get_predictions_block2_metal(self, image):
+    def predict_components_metal(self, image):
         """
         Detects utility pole components
         :param image: 
@@ -135,16 +136,22 @@ class NeuralNetwork:
         """
         self.image_height, self.image_width = image.shape[0], image.shape[1]
         blob = self.create_blob(image)
-        self.block_2_NN_metal.setInput(blob)
-        layers = self.get_output_names(self.block_2_NN_metal)
-        output = self.block_2_NN_metal.forward(layers)
+        self.components_NN_metal.setInput(blob)
+        layers = self.get_output_names(self.components_NN_metal)
+        output = self.components_NN_metal.forward(layers)
+        # Get predictions
         components = self.postprocess(image, output)
+        # Perform results modification
+        insulator_counter, dumper_counter = 1, 1
+        # Perform modifications to the objects found
         
-        insulator_counter, dumper_counter = 1,1
+        # ! MIGHT BE A GOOD IDEA TO WIDEN AND HEIGHTEN BBs FOR ELEMENTS
+        # SINCE IT OFTEN DOES NOT CONTAIN THE WHOLE OBJECT
+        
         for component in components:
             if component.class_id == 0:  # insulator?
                 
-                # DO NORMALIZATION HERE
+                # ! DO NORMALIZATION HERE
                 
                 component.object_class = "insulator_{}".format(insulator_counter)
                 insulator_counter += 1

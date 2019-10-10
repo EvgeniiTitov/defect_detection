@@ -45,3 +45,17 @@ Main logic:
 17. If working with images (len(image)>0) break out of the while loop. For videos repeat and
     check if there are frames left to process.
 
+Known issues performance:
+1. When i send plain components, somehow it detects pole as well wtf!
+On top, bb seems to be fucked, it goes beyond edges(right, bot)
+
+2. Confidence text look aweful, implement in the image section class some methods to
+   output text size and BB thickness.
+3. Experiment with threshold and image size 416 vs 608 etc.
+4. Fix importing issue for god sake
+
+Issues weights:
+1. Might have included too many images of poles being too close to the camera
+   now even a simple insulator can get detected as a pole! Need to enrich DS with
+   high res full size images of poles.
+2. For poles might be a bad idea to set 608 image size! Stick to 416
