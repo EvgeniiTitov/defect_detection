@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from neural_networks.detections import DetectedObject
+import sys
 
 class NeuralNetwork:
     """
@@ -75,8 +76,8 @@ class NeuralNetwork:
         Object detected: [0, 0.452914834022522, 675, 357, 768, 571]
         540 357 921 571
         '''
-        coef_1 = 0.8
-        coef_2 = 1.2
+        coef_1 = 1
+        coef_2 = 1
         # Set new left boundary, move it 20% to the left
         left_boundary = int(element.BB_left * coef_1)
         # Set new right boundary, move it 20% to the right if it doesn't go beyond the edge
@@ -101,6 +102,7 @@ class NeuralNetwork:
         # Run forward pass to get output from 3 output layers (BBs). List of 3 numpy matrices of shape
         output = self.poles_NN.forward(layers)
         poles = self.postprocess(image, output)
+
         # If a pole detected is a metal pole. Widen (probably even heighten) coordinates
         # of this object to address the issue when insulators sticking out horizontally
         # do not get included in the object's bounding box.
@@ -174,7 +176,8 @@ class NeuralNetwork:
         """
         # Get image width and height since object's location on an image is given as a 
         # percent values which need to be multipled by the image's shape to get actual values
-        image_height, image_width = frame.shape[0], frame.shape[1]
+        frame_height = frame.shape[0]
+        frame_width = frame.shape[1]
         class_ids, confidences, boxes = [], [], []
         # Check all detections from 3 YOLO layers. Discard bad ones.
         for out in outs:
@@ -183,12 +186,18 @@ class NeuralNetwork:
                 classId = np.argmax(scores)
                 confidence = scores[classId]
                 if confidence > self.conf_threshold:
-                    center_x = int(detection[0] * image_width)
-                    center_y = int(detection[1] * image_height)
-                    width = int(detection[2] * image_width)
-                    height = int(detection[3] * image_height)
-                    left = abs(int(center_x - width / 2))
-                    top = abs(int(center_y - height / 2))
+                    # Centre of object relatively to the upper left corner.
+                    # 0-1 value (percent) multiplied by image width and height
+                    center_x = int(detection[0] * frame_width)
+                    center_y = int(detection[1] * frame_height)
+                    # Width and height of the bounding box
+                    # ! Some output issue. Fix for now. Outputs value more than 1 WTF
+                    width_percent = detection[2] if detection[2] < 0.98 else 0.98
+                    height_percent = detection[3] if detection[3] < 0.98 else 0.98
+                    width = int(width_percent * frame_width)
+                    height = int(height_percent * frame_height)
+                    left = abs(int(center_x - (width / 2)))
+                    top = int(center_y - (height / 2))
 
                     class_ids.append(classId)
                     confidences.append(float(confidence))
@@ -197,7 +206,7 @@ class NeuralNetwork:
         indices = cv2.dnn.NMSBoxes(boxes, confidences, self.conf_threshold, self.NMS_threshold)
         
         objects_detected = list()
-        for index, i in enumerate(indices):
+        for i in indices:
             i = i[0]
             box = boxes[i]
             left = box[0]
@@ -205,7 +214,10 @@ class NeuralNetwork:
             width = box[2]
             height = box[3]
             # For convenience each object detected gets represented as a class object
-            object = DetectedObject(class_ids[i], confidences[i], left, top, left+width, top+height)
+            # ! WEIRD YOLO ISSUE. OUTPUTS INCORRECT VALUES. CAN OUTPUT MORE THAN 1 (> 100% wtf)
+            right = left+width if left+width < frame_width else int(frame_width*0.99)
+            bottom = top+height if top+height < frame_height else int(frame_height*0.99)
+            object = DetectedObject(class_ids[i], confidences[i], left, top, right, bottom)
             objects_detected.append(object)
             
         return objects_detected
