@@ -9,8 +9,9 @@ class DetectedObject:
         self.BB_left = left
         self.BB_right = right
         self.BB_bottom = bottom
-        # Another set of coordinates to widen BB of metal pole's detected to address 
-        # the insulators sticking out issue. By default they are the same
+        # Another set of coordinates to modify BBs of objects detected to achieve certain
+        # things. For instance, to address an issue of insulators sticking out and not getting
+        # detected because they do not get included in the pole's BB. Widen the BB in this case
         self.top = top
         self.left = left
         self.right = right
@@ -18,10 +19,10 @@ class DetectedObject:
 
     def update_object_coordinates(self, left, top, right, bottom):
         """
-        If a pole detected is a metal pole. Widen (probably even heighten) coordinates
-        of this object to address the issue when insulators sticking out horizontally 
-        do not get included in the object's bounding box, so they don't get detected by
-        subsequent neural nets.
+        Modifies object's BBs (mainly applies to utility poles detected) to make sure
+        when searching for this object's components nothing gets missed because it didnt
+        end up in the object's BB. So, we can either wider/heighten the BB or even tighten
+        the box when it comes to detecting concrete pole for defect detection
         """
         self.top = top
         self.left = left
@@ -29,12 +30,12 @@ class DetectedObject:
         self.bottom = bottom
 
     def __str__(self):
-        return "Object detected: [{}, {}, {}, {}, {}, {}]".format(
+        return "Object: {}, {}, {}, {}, {}, {}".format(
                 self.class_id, self.confidence, self.BB_left,
                 self.BB_top, self.BB_right, self.BB_bottom)
         
         
-class DetectionSection:
+class DetectionImageSection:
     """
     Represents part, section of the image in which detection takes place. Used to
     save objects detected by neural networks with reference to the image section in
@@ -54,7 +55,7 @@ class DetectionSection:
         """
         When it comes to drawing BBs and saving objects detected in order to do so with
         the components, we need to know their relative positive relatively not to the
-        original image, but rather to the image section in which they were detected - on poles 
+        original image, but rather to the image section on which they were detected - on poles
         """
         self.top = top
         self.left = left

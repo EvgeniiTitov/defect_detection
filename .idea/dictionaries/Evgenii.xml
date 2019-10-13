@@ -2,6 +2,7 @@
   <dictionary name="Evgenii">
     <words>
       <w>coef</w>
+      <w>neuralnet</w>
       <w>postprocess</w>
       <w>subimage</w>
       <w>yolo</w>

@@ -2,7 +2,7 @@
 
 #from defect_detection.preprocessing.preprocessing import *
 from neural_networks.neural_network import NeuralNetwork
-from neural_networks.detections import DetectionSection
+from neural_networks.detections import DetectionImageSection
 import cv2
 import os
 import sys
@@ -97,7 +97,7 @@ def object_detection(image=None, cap=None, video_writer=None):
 
         # BLOCK 1
         # First we consider the whole image. Create an instance reflecting this:
-        whole_image = DetectionSection(frame, "image, utility poles")
+        whole_image = DetectionImageSection(frame, "image, utility poles")
         # Run neural net and see if we got any poles detected
         poles_detected = NN.predict_poles(frame)
         # Save poles detected along side the image section in which detection took place
@@ -114,7 +114,7 @@ def object_detection(image=None, cap=None, video_writer=None):
             for pole in poles_detected:
                 # Get new image section - pole's coordinates.
                 pole_subimage = np.array(frame[pole.top:pole.bottom, pole.left:pole.right])
-                pole_section = DetectionSection(pole_subimage, "subimage, components")
+                pole_section = DetectionImageSection(pole_subimage, "subimage, components")
                 # Above we save subimage size. Now save its coordinates relatively to the original image!
                 pole_section.save_relative_coordinates(pole.top, pole.left, pole.right, pole.bottom)
 
@@ -132,7 +132,7 @@ def object_detection(image=None, cap=None, video_writer=None):
         else:
             # No poles detected, send the whole frame to check for close-up components
             components_detected += NN.predict_components_metal(frame)
-            whole_image = DetectionSection(frame, "image, components")
+            whole_image = DetectionImageSection(frame, "image, components")
             if components_detected:
                 for component in components_detected:
                     objects_detected[whole_image].append(component)

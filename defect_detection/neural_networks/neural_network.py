@@ -2,14 +2,15 @@ import cv2
 import numpy as np
 from neural_networks.detections import DetectedObject
 
+
 class NeuralNetwork:
     """
     Class accommodating all neural networks involved plus any nn related functions
     """
     conf_threshold = 0.2
     NMS_threshold = 0.2
-    input_width = 416  # lower value seems to be speeding up performance
-    input_height = 416  # 320, 416, 512,
+    input_width = 512  # lower value seems to be speeding up performance
+    input_height = 512  # 320, 416, 512,
     
     def __init__(self):
         # Parse and load configuration data, weights, classes upon class initialization

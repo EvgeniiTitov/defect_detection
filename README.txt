@@ -63,3 +63,11 @@ Issues weights:
    now even a simple insulator can get detected as a pole! Need to enrich DS with
    high res full size images of poles.
 2. For poles might be a bad idea to set 608 image size! Stick to 416
+
+Possible improvements:
+1. For each block 1,2,3 create a separate class. This will ensure flexebility
+of the overall system. When working with function one might need to send
+heaps of arguments, whereas when working with classes one argument is enough
+- class instance (gets sent to another class and initialized in the constructor)
+2. DO NOT USE GLOBAL
+3.
