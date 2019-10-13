@@ -12,8 +12,8 @@ import collections
 import numpy as np
 
 parser = argparse.ArgumentParser(description='Defect detection with YOLO and OpenCV')
-parser.add_argument('--image', help='Path to an image file.')
-parser.add_argument('--video', help='Path to a video file.')
+parser.add_argument('--image', help='Path to an image.')
+parser.add_argument('--video', help='Path to a video.')
 parser.add_argument('--folder', help='Path to a folder containing images to get processed')
 parser.add_argument('--crop', default=False, help='Crop out and save objects detected')
 parser.add_argument('--save_path', default=r'D:\Desktop\system_output', help="Path to where save images afterwards")
@@ -217,7 +217,7 @@ def main():
             sys.exit()
         cap = cv2.VideoCapture(arguments.video)
         video_name = os.path.split(arguments.video)[-1][:-4]
-        output_file = video_name + "_out.avi"
+        output_file = video_name + "_OUT.avi"
         video_writer = cv2.VideoWriter(output_file,
                                        cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
                                        (round(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),

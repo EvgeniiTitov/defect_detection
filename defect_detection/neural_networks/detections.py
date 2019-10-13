@@ -17,17 +17,24 @@ class DetectedObject:
         self.right = right
         self.bottom = bottom
 
-    def update_object_coordinates(self, left, top, right, bottom):
+    def update_object_coordinates(self, left=None, top=None, right=None, bottom=None):
         """
         Modifies object's BBs (mainly applies to utility poles detected) to make sure
-        when searching for this object's components nothing gets missed because it didnt
+        when searching for this object's components nothing gets missed because it didn't
         end up in the object's BB. So, we can either wider/heighten the BB or even tighten
-        the box when it comes to detecting concrete pole for defect detection
+        the box when it comes to detecting concrete pole for defect detection.
+        Does not modifies BBs values that will be used for BBs drawing and cropping out objects
         """
-        self.top = top
-        self.left = left
-        self.right = right
-        self.bottom = bottom
+        # Update value only of the coordinates provided. Doesn't change default box values
+        # which are equal to the values of the BBs predicted.
+        if left:
+            self.top = top
+        if top:
+            self.left = left
+        if right:
+            self.right = right
+        if bottom:
+            self.bottom = bottom
 
     def __str__(self):
         return "Object: {}, {}, {}, {}, {}, {}".format(
