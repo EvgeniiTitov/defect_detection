@@ -3,7 +3,7 @@ import sys
 import argparse
 import time
 import cv2
-from defect_detection.neural_networks.predictors import ResultsHandler, PoleDetector, ComponentsDetector, DefectDetector
+from neural_networks.predictors import ResultsHandler, PoleDetector, ComponentsDetector, DefectDetector
 
 
 def parse_args():
@@ -45,24 +45,34 @@ def detection(save_path,
                 sys.exit()
         else:
             frame = image
+
+        handler = ResultsHandler(image=frame,
+                                 path_to_image=path_to_input,
+                                 save_path=save_path,
+                                 cropped_path=crop_path,
+                                 input_photo=input_type)
+
         # BLOCK 1,2. Detect poles and elements on them
         poles = pole_detector.predict(frame)
         components = component_detector.predict(frame, poles)
         # Merge all objects found into one dictionary
-        objects.update(d for d in (poles, components))
+        for dictionary in (poles, components):
+            objects.update(dictionary)
 
         # BLOCK 3. TBC. SEND ALL OBJECTS TO DEFECT DETECTOR.
         # defect_detector.find_defects(objects)
 
         # SAVE DEFECTS/OBJECTS TO A DATABASE
 
-        handler = ResultsHandler(image=frame,
-                                path_to_image=path_to_input,
-                                save_path=save_path,
-                                cropped_path=crop_path,
-                                input_photo=input_type)
+        # STOPPED HERE. CHECK CLASS NAME FOR POLES, MIGHT HAVE MIXED THEM.
+        # THROWS AN ERROR DURING BBs DRAWING
+        # A BIT OF SHIT CODING WHEN CREATING CLASS INSTANCES
+        for w,e in objects.items():
+            for _ in e:
+                print(_.object_name)
+        sys.exit()
 
-        handler.save_objects_detected(objects)
+        #handler.save_objects_detected(objects)
         handler.draw_bounding_boxes(objects)
 
         if video_writer:
@@ -106,7 +116,7 @@ if __name__ == "__main__":
 
     elif arguments.folder:
         if not os.path.isdir(arguments.folder):
-            print("The provided file is not a folder")
+            print("The provided file is not a folder. Double check!")
             sys.exit()
         for image in os.listdir(arguments.folder):
             if not any(image.endswith(ext) for ext in [".jpg", ".JPG", ".jpeg", ".JPEG"]):

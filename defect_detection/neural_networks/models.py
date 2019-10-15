@@ -5,12 +5,12 @@ import numpy as np
 class NetPoles:
     """
     UTILITY POLES detecting and classifying neural network.
-    Receives IMAGE (NumPy array)
+    predict method receives IMAGE (NumPy array)
     Returns list of the objects (utility poles) predicted.
     """
 
-    # MIGHT MAKE SENSE TO MOVE THOSE PARAMETERS TO THE TXT FILE SINCE USER DOESN't WANT
-    # TO DEAL WITH THE CODE BUT WITH A TXT FILE!
+    # ! MIGHT MAKE SENSE TO MOVE THOSE PARAMETERS TO THE TXT FILE SINCE USER DOESN't WANT
+    # ! TO DEAL WITH THE CODE BUT WITH A TXT FILE!
 
     confidence_thresh = 0.3
     NMS_thresh = 0.2
@@ -18,24 +18,24 @@ class NetPoles:
 
     def __init__(self):
         self.config, self.weights = self.load_files()
-        self.net = self.setup_net(self.config, self.weights)
+        self.net = self.setup_net()
 
     def load_files(self):
         """
         Extract configuration information and weights for the net
         """
         with open(
-                r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs\net1.txt",
+                r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs\net_poles.txt",
                 "rt") as f:
             content = [line.rstrip("\n") for line in f]
 
         return content
 
-    def setup_net(self, config, weights):
+    def setup_net(self):
         """
         Initializes the net with the config and weights provided.
         """
-        neural_net = cv2.dnn.readNetFromDarknet(config, weights)
+        neural_net = cv2.dnn.readNetFromDarknet(self.config, self.weights)
         neural_net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
         neural_net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -68,23 +68,24 @@ class NetPoles:
         objects_predicted = list()
         # For each prediction from each of 3 YOLO layers
         for prediction in predictions:
-            # For each detection from one YOLO layer
+            # For each detection from each YOLO layer
             for detection in prediction:
-                scores = detection[5:]
-                classId = np.argmax(scores)  # Index of a BB with highest confidence
+                scores = detection[5:]  # Class scores
+                classId = np.argmax(scores)  # Index of the class with highest probability
                 confidence = scores[classId]  # Value of this BB's confidence
                 if confidence > self.confidence_thresh:
-                    # Centre of object relatively to the upper left corner in percent
+                    # Centre of an object relatively to the upper left corner of the image in percent
                     centre_x = int(detection[0] * image_width)
                     centre_y = int(detection[1] * image_height)
-                    # Width and height of the BB predicted. Check for ERROR
-                    width_percent = detection[2] if detection[2] < 0.99 else 0.99
-                    height_percent = detection[3] if detection[3] < 0.99 else 0.99
+                    # Width and height of the BB predicted in percent. Catching ERRORS:
+                    width_percent = detection[2] if detection[2] < 0.98 else 0.98
+                    height_percent = detection[3] if detection[3] < 0.98 else 0.98
                     # Calculate actual size of the BB
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
-                    left = int(centre_x - (width / 2))
-                    top = int(centre_y - (height / 2))
+                    # ANOTHER ERROR CATCHING WITH ABS
+                    left = abs(int(centre_x - (width / 2)))
+                    top = abs(int(centre_y - (height / 2)))
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))
@@ -107,7 +108,9 @@ class NetPoles:
 
     def predict(self, image):
         """
-        Performs utility pole detection and classification. Returns list of objects detected
+        Performs utility pole detection and classification.
+        Accepts an image (NumPy array)
+        Returns list of objects detected (List of lists) [[obj1], [obj2]]
         """
         blob = self.create_blob(image)
         # Pass the blob to the neural net
@@ -129,8 +132,8 @@ class NetElements:
     Returns list of the objects (components: INSULATORS, DUMPERS) predicted.
     """
 
-    # MIGHT MAKE SENSE TO MOVE THOSE PARAMETERS TO THE TXT FILE SINCE USER DOESN't WANT
-    # TO DEAL WITH THE CODE BUT WITH A TXT FILE!
+    # ! MIGHT MAKE SENSE TO MOVE THOSE PARAMETERS TO THE TXT FILE SINCE USER DOESN't WANT
+    # ! TO DEAL WITH THE CODE BUT WITH A TXT FILE!
 
     confidence_thresh = 0.2
     NMS_thresh = 0.2
@@ -138,7 +141,7 @@ class NetElements:
 
     def __init__(self):
         self.config, self.weights = self.load_files()
-        self.net = self.setup_net(self.config, self.weights)
+        self.net = self.setup_net()
 
     def load_files(self):
         """
@@ -151,11 +154,11 @@ class NetElements:
 
         return content
 
-    def setup_net(self, config, weights):
+    def setup_net(self):
         """
         Initializes the net with the config and weights provided.
         """
-        neural_net = cv2.dnn.readNetFromDarknet(config, weights)
+        neural_net = cv2.dnn.readNetFromDarknet(self.config, self.weights)
         neural_net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
         neural_net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -198,13 +201,14 @@ class NetElements:
                     centre_x = int(detection[0] * image_width)
                     centre_y = int(detection[1] * image_height)
                     # Width and height of the BB predicted. Check for ERROR
-                    width_percent = detection[2] if detection[2] < 0.99 else 0.99
-                    height_percent = detection[3] if detection[3] < 0.99 else 0.99
+                    width_percent = detection[2] if detection[2] < 0.98 else 0.98
+                    height_percent = detection[3] if detection[3] < 0.98 else 0.98
                     # Calculate actual size of the BB
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
-                    left = int(centre_x - (width / 2))
-                    top = int(centre_y - (height / 2))
+                    # ERROR CATCHING WITH ABS
+                    left = abs(int(centre_x - (width / 2)))
+                    top = abs(int(centre_y - (height / 2)))
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))

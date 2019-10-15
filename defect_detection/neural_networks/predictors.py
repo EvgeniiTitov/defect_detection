@@ -1,6 +1,6 @@
 from collections import defaultdict
-from detections import DetectedObject, DetectionImageSection
-from models import NetPoles, NetElements
+from neural_networks.detections import DetectedObject, DetectionImageSection
+from neural_networks.models import NetPoles, NetElements
 import numpy as np
 import cv2
 import os
@@ -9,9 +9,10 @@ import os
 class ComponentsDetector:
     """
     Class performing predictions of utility pole components on image / image
-    sections provided. All components detected get represented as class objects
-    and are saved in a dictionary as values, whereas the image section on which the
-    detection was performed serves the role of a dictionary key.
+    sections provided.
+    All components detected get represented as class objects and are saved in a dictionary
+    as values, whereas the image section on which the detection was performed serves the
+    role of a dictionary key.
     """
     def __init__(self):
         # Initialize components predictor
@@ -19,12 +20,27 @@ class ComponentsDetector:
         # Dictionary to keep components detected
         self.components_detected = defaultdict(list)
 
+    def determine_object_class(self):
+        """
+        Checks object's class and names it. Since we've got multiple nets predicting objects
+        like 0,1,2 classes, we want to make sure we don't get confused later.
+        Dynamically creates new attribute
+        :return: Nothing. Simply names objects
+        """
+        for window, components in self.components_detected.items():
+            for component in components:
+                if component.class_id == 0:
+                    component.object_name = "I"  # Insulator
+                else:
+                    component.object_name = "D"  # Vibration dumper
+
     def predict(self, image, pole_predictions):
         """
         Predicts components. Saves them in the appropriate format
         :param image: original image in case no poles have been found
-        :param pole_predictions: poles predicted by the pole predicting net
-        :return: dictionary of components
+        :param pole_predictions: poles predicted by the pole predicting net (dictionary)
+        :return: separate dictionary with components found as values and coordinates of a
+        pole on which they were detected as a key.
         """
         components = list()
         # If poles detecting neural net detected any poles. Find all components on them
@@ -56,7 +72,10 @@ class ComponentsDetector:
                         # to the dictionary with the appropriate key - image section (pole) on which they
                         # were detected
                         for component in components:
-                            self.components_detected[pole_image_section].append(DetectedObject(component))
+                            self.components_detected[pole_image_section].append(
+                                DetectedObject(component[0], component[1], component[2],
+                                               component[3], component[4], component[5])
+                                                                                )
         else:
             # In case no poles have been detected, send the whole image for components detection
             # in case there are any close-up components on the image
@@ -64,7 +83,13 @@ class ComponentsDetector:
             if components:
                 whole_image = DetectionImageSection(image, "components")
                 for component in components:
-                    self.components_detected[whole_image].append(DetectedObject(component))
+                    self.components_detected[whole_image].append(
+                        DetectedObject(component[0], component[1], component[2],
+                                       component[3], component[4], component[5])
+                                                                )
+        #  Name objects detected by unique names instead of default 0,1,2 etc.
+        if components:
+            self.determine_object_class()
 
         return self.components_detected
 
@@ -84,12 +109,26 @@ class PoleDetector:
         # Dictionary to keep poles detected
         self.poles_detected = defaultdict(list)
 
+    def determine_object_class(self):
+        """
+        Checks object's class and names it. Since we've got multiple nets predicting objects
+        like 0,1,2 classes, we want to make sure we don't get confused later.
+        Dynamically creates new attribute
+        :return: Nothing. Simply names objects
+        """
+        for window, poles in self.poles_detected.items():
+            for pole in poles:
+                if pole.class_id == 0:
+                    pole.object_name = "C"
+                else:
+                    pole.object_name = "M"
+
     def modify_box_coordinates(self, image):
         """
         Modifies pole's BB.
-        :param image: image on which detection of poles took place. Will be used to make
-        sure new coordinates do not go beyond image's edges
-        :return: class object with modified box coordinates
+        :param image: image on which detection of poles took place (original image).
+        Will be used to make sure new modified coordinates do not go beyond image's edges
+        :return: None. Simply modified coordinates
         """
         for window, poles in self.poles_detected.items():
             # Let's consider all poles detected on an image and modify their coordinates
@@ -111,18 +150,23 @@ class PoleDetector:
 
     def predict(self, image):
         """
-        :param image: Image on which to perform pole detection
+        :param image: Image on which to perform pole detection (the whole original image)
         :return: Dictionary containing all poles detected on the image
         """
-        whole_image = DetectionImageSection(image, "poles")
+        detecting_image_section = DetectionImageSection(image, "poles")
         poles = self.poles_predictor.predict(image)
         # Represent each object detected as a class object. Add all objects
         # to the dictionary as values.
         # Check if any poles have been detected otherwise return the empty dictionary
         if poles:
             for pole in poles:
-                self.poles_detected[whole_image].append(DetectedObject(pole))
+                # ! ! ! ! THIS IS TEMPORARY PATHETIC SHIT. FIX
+                self.poles_detected[detecting_image_section].append(
+                        DetectedObject(pole[0], pole[1], pole[2], pole[3], pole[4], pole[5])
+                                                                    )
             self.modify_box_coordinates(image)
+            # Name objects detected by unique names instead of default 0,1,2 etc.
+            self.determine_object_class()
 
         return self.poles_detected
 
@@ -155,7 +199,7 @@ class ResultsHandler:
         text_size = 0.5 + (self.image[0] * self.image[1] // 5_000_000)
         text_boldness = 1 + (self.image[0] * self.image[1] // 2_000_000)
 
-        return line_thickness, text_size, text_boldness
+        return [line_thickness, text_size, text_boldness]
 
     def draw_bounding_boxes(self, objects_detected):
         """
@@ -168,11 +212,13 @@ class ResultsHandler:
             # There might be multiple objects detected in a certain image section (whole image:poles),
             # pole1:elements, pole2:elements etc.
             for element in elements:
-                cv2.rectangle(self.image, (image_section.left + elements.left,
+                cv2.rectangle(self.image, (image_section.left + element.left,
                                            image_section.top + element.top),
-                                          (image_section.left + elements.right,
-                                           image_section.top + elements.bottom),
-                                          (0, 255, 0), self.line_text_size()[0])
+                                          (image_section.left + element.right,
+                                           image_section.top + element.bottom),
+                                          (0, 255, 0), self.line_text_size()[0]
+                              )
+
                 label = "{}:{:1.2f}".format("CLASS OF THE OBJECT", element.confidence)
 
                 label_size, base_line = cv2.getTextSize(label,
