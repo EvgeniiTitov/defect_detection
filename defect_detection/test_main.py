@@ -78,7 +78,7 @@ def detection(save_path,
 
         # In case of image break out of WHILE loop. Show image for N sec.
         if len(image) > 0:
-            cv2.waitKey(5000)
+            cv2.waitKey(2000)
             return
 
 
@@ -115,6 +115,7 @@ if __name__ == "__main__":
         for image in os.listdir(arguments.folder):
             if not any(image.endswith(ext) for ext in [".jpg", ".JPG", ".jpeg", ".JPEG"]):
                 continue
+            print("\nProcessing:", image)
             path_to_image = os.path.join(arguments.folder, image)
             image = cv2.imread(path_to_image)
             detection(save_path=save_path,

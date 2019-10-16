@@ -61,7 +61,7 @@ class ComponentsDetector:
 
                     # ! Depending on the pole's class we want to detect different number of objects
                     # ! FOR NOW IT IS THE SAME NN SINCE WE DO NOT HAVE WEIGHTS YET
-                    print("\nSUBIMAGE:", pole_subimage.shape)
+                    print("SUBIMAGE:", pole_subimage.shape)
                     if pole.class_id == 0:  # metal
                         components += self.components_predictor.predict(pole_subimage)
                     elif pole.class_id == 1:  # concrete
@@ -137,7 +137,7 @@ class PoleDetector:
                 left = int(poles[0].BB_left*0.5)
                 right = int(poles[0].BB_right*0.5) if int(poles[0].BB_right*0.5) <\
                                                    image.shape[1] else image.shape[1]
-                poles[0].update_object_coordinates(left, right)
+                poles[0].update_object_coordinates(left=left, right=right)
             else:
                 for pole in poles:
 

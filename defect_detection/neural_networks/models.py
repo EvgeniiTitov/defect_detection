@@ -84,8 +84,8 @@ class NetPoles:
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
                     # ANOTHER ERROR CATCHING WITH ABS
-                    left = int(centre_x - (width / 2))
-                    top = int(centre_y - (height / 2))
+                    left = int(centre_x - (width / 2)) if int(centre_x - (width / 2)) > 0 else 1
+                    top = int(centre_y - (height / 2)) if int(centre_y - (height / 2)) > 0 else 1
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))
@@ -135,7 +135,7 @@ class NetElements:
     # ! MIGHT MAKE SENSE TO MOVE THOSE PARAMETERS TO THE TXT FILE SINCE USER DOESN't WANT
     # ! TO DEAL WITH THE CODE BUT WITH A TXT FILE!
 
-    confidence_thresh = 0.15
+    confidence_thresh = 0.10
     NMS_thresh = 0.2
     input_width, input_height = 608, 608
 
