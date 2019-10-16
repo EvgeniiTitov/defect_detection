@@ -14,7 +14,7 @@ class NetPoles:
 
     confidence_thresh = 0.2
     NMS_thresh = 0.2
-    input_width, input_height = 512, 512
+    input_width, input_height = 512, 512  # Can decrease once we modify the boxes!
 
     def __init__(self):
         self.config, self.weights = self.load_files()
@@ -135,8 +135,8 @@ class NetElements:
     # ! MIGHT MAKE SENSE TO MOVE THOSE PARAMETERS TO THE TXT FILE SINCE USER DOESN't WANT
     # ! TO DEAL WITH THE CODE BUT WITH A TXT FILE!
 
-    confidence_thresh = 0.10
-    NMS_thresh = 0.2
+    confidence_thresh = 0.15
+    NMS_thresh = 0.25
     input_width, input_height = 608, 608
 
     def __init__(self):

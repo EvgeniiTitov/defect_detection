@@ -3,7 +3,7 @@ from neural_networks.detections import DetectedObject, DetectionImageSection
 from neural_networks.models import NetPoles, NetElements
 import numpy as np
 import cv2
-import os, sys
+import os
 
 
 class ComponentsDetector:
@@ -61,7 +61,6 @@ class ComponentsDetector:
 
                     # ! Depending on the pole's class we want to detect different number of objects
                     # ! FOR NOW IT IS THE SAME NN SINCE WE DO NOT HAVE WEIGHTS YET
-                    print("SUBIMAGE:", pole_subimage.shape)
                     if pole.class_id == 0:  # metal
                         components += self.components_predictor.predict(pole_subimage)
                     elif pole.class_id == 1:  # concrete
@@ -163,6 +162,7 @@ class PoleDetector:
                 self.poles_detected[detecting_image_section].append(
                         DetectedObject(pole[0], pole[1], pole[2], pole[3], pole[4], pole[5])
                                                                     )
+            # Modify poles coordinates to widen them for components detection
             #self.modify_box_coordinates(image)
             # Name objects detected by unique names instead of default 0,1,2 etc.
             self.determine_object_class()
@@ -267,7 +267,6 @@ class ResultsHandler:
             cv2.imwrite(os.path.join(self.save_path, image_name), self.image)
         else:
             self.video_writer.write(self.image.astype(np.uint8))
-
 
 
 class DefectDetector:

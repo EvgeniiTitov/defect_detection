@@ -70,12 +70,10 @@ def detection(save_path,
         handler.draw_bounding_boxes(objects)
         handler.save_frame()
 
-
         cv2.imshow(window_name, frame)
         frame_counter += 1
         end_time = time.time()
-        print("FPS:", end_time - start_time)
-
+        print("Time required:", end_time - start_time)
         # In case of image break out of WHILE loop. Show image for N sec.
         if len(image) > 0:
             cv2.waitKey(2000)
