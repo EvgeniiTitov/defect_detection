@@ -3,7 +3,7 @@ from neural_networks.detections import DetectedObject, DetectionImageSection
 from neural_networks.models import NetPoles, NetElements
 import numpy as np
 import cv2
-import os
+import os, sys
 
 
 class ComponentsDetector:
@@ -30,9 +30,9 @@ class ComponentsDetector:
         for window, components in self.components_detected.items():
             for component in components:
                 if component.class_id == 0:
-                    component.object_name = "I"  # Insulator
+                    component.object_name = "insulator"  # Insulator
                 else:
-                    component.object_name = "D"  # Vibration dumper
+                    component.object_name = "dumper"  # Vibration dumper
 
     def predict(self, image, pole_predictions):
         """
@@ -61,7 +61,7 @@ class ComponentsDetector:
 
                     # ! Depending on the pole's class we want to detect different number of objects
                     # ! FOR NOW IT IS THE SAME NN SINCE WE DO NOT HAVE WEIGHTS YET
-
+                    print("\nSUBIMAGE:", pole_subimage.shape)
                     if pole.class_id == 0:  # metal
                         components += self.components_predictor.predict(pole_subimage)
                     elif pole.class_id == 1:  # concrete
@@ -119,9 +119,9 @@ class PoleDetector:
         for window, poles in self.poles_detected.items():
             for pole in poles:
                 if pole.class_id == 0:
-                    pole.object_name = "C"
+                    pole.object_name = "metal"
                 else:
-                    pole.object_name = "M"
+                    pole.object_name = "concrete"
 
     def modify_box_coordinates(self, image):
         """
@@ -143,10 +143,10 @@ class PoleDetector:
 
                     # ! CHECK FOR OVERLAPPING
 
-                    left = int(pole.BB_left*0.2)
-                    right = int(pole.BB_right*0.2) if int(pole.BB_right*0.2) <\
+                    left = int(pole.BB_left*0.8)
+                    right = int(pole.BB_right*1.2) if int(pole.BB_right*1.2) <\
                                                     image.shape[1] else image.shape[1]
-                    pole.update_object_coordinates(left, right)
+                    pole.update_object_coordinates(left=left, right=right)
 
     def predict(self, image):
         """
@@ -160,11 +160,10 @@ class PoleDetector:
         # Check if any poles have been detected otherwise return the empty dictionary
         if poles:
             for pole in poles:
-                # ! ! ! ! THIS IS TEMPORARY PATHETIC SHIT. FIX
                 self.poles_detected[detecting_image_section].append(
                         DetectedObject(pole[0], pole[1], pole[2], pole[3], pole[4], pole[5])
                                                                     )
-            self.modify_box_coordinates(image)
+            #self.modify_box_coordinates(image)
             # Name objects detected by unique names instead of default 0,1,2 etc.
             self.determine_object_class()
 
@@ -180,13 +179,17 @@ class ResultsHandler:
                 path_to_image,
                 save_path=r"D:\Desktop\system_output",
                 cropped_path=r"D:\Desktop\system_output\cropped_elements",
-                input_photo=True
+                input_photo=True,
+                video_writer=None,
+                frame_counter=0
                 ):
         self.image = image
         self.path_to_image = path_to_image
         self.save_path = save_path
         self.cropped_path = cropped_path
         self.input_photo = input_photo  # True - photo, False - video
+        self.video_writer = video_writer
+        self.frame_counter = frame_counter
         # Extract image name. Yikes approach because can be both .jpg and .jpeg
         self.image_name = os.path.split(path_to_image)[-1].split('.')[0]
 
@@ -195,11 +198,11 @@ class ResultsHandler:
         Method determining BB line thickness and text size based on the original image's size
         :return:
         """
-        line_thickness = (self.image[0] * self.image[1] // 1_000_000)
-        text_size = 0.5 + (self.image[0] * self.image[1] // 5_000_000)
-        text_boldness = 1 + (self.image[0] * self.image[1] // 2_000_000)
+        line_thickness = (self.image.shape[0] * self.image.shape[1] // 1_000_000)
+        text_size = 0.5 + (self.image.shape[0] * self.image.shape[1] // 5_000_000)
+        text_boldness = 1 + (self.image.shape[0] * self.image.shape[1] // 2_000_000)
 
-        return [line_thickness, text_size, text_boldness]
+        return line_thickness, text_size, text_boldness
 
     def draw_bounding_boxes(self, objects_detected):
         """
@@ -212,14 +215,11 @@ class ResultsHandler:
             # There might be multiple objects detected in a certain image section (whole image:poles),
             # pole1:elements, pole2:elements etc.
             for element in elements:
-                cv2.rectangle(self.image, (image_section.left + element.left,
-                                           image_section.top + element.top),
-                                          (image_section.left + element.right,
-                                           image_section.top + element.bottom),
-                                          (0, 255, 0), self.line_text_size()[0]
-                              )
+                cv2.rectangle(self.image, (image_section.left + element.left, image_section.top + element.top),
+                                          (image_section.left + element.right, image_section.top + element.bottom),
+                                          (0, 255, 0), self.line_text_size()[0])
 
-                label = "{}:{:1.2f}".format("CLASS OF THE OBJECT", element.confidence)
+                label = "{}:{:1.2f}".format(element.object_name, element.confidence)
 
                 label_size, base_line = cv2.getTextSize(label,
                                                         cv2.FONT_HERSHEY_SIMPLEX,
@@ -256,6 +256,18 @@ class ResultsHandler:
                                                         element.right + image_section.left]
                     frame_name = "TBC"
                     cv2.imwrite(os.path.join(self.cropped_path, frame_name), cropped_frame)
+
+    def save_frame(self):
+        """
+        Saves a frame with all BBs drawn on it
+        :return:
+        """
+        if self.input_photo:
+            image_name = "out_" + os.path.split(self.path_to_image)[-1]
+            cv2.imwrite(os.path.join(self.save_path, image_name), self.image)
+        else:
+            self.video_writer.write(self.image.astype(np.uint8))
+
 
 
 class DefectDetector:

@@ -12,9 +12,9 @@ class NetPoles:
     # ! MIGHT MAKE SENSE TO MOVE THOSE PARAMETERS TO THE TXT FILE SINCE USER DOESN't WANT
     # ! TO DEAL WITH THE CODE BUT WITH A TXT FILE!
 
-    confidence_thresh = 0.3
+    confidence_thresh = 0.2
     NMS_thresh = 0.2
-    input_width, input_height = 416, 416
+    input_width, input_height = 512, 512
 
     def __init__(self):
         self.config, self.weights = self.load_files()
@@ -84,8 +84,8 @@ class NetPoles:
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
                     # ANOTHER ERROR CATCHING WITH ABS
-                    left = abs(int(centre_x - (width / 2)))
-                    top = abs(int(centre_y - (height / 2)))
+                    left = int(centre_x - (width / 2))
+                    top = int(centre_y - (height / 2))
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))
@@ -135,9 +135,9 @@ class NetElements:
     # ! MIGHT MAKE SENSE TO MOVE THOSE PARAMETERS TO THE TXT FILE SINCE USER DOESN't WANT
     # ! TO DEAL WITH THE CODE BUT WITH A TXT FILE!
 
-    confidence_thresh = 0.2
+    confidence_thresh = 0.15
     NMS_thresh = 0.2
-    input_width, input_height = 416, 416
+    input_width, input_height = 608, 608
 
     def __init__(self):
         self.config, self.weights = self.load_files()

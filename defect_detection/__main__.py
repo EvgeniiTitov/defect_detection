@@ -32,8 +32,8 @@ def draw_bounding_boxes(objects_detected, frame):
     for image_section, objects in objects_detected.items():
         for element in objects:
             cv2.rectangle(frame, (image_section.left+element.left, image_section.top+element.top),
-                                          (image_section.left+element.right, image_section.top+element.bottom),
-                                          (0, 255, 0), line_thickness)
+                                 (image_section.left+element.right, image_section.top+element.bottom),
+                                 (0, 255, 0), line_thickness)
             label = "{}:{:1.2f}".format(element.object_class[:-4], element.confidence)
             label_size, base_line = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, text_size, 1)
             top = max(element.top + image_section.top, label_size[1])

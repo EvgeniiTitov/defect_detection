@@ -50,7 +50,9 @@ def detection(save_path,
                                  path_to_image=path_to_input,
                                  save_path=save_path,
                                  cropped_path=crop_path,
-                                 input_photo=input_type)
+                                 input_photo=input_type,
+                                 video_writer = video_writer,
+                                 frame_counter = frame_counter)
 
         # BLOCK 1,2. Detect poles and elements on them
         poles = pole_detector.predict(frame)
@@ -63,29 +65,21 @@ def detection(save_path,
         # defect_detector.find_defects(objects)
 
         # SAVE DEFECTS/OBJECTS TO A DATABASE
-
-        # STOPPED HERE. CHECK CLASS NAME FOR POLES, MIGHT HAVE MIXED THEM.
-        # THROWS AN ERROR DURING BBs DRAWING
-        # A BIT OF SHIT CODING WHEN CREATING CLASS INSTANCES
-        for w,e in objects.items():
-            for _ in e:
-                print(_.object_name)
-        sys.exit()
-
-        #handler.save_objects_detected(objects)
+        if crop_path:
+            handler.save_objects_detected(objects)
         handler.draw_bounding_boxes(objects)
+        handler.save_frame()
 
-        if video_writer:
-            # Send it to handler method to save a frame
-            pass
-        else:
-            # Send image to another handler method to have it saved
-            pass
 
         cv2.imshow(window_name, frame)
         frame_counter += 1
         end_time = time.time()
         print("FPS:", end_time - start_time)
+
+        # In case of image break out of WHILE loop. Show image for N sec.
+        if len(image) > 0:
+            cv2.waitKey(5000)
+            return
 
 
 if __name__ == "__main__":
