@@ -1,2 +1,2 @@
-C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs\yolo-obj.cfg
-D:\Desktop\Reserve_NNs\weights\Try3_Poles_MetalConcrete_Detection\yolo-obj_best.weights
+D:\Desktop\Reserve_NNs\weights_configs\try_5_poles\poles_improved.cfg
+D:\Desktop\Reserve_NNs\weights_configs\try_5_poles\yolo-obj_0128.weights

@@ -14,7 +14,7 @@ class NetPoles:
 
     confidence_thresh = 0.2
     NMS_thresh = 0.2
-    input_width, input_height = 512, 512  # Can decrease once we modify the boxes!
+    input_width, input_height = 416, 416
 
     def __init__(self):
         self.config, self.weights = self.load_files()
@@ -142,6 +142,7 @@ class NetElements:
     def __init__(self):
         self.config, self.weights = self.load_files()
         self.net = self.setup_net()
+        print("Net has been setup")
 
     def load_files(self):
         """
