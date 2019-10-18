@@ -30,9 +30,9 @@ class ComponentsDetector:
         for window, components in self.components_detected.items():
             for component in components:
                 if component.class_id == 0:
-                    component.object_name = "insulator"  # Insulator
+                    component.object_name = "insl"  # Insulator
                 else:
-                    component.object_name = "dumper"  # Vibration dumper
+                    component.object_name = "dump"  # Vibration dumper
 
     def predict(self, image, pole_predictions):
         """

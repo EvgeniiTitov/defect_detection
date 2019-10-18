@@ -84,8 +84,8 @@ class NetPoles:
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
                     # ANOTHER ERROR CATCHING WITH ABS
-                    left = int(centre_x - (width / 2)) if int(centre_x - (width / 2)) > 0 else 1
-                    top = int(centre_y - (height / 2)) if int(centre_y - (height / 2)) > 0 else 1
+                    left = int(centre_x - (width / 2)) if int(centre_x - (width / 2)) > 0 else 2
+                    top = int(centre_y - (height / 2)) if int(centre_y - (height / 2)) > 0 else 2
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))
@@ -142,7 +142,6 @@ class NetElements:
     def __init__(self):
         self.config, self.weights = self.load_files()
         self.net = self.setup_net()
-        print("Net has been setup")
 
     def load_files(self):
         """

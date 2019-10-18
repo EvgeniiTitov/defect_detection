@@ -1,2 +1,2 @@
-C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs\yolo-obj.cfg
-D:\Desktop\Reserve_NNs\weights_configs\Try4_Components_InsulatorsDumpers\yolo-obj_final.weights
+D:\Desktop\Reserve_NNs\weights_configs\try_6_components\yolo-obj.cfg
+D:\Desktop\Reserve_NNs\weights_configs\try_6_components\yolo-obj_best.weights
