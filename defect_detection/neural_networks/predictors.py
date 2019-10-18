@@ -211,13 +211,21 @@ class ResultsHandler:
         :return: None
         """
         # Traverse over all key-value pairs drawing objects one after another
+        colour = (0, 255, 0)
         for image_section, elements in objects_detected.items():
             # There might be multiple objects detected in a certain image section (whole image:poles),
             # pole1:elements, pole2:elements etc.
             for element in elements:
+                # Check element class and change BBs colour
+                if element.object_name == "insl":
+                    colour = (210, 0, 210)
+                elif element.object_name == "dump":
+                    colour = (255, 0, 0)
+                # Draw BBs using both BBs coordinates and coordinates of the image section relative to the original
+                # image in which this object was detected
                 cv2.rectangle(self.image, (image_section.left + element.left, image_section.top + element.top),
                                           (image_section.left + element.right, image_section.top + element.bottom),
-                                          (0, 255, 0), self.line_text_size()[0])
+                                          colour, self.line_text_size()[0])
 
                 label = "{}:{:1.2f}".format(element.object_name, element.confidence)
 
