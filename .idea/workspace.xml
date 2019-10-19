@@ -36,8 +36,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/predictors.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="546">
-                  <caret line="89" column="86" selection-start-line="89" selection-start-column="86" selection-end-line="89" selection-end-column="86" />
+                <state relative-caret-position="588">
+                  <caret line="93" lean-forward="true" selection-start-line="93" selection-end-line="93" />
                   <folding>
                     <element signature="e#0#35#0" expanded="true" />
                   </folding>
@@ -237,7 +237,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
       <window_info content_ui="combo" id="Project" order="1" visible="true" weight="0.01981506" />
@@ -394,8 +393,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/predictors.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="546">
-          <caret line="89" column="86" selection-start-line="89" selection-start-column="86" selection-end-line="89" selection-end-column="86" />
+        <state relative-caret-position="588">
+          <caret line="93" lean-forward="true" selection-start-line="93" selection-end-line="93" />
           <folding>
             <element signature="e#0#35#0" expanded="true" />
           </folding>
