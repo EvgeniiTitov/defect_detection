@@ -42,7 +42,6 @@ class ComponentsDetector:
         :return: separate dictionary with components found as values and coordinates of a
         pole on which they were detected as a key.
         """
-        components = list()
         # If poles detecting neural net detected any poles. Find all components on them
         if pole_predictions:
             # FOR loop below just to play it safe. There should be only one item in the dictionary
@@ -50,7 +49,8 @@ class ComponentsDetector:
             for window, poles in pole_predictions.items():
                 # Consider all poles detected on the original image
                 for pole in poles:
-                    # Crop out the pole detected to send for components detection
+                    components = list()
+                    # Crop out the pole detected to send for components detection (modified coordinates)
                     pole_subimage = np.array(window.frame[pole.top:pole.bottom,
                                                           pole.left:pole.right])
                     pole_image_section = DetectionImageSection(pole_subimage, "components")
@@ -75,6 +75,7 @@ class ComponentsDetector:
                                 DetectedObject(component[0], component[1], component[2],
                                                component[3], component[4], component[5])
                                                                                 )
+                        self.determine_object_class()
         else:
             # In case no poles have been detected, send the whole image for components detection
             # in case there are any close-up components on the image
@@ -86,12 +87,10 @@ class ComponentsDetector:
                         DetectedObject(component[0], component[1], component[2],
                                        component[3], component[4], component[5])
                                                                 )
-        #  Name objects detected by unique names instead of default 0,1,2 etc.
-        if components:
-            self.determine_object_class()
+                #  Name objects detected by unique names instead of default 0,1,2 etc.
+                self.determine_object_class()
 
         return self.components_detected
-
 
 class PoleDetector:
     """
