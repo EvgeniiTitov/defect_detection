@@ -130,23 +130,36 @@ class PoleDetector:
         :return: None. Simply modified coordinates
         """
         for window, poles in self.poles_detected.items():
-            # Let's consider all poles detected on an image and modify their coordinates
+            # Let's consider all poles detected on an image and modify their coordinates.
             # If only one pole's been detected, just widen the box 50% both sides
             if len(poles) == 1:
                 new_left_boundary = int(poles[0].BB_left * 0.5)
                 new_right_boundary = int(poles[0].BB_right * 1.5) if int(poles[0].BB_right * 1.5) <\
                                                                 image.shape[1] else (image.shape[1] - 2)
+                new_top_boundary = int(poles[0].BB_top * 0.9)
+                new_bot_boundary = int(poles[0].BB_bottom * 1.1) if int(poles[0].BB_bottom * 1.1) <\
+                                                                image.shape[0] else (image.shape[0] - 2)
+
                 poles[0].update_object_coordinates(left=new_left_boundary,
-                                                   right=new_right_boundary)
+                                                   top=new_top_boundary,
+                                                   right=new_right_boundary,
+                                                   bottom=new_bot_boundary)
             else:
                 for pole in poles:
 
                     # ! CHECK FOR OVERLAPPING
-                    new_left_boundary = int(pole.BB_left * 0.8)
+
+                    new_left_boundary = int(pole.BB_left * 0.9)
                     new_right_boundary = int(pole.BB_right * 1.1) if int(pole.BB_right * 1.1) < \
                                                             image.shape[1] else (image.shape[1] - 2)
+                    new_top_boundary = int(pole.BB_top * 0.9)
+                    new_bot_boundary = int(pole.BB_bottom * 1.1) if int(pole.BB_bottom * 1.1) < \
+                                                            image.shape[0] else (image.shape[0] - 2)
+
                     pole.update_object_coordinates(left=new_left_boundary,
-                                                   right=new_right_boundary)
+                                                   top=new_top_boundary,
+                                                   right=new_right_boundary,
+                                                   bottom=new_bot_boundary)
 
     def predict(self, image):
         """
@@ -164,7 +177,9 @@ class PoleDetector:
                 self.poles_detected[detecting_image_section].append(
                         DetectedObject(pole[0], pole[1], pole[2], pole[3], pole[4], pole[5])
                                                                     )
-            # Modify poles coordinates to widen them for components detection
+            # Modify poles coordinates to widen them for better components detection (some might stick out, so
+            # they don't end up inside the objects BB. Hence, they get missed since component detection happens only
+            # inside the objects box.
             self.modify_box_coordinates(image)
             # Name objects detected by unique names instead of default 0,1,2 etc.
             self.determine_object_class()
