@@ -77,13 +77,13 @@ class NetPoles:
                     # Centre of an object relatively to the upper left corner of the image in percent
                     centre_x = int(detection[0] * image_width)
                     centre_y = int(detection[1] * image_height)
-                    # Width and height of the BB predicted in percent. Catching ERRORS:
+                    # Width and height of the BB predicted in percent. Catching ERROR when its more 100%
                     width_percent = detection[2] if detection[2] < 0.98 else 0.98
                     height_percent = detection[3] if detection[3] < 0.98 else 0.98
                     # Calculate actual size of the BB
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
-                    # ANOTHER ERROR CATCHING WITH ABS
+                    # Catching error when left/top value can go below 0
                     left = int(centre_x - (width / 2)) if int(centre_x - (width / 2)) > 0 else 2
                     top = int(centre_y - (height / 2)) if int(centre_y - (height / 2)) > 0 else 2
                     # Save prediction results
@@ -207,8 +207,8 @@ class NetElements:
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
                     # ERROR CATCHING WITH ABS
-                    left = abs(int(centre_x - (width / 2)))
-                    top = abs(int(centre_y - (height / 2)))
+                    left = int(centre_x - (width / 2)) if int(centre_x - (width / 2)) > 0 else 2
+                    top = int(centre_y - (height / 2)) if int(centre_y - (height / 2)) > 0 else 2
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))

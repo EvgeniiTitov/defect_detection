@@ -27,9 +27,9 @@ class DetectedObject:
         """
         # Update value only of the coordinates provided. Doesn't change default box values
         # which are equal to the values of the BBs predicted.
-        if left:
-            self.top = top
         if top:
+            self.top = top
+        if left:
             self.left = left
         if right:
             self.right = right

@@ -3,7 +3,7 @@ from neural_networks.detections import DetectedObject, DetectionImageSection
 from neural_networks.models import NetPoles, NetElements
 import numpy as np
 import cv2
-import os
+import os, sys
 
 
 class ComponentsDetector:
@@ -124,7 +124,7 @@ class PoleDetector:
 
     def modify_box_coordinates(self, image):
         """
-        Modifies pole's BB.
+        Modifies pole's BB. 50% both sides if only one pole detected (likely to be closeup), 10% if more
         :param image: image on which detection of poles took place (original image).
         Will be used to make sure new modified coordinates do not go beyond image's edges
         :return: None. Simply modified coordinates
@@ -133,19 +133,20 @@ class PoleDetector:
             # Let's consider all poles detected on an image and modify their coordinates
             # If only one pole's been detected, just widen the box 50% both sides
             if len(poles) == 1:
-                left = int(poles[0].BB_left*0.5)
-                right = int(poles[0].BB_right*0.5) if int(poles[0].BB_right*0.5) <\
-                                                   image.shape[1] else image.shape[1]
-                poles[0].update_object_coordinates(left=left, right=right)
+                new_left_boundary = int(poles[0].BB_left * 0.5)
+                new_right_boundary = int(poles[0].BB_right * 1.5) if int(poles[0].BB_right * 1.5) <\
+                                                                image.shape[1] else (image.shape[1] - 2)
+                poles[0].update_object_coordinates(left=new_left_boundary,
+                                                   right=new_right_boundary)
             else:
                 for pole in poles:
 
                     # ! CHECK FOR OVERLAPPING
-
-                    left = int(pole.BB_left*0.8)
-                    right = int(pole.BB_right*1.2) if int(pole.BB_right*1.2) <\
-                                                    image.shape[1] else image.shape[1]
-                    pole.update_object_coordinates(left=left, right=right)
+                    new_left_boundary = int(pole.BB_left * 0.8)
+                    new_right_boundary = int(pole.BB_right * 1.1) if int(pole.BB_right * 1.1) < \
+                                                            image.shape[1] else (image.shape[1] - 2)
+                    pole.update_object_coordinates(left=new_left_boundary,
+                                                   right=new_right_boundary)
 
     def predict(self, image):
         """
@@ -153,6 +154,7 @@ class PoleDetector:
         :return: Dictionary containing all poles detected on the image
         """
         detecting_image_section = DetectionImageSection(image, "poles")
+        # Call neural net to get predictions
         poles = self.poles_predictor.predict(image)
         # Represent each object detected as a class object. Add all objects
         # to the dictionary as values.
@@ -163,7 +165,7 @@ class PoleDetector:
                         DetectedObject(pole[0], pole[1], pole[2], pole[3], pole[4], pole[5])
                                                                     )
             # Modify poles coordinates to widen them for components detection
-            #self.modify_box_coordinates(image)
+            self.modify_box_coordinates(image)
             # Name objects detected by unique names instead of default 0,1,2 etc.
             self.determine_object_class()
 
@@ -223,8 +225,8 @@ class ResultsHandler:
                     colour = (255, 0, 0)
                 # Draw BBs using both BBs coordinates and coordinates of the image section relative to the original
                 # image in which this object was detected
-                cv2.rectangle(self.image, (image_section.left + element.left, image_section.top + element.top),
-                                          (image_section.left + element.right, image_section.top + element.bottom),
+                cv2.rectangle(self.image, (image_section.left + element.BB_left, image_section.top + element.BB_top),
+                                          (image_section.left + element.BB_right, image_section.top + element.BB_bottom),
                                           colour, self.line_text_size()[0])
 
                 label = "{}:{:1.2f}".format(element.object_name, element.confidence)
@@ -250,18 +252,18 @@ class ResultsHandler:
             for element in elements:
                 if self.input_photo:
                     # Processing image
-                    cropped_frame = image_section.frame[element.top+image_section.top:
-                                                        element.bottom+image_section.top,
-                                                        element.left+image_section.left:
-                                                        element.right+image_section.left]
+                    cropped_frame = image_section.frame[element.BB_top+image_section.top:
+                                                        element.BB_bottom+image_section.top,
+                                                        element.BB_left+image_section.left:
+                                                        element.BB_right+image_section.left]
                     file_name = self.image_name + "_OBJECT CLASS" + ".jpg"
                     cv2.imwrite(os.path.join(self.cropped_path, file_name), cropped_frame)
                 else:
                     # ! NEEDS TESTING Processing video
-                    cropped_frame = image_section.frame[element.top + image_section.top:
-                                                        element.bottom + image_section.top,
-                                                        element.left + image_section.left:
-                                                        element.right + image_section.left]
+                    cropped_frame = image_section.frame[element.BB_top + image_section.top:
+                                                        element.BB_bottom + image_section.top,
+                                                        element.BB_left + image_section.left:
+                                                        element.BB_right + image_section.left]
                     frame_name = "TBC"
                     cv2.imwrite(os.path.join(self.cropped_path, frame_name), cropped_frame)
 
