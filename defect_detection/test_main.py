@@ -1,4 +1,4 @@
-from neural_networks.predictors import ResultsHandler, PoleDetector, ComponentsDetector, DefectDetector
+from .neural_networks.predictors import ResultsHandler, PoleDetector, ComponentsDetector, DefectDetector
 import cv2
 import time
 import sys
@@ -24,6 +24,8 @@ class App:
 
         self.window_name = "Defect Detection"
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        #MOVE TO METHOD OTHEWISE EVERYTHING WIL BE HERE
+
 
         self.objects_detected = dict()
 

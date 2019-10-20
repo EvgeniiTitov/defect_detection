@@ -1,6 +1,6 @@
 from collections import defaultdict
-from neural_networks.detections import DetectedObject, DetectionImageSection
-from neural_networks.models import NetPoles, NetElements
+from .detections import DetectedObject, DetectionImageSection
+from .models import NetPoles, NetElements
 import numpy as np
 import cv2
 import os, sys
@@ -15,8 +15,14 @@ class ComponentsDetector:
     role of a dictionary key.
     """
     def __init__(self):
+        # IMPORTANT NEW IGOR. Here send arguments (neural nets) to the constructor
+        # def __init__(self, predictor):
+            # self.components_predictor = predictor
+
+
         # Initialize components predictor
         self.components_predictor = NetElements()
+
         # Dictionary to keep components detected
         self.components_detected = defaultdict(list)
 
@@ -263,6 +269,8 @@ class ResultsHandler:
         :return:
         """
         for image_section, elements in objects_detected.items():
+
+            # COunter mght be wrong, enumerate
             counter = 1
             for element in elements:
                 if self.input_photo:
