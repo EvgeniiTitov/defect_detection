@@ -1,9 +1,8 @@
 from collections import defaultdict
 from .detections import DetectedObject, DetectionImageSection
-from .models import NetPoles, NetElements
 import numpy as np
 import cv2
-import os, sys
+import os
 
 
 class ComponentsDetector:
@@ -14,26 +13,18 @@ class ComponentsDetector:
     as values, whereas the image section on which the detection was performed serves the
     role of a dictionary key.
     """
-    def __init__(self):
-        # IMPORTANT NEW IGOR. Here send arguments (neural nets) to the constructor
-        # def __init__(self, predictor):
-            # self.components_predictor = predictor
-
-
+    def __init__(self, predictor):
         # Initialize components predictor
-        self.components_predictor = NetElements()
+        self.components_predictor = predictor
 
-        # Dictionary to keep components detected
-        self.components_detected = defaultdict(list)
-
-    def determine_object_class(self):
+    def determine_object_class(self, components_detected):
         """
         Checks object's class and names it. Since we've got multiple nets predicting objects
         like 0,1,2 classes, we want to make sure we don't get confused later.
         Dynamically creates new attribute
         :return: Nothing. Simply names objects
         """
-        for window, components in self.components_detected.items():
+        for window, components in components_detected.items():
             for component in components:
                 if component.class_id == 0:
                     component.object_name = "insl"  # Insulator
@@ -48,6 +39,8 @@ class ComponentsDetector:
         :return: separate dictionary with components found as values and coordinates of a
         pole on which they were detected as a key.
         """
+        # Dictionary to keep components detected
+        components_detected = defaultdict(list)
         # If poles detecting neural net detected any poles. Find all components on them
         if pole_predictions:
             # FOR loop below just to play it safe. There should be only one item in the dictionary
@@ -77,11 +70,11 @@ class ComponentsDetector:
                         # to the dictionary with the appropriate key - image section (pole) on which they
                         # were detected
                         for component in components:
-                            self.components_detected[pole_image_section].append(
+                            components_detected[pole_image_section].append(
                                 DetectedObject(component[0], component[1], component[2],
                                                component[3], component[4], component[5])
-                                                                                )
-                        self.determine_object_class()
+                                                                          )
+                        self.determine_object_class(components_detected)
         else:
             # In case no poles have been detected, send the whole image for components detection
             # in case there are any close-up components on the image
@@ -89,14 +82,15 @@ class ComponentsDetector:
             if components:
                 whole_image = DetectionImageSection(image, "components")
                 for component in components:
-                    self.components_detected[whole_image].append(
+                    components_detected[whole_image].append(
                         DetectedObject(component[0], component[1], component[2],
                                        component[3], component[4], component[5])
-                                                                )
+                                                            )
                 #  Name objects detected by unique names instead of default 0,1,2 etc.
-                self.determine_object_class()
+                self.determine_object_class(components_detected)
 
-        return self.components_detected
+        return components_detected
+
 
 class PoleDetector:
     """
@@ -107,43 +101,42 @@ class PoleDetector:
     role. In this case we consider the whole image.
     As input it accepts a plain image.
     """
-    def __init__(self):
+    def __init__(self, predictor):
         # Initialize predictor
-        self.poles_predictor = NetPoles()
-        # Dictionary to keep poles detected
-        self.poles_detected = defaultdict(list)
+        self.poles_predictor = predictor
 
-    def determine_object_class(self):
+    def determine_object_class(self, poles_detected):
         """
         Checks object's class and names it. Since we've got multiple nets predicting objects
         like 0,1,2 classes, we want to make sure we don't get confused later.
         Dynamically creates new attribute
         :return: Nothing. Simply names objects
         """
-        for window, poles in self.poles_detected.items():
+        for window, poles in poles_detected.items():
             for pole in poles:
                 if pole.class_id == 0:
                     pole.object_name = "metal"
                 else:
                     pole.object_name = "concrete"
 
-    def modify_box_coordinates(self, image):
+    def modify_box_coordinates(self, image, poles_detected):
         """
         Modifies pole's BB. 50% both sides if only one pole detected (likely to be closeup), 10% if more
-        :param image: image on which detection of poles took place (original image).
+        :param image: image on which detection of poles took place (original image)
+        :param poles_detected: detections of poles
         Will be used to make sure new modified coordinates do not go beyond image's edges
         :return: None. Simply modified coordinates
         """
-        for window, poles in self.poles_detected.items():
+        for window, poles in poles_detected.items():
             # Let's consider all poles detected on an image and modify their coordinates.
             # If only one pole's been detected, just widen the box 50% both sides
             if len(poles) == 1:
                 new_left_boundary = int(poles[0].BB_left * 0.5)
                 new_right_boundary = int(poles[0].BB_right * 1.5) if int(poles[0].BB_right * 1.5) <\
-                                                                image.shape[1] else (image.shape[1] - 2)
+                                                                    image.shape[1] else (image.shape[1] - 2)
                 new_top_boundary = int(poles[0].BB_top * 0.9)
                 new_bot_boundary = int(poles[0].BB_bottom * 1.1) if int(poles[0].BB_bottom * 1.1) <\
-                                                                image.shape[0] else (image.shape[0] - 2)
+                                                                    image.shape[0] else (image.shape[0] - 2)
 
                 poles[0].update_object_coordinates(left=new_left_boundary,
                                                    top=new_top_boundary,
@@ -156,10 +149,10 @@ class PoleDetector:
 
                     new_left_boundary = int(pole.BB_left * 0.9)
                     new_right_boundary = int(pole.BB_right * 1.1) if int(pole.BB_right * 1.1) < \
-                                                            image.shape[1] else (image.shape[1] - 2)
+                                                                image.shape[1] else (image.shape[1] - 2)
                     new_top_boundary = int(pole.BB_top * 0.9)
                     new_bot_boundary = int(pole.BB_bottom * 1.1) if int(pole.BB_bottom * 1.1) < \
-                                                            image.shape[0] else (image.shape[0] - 2)
+                                                                image.shape[0] else (image.shape[0] - 2)
 
                     pole.update_object_coordinates(left=new_left_boundary,
                                                    top=new_top_boundary,
@@ -171,6 +164,9 @@ class PoleDetector:
         :param image: Image on which to perform pole detection (the whole original image)
         :return: Dictionary containing all poles detected on the image
         """
+        # Create a dictionary to keep the predictions made
+        poles_detected = defaultdict(list)
+        # Specify image section on which predictions take place
         detecting_image_section = DetectionImageSection(image, "poles")
         # Call neural net to get predictions
         poles = self.poles_predictor.predict(image)
@@ -179,17 +175,17 @@ class PoleDetector:
         # Check if any poles have been detected otherwise return the empty dictionary
         if poles:
             for pole in poles:
-                self.poles_detected[detecting_image_section].append(
+                poles_detected[detecting_image_section].append(
                         DetectedObject(pole[0], pole[1], pole[2], pole[3], pole[4], pole[5])
-                                                                    )
+                                                               )
             # Modify poles coordinates to widen them for better components detection (some might stick out, so
             # they don't end up inside the objects BB. Hence, they get missed since component detection happens only
             # inside the objects box.
-            self.modify_box_coordinates(image)
+            self.modify_box_coordinates(image, poles_detected)
             # Name objects detected by unique names instead of default 0,1,2 etc.
-            self.determine_object_class()
+            self.determine_object_class(poles_detected)
 
-        return self.poles_detected
+        return poles_detected
 
 
 class ResultsHandler:
@@ -205,6 +201,7 @@ class ResultsHandler:
                 video_writer=None,
                 frame_counter=0
                 ):
+
         self.image = image
         self.path_to_image = path_to_image
         self.save_path = save_path
@@ -270,9 +267,8 @@ class ResultsHandler:
         """
         for image_section, elements in objects_detected.items():
 
-            # COunter mght be wrong, enumerate
-            counter = 1
-            for element in elements:
+            # Use enumerate() to make sure no objects get overwritten
+            for index, element in enumerate(elements, start=1):
                 if self.input_photo:
                     # Processing image(s)
                     cropped_frame = image_section.frame[element.BB_top + image_section.top:
@@ -280,7 +276,7 @@ class ResultsHandler:
                                                         element.BB_left + image_section.left:
                                                         element.BB_right + image_section.left]
 
-                    file_name = self.image_name + "_" + element.object_name + "_" + str(counter) + ".jpg"
+                    file_name = self.image_name + "_" + element.object_name + "_" + str(index) + ".jpg"
                     cv2.imwrite(os.path.join(self.cropped_path, file_name), cropped_frame)
                 else:
                     # ! NEEDS TESTING Processing video
@@ -290,7 +286,6 @@ class ResultsHandler:
                                                         element.BB_right + image_section.left]
                     frame_name = "TBC"
                     cv2.imwrite(os.path.join(self.cropped_path, frame_name), cropped_frame)
-            counter += 1
 
     def save_frame(self):
         """

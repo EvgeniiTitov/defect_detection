@@ -1,4 +1,5 @@
 from .neural_networks.predictors import ResultsHandler, PoleDetector, ComponentsDetector, DefectDetector
+from .neural_networks.models import NetPoles, NetElements
 import cv2
 import time
 import sys

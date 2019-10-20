@@ -3,8 +3,8 @@ import sys
 import argparse
 import time
 import cv2
-from neural_networks.predictors import ResultsHandler, PoleDetector, ComponentsDetector, DefectDetector
-
+from neural_networks import ResultsHandler, PoleDetector, ComponentsDetector, DefectDetector
+from neural_networks import NetPoles, NetElements
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -32,8 +32,14 @@ def detection(save_path,
     frame_counter = 0
     input_type = True
     objects = dict()
-    pole_detector = PoleDetector()
-    component_detector = ComponentsDetector()
+    # Initialize neural networks
+    pole_neural_net = NetPoles()
+    component_neural_net = NetElements()
+    # Initialize detectors that use the nets to make predictions and postprocess
+    # the results
+    pole_detector = PoleDetector(pole_neural_net)
+    component_detector = ComponentsDetector(component_neural_net)
+    # TBD
     defect_detector = DefectDetector()
 
     while cv2.waitKey(1) < 0:
