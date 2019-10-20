@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     crop_path = None
     if arguments.crop_path:
-        crop_path = arguments.crop
+        crop_path = arguments.crop_path
 
     if arguments.image:
         if not os.path.isfile(arguments.image):
@@ -114,6 +114,9 @@ if __name__ == "__main__":
             if not any(image.endswith(ext) for ext in [".jpg", ".JPG", ".jpeg", ".JPEG"]):
                 continue
             print("\nProcessing:", image)
+
+            # Check for incorrect image name! Try/Except
+
             path_to_image = os.path.join(arguments.folder, image)
             image = cv2.imread(path_to_image)
             detection(save_path=save_path,
