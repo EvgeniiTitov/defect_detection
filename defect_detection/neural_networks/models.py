@@ -100,9 +100,11 @@ class NetPoles:
             top = box[1]
             width = box[2]
             height = box[3]
+            # Catching right and bot edges of BBs being not visible
+            right = (left+width) if (left+width) < image_width else image_width-3
+            bottom = (top+height) if (top+height) < image_height else image_height-3
 
-            objects_predicted.append([classIds[i], confidences[i], left,
-                                      top, left + width, top + height])
+            objects_predicted.append([classIds[i], confidences[i], left, top, right, bottom])
 
         return objects_predicted
 

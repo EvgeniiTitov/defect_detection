@@ -256,21 +256,23 @@ class ResultsHandler:
                             cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size()[1],
                             (0, 0, 0), self.line_text_size()[-1])
 
-    def save_objects_detected(self, objects_detected):
+    def save_objects_detected(self, objects_detected, video_writer=None):
         """
         Class method saving objects detected
         :param objects_detected:
         :return:
         """
         for image_section, elements in objects_detected.items():
+            counter = 1
             for element in elements:
                 if self.input_photo:
-                    # Processing image
-                    cropped_frame = image_section.frame[element.BB_top+image_section.top:
-                                                        element.BB_bottom+image_section.top,
-                                                        element.BB_left+image_section.left:
-                                                        element.BB_right+image_section.left]
-                    file_name = self.image_name + "_OBJECT CLASS" + ".jpg"
+                    # Processing image(s)
+                    cropped_frame = image_section.frame[element.BB_top + image_section.top:
+                                                        element.BB_bottom + image_section.top,
+                                                        element.BB_left + image_section.left:
+                                                        element.BB_right + image_section.left]
+
+                    file_name = self.image_name + "_" + element.object_name + "_" + str(counter) + ".jpg"
                     cv2.imwrite(os.path.join(self.cropped_path, file_name), cropped_frame)
                 else:
                     # ! NEEDS TESTING Processing video
@@ -280,6 +282,7 @@ class ResultsHandler:
                                                         element.BB_right + image_section.left]
                     frame_name = "TBC"
                     cv2.imwrite(os.path.join(self.cropped_path, frame_name), cropped_frame)
+            counter += 1
 
     def save_frame(self):
         """
