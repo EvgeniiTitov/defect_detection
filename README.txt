@@ -1,9 +1,3 @@
-TO DO:
-1. Complete proper saving of cropped images
-2. Check for video
-3. Perform BBs enlargement for both classes, check for overlapping
-
-
 Main logic:
 
 1. Parse user input, initialize things, create opencv window etc.
@@ -56,18 +50,3 @@ Known issues performance:
    thresholds,
    input width and size,
    enlargement coefficient (where it searches for components)
-4. Fix importing issue for god sake
-
-Issues weights:
-1. Might have included too many images of poles being too close to the camera
-   now even a simple insulator can get detected as a pole! Need to enrich DS with
-   high res full size images of poles.
-2. For poles might be a bad idea to set 608 image size! Stick to 416
-
-Possible improvements:
-1. For each block 1,2,3 create a separate class. This will ensure flexebility
-of the overall system. When working with function one might need to send
-heaps of arguments, whereas when working with classes one argument is enough
-- class instance (gets sent to another class and initialized in the constructor)
-2. DO NOT USE GLOBAL
-3.

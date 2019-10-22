@@ -192,25 +192,9 @@ class ResultsHandler:
     """
     Class performing BBs drawing, saving objects to disk
     """
-    def __init__(self,
-                image,
-                path_to_image,
-                save_path=r"D:\Desktop\system_output",
-                cropped_path=r"D:\Desktop\system_output\cropped_elements",
-                input_photo=True,
-                video_writer=None,
-                frame_counter=0
-                ):
-
-        self.image = image
-        self.path_to_image = path_to_image
+    def __init__(self, save_path, cropped_path):
         self.save_path = save_path
         self.cropped_path = cropped_path
-        self.input_photo = input_photo  # True - photo, False - video
-        self.video_writer = video_writer
-        self.frame_counter = frame_counter
-        # Extract image name. Yikes approach because can be both .jpg and .jpeg
-        self.image_name = os.path.split(path_to_image)[-1].split('.')[0]
 
     def line_text_size(self):
         """
@@ -297,3 +281,8 @@ class ResultsHandler:
             cv2.imwrite(os.path.join(self.save_path, image_name), self.image)
         else:
             self.video_writer.write(self.image.astype(np.uint8))
+
+
+class DefectDetector:
+    def find_defects(self, objects):
+        return objects

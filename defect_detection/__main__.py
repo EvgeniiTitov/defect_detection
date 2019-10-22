@@ -3,8 +3,9 @@ import sys
 import argparse
 import time
 import cv2
-from neural_networks import ResultsHandler, PoleDetector, ComponentsDetector, DefectDetector
+from neural_networks import ResultsHandler, PoleDetector, ComponentsDetector
 from neural_networks import NetPoles, NetElements
+from preprocessing import Preprocessor
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -32,6 +33,8 @@ def detection(save_path,
     frame_counter = 0
     input_type = True
     objects = dict()
+    # Initialize image preprocessor (angle (metadata) extraction)
+    preprocessor = Preprocessor()
     # Initialize neural networks
     pole_neural_net = NetPoles()
     component_neural_net = NetElements()
@@ -39,8 +42,8 @@ def detection(save_path,
     # the results
     pole_detector = PoleDetector(pole_neural_net)
     component_detector = ComponentsDetector(component_neural_net)
-    # TBD
-    defect_detector = DefectDetector()
+    # TBD Initialize defect detectors
+
 
     while cv2.waitKey(1) < 0:
         start_time = time.time()
@@ -62,6 +65,10 @@ def detection(save_path,
 
         # BLOCK 1,2. Detect poles and elements on them
         poles = pole_detector.predict(frame)
+
+        # IF POLES DETECTED. CHECK FOR CONCRETE. EXTRACT IMAGES METADATA, CHECK
+        # FOR ANGLES. RUN TILTCHECKER. (COULD BE DONE IN PARALLEL?)
+
         components = component_detector.predict(frame, poles)
         # Merge all objects found into one dictionary
         for dictionary in (poles, components):

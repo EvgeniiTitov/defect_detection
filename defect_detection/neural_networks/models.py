@@ -247,8 +247,10 @@ class NetElements:
 
         return components
 
-class DefectDetector_1:
+
+class DefectDetector1:
     pass
 
-class DefectDetector_2:
+
+class DefectDetector2:
     pass

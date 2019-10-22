@@ -1,6 +1,6 @@
 class DetectedObject:
     """
-    Represents an object detected. Keeps its coordinates, class name, confidence
+    Represents an object detected. Keeps its coordinates, class ID, confidence score
     """
     def __init__(self, class_id, confidence, left, top, right, bottom):
         self.class_id = class_id
@@ -44,10 +44,10 @@ class DetectedObject:
         
 class DetectionImageSection:
     """
-    Represents part, section of the image in which detection takes place. Used to
-    save objects detected by neural networks with reference to the image section in
+    Represents part, section of the image on which detection takes place. Is used to
+    save objects detected by neural networks with reference to the image section on
     which the detection took place. For instance block 1 neural network uses the
-    whole full size image. Block 2 neural nets do detection on the objects found
+    whole full size image. Block 2 neural net does detection on the objects found
     by the block1 nets. We need this referencing for proper result handling at the end
     """
     def __init__(self, frame, name):
