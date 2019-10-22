@@ -32,10 +32,20 @@ class TiltChecker:
         #the_line = self.find_most_vertical_line(lines)[0]
 
         # Combination of the two
+        if lines is None:
+            print("No lines found")
+            return
+
         longest_lines = self.N_longest_lines(lines)
         the_line = self.find_most_vertical_line(longest_lines)[0]
+
+        # HERE WE HAVE TO CONSIDER THE ERROR PITCH, ROLL
+        # THEN ANNOUCE IF POLE ON THE PICTURE IS DEFECTED
+
         # FOR TESTING PURPOSES
         self._draw_line(image, the_line)
+
+
 
     def modify_image(self, image):
         """
@@ -68,25 +78,25 @@ class TiltChecker:
 
         return lines
 
-    # def find_longest_line(self, lines):
-    #     """
-    #     NOTE! TIME COMPLEXITY O(n)!
-    #     Calculates and returns coordinates of the longest line
-    #     :param lines:
-    #     :return:
-    #     """
-    #     longest_line = (0,0)  # index of the line, its lenght
-    #     for index, line_coordinates in enumerate(lines):
-    #         # Extra index since its a list in the list
-    #         x1 = line_coordinates[0][0]
-    #         y1 = line_coordinates[0][1]
-    #         x2 = line_coordinates[0][2]
-    #         y2 = line_coordinates[0][3]
-    #         line_lenght = ((x2-x1)**2 + (y2-y1)**2)**0.5
-    #         if line_lenght > longest_line[-1]:
-    #             longest_line = (index, line_lenght)
-    #
-    #     return lines[longest_line[0]]  # Index of the longest line
+    def find_longest_line(self, lines):
+        """
+        NOTE! TIME COMPLEXITY O(n)!
+        Calculates and returns coordinates of the longest line
+        :param lines:
+        :return:
+        """
+        longest_line = (0,0)  # index of the line, its lenght
+        for index, line_coordinates in enumerate(lines):
+            # Extra index since its a list in the list
+            x1 = line_coordinates[0][0]
+            y1 = line_coordinates[0][1]
+            x2 = line_coordinates[0][2]
+            y2 = line_coordinates[0][3]
+            line_lenght = ((x2-x1)**2 + (y2-y1)**2)**0.5
+            if line_lenght > longest_line[-1]:
+                longest_line = (index, line_lenght)
+
+        return lines[longest_line[0]]  # Index of the longest line
 
     def N_longest_lines(self, lines):
         """
@@ -137,8 +147,7 @@ class TiltChecker:
         return lines[vertical_line[0]]
 
     def _draw_line(self, image, line):
-        print(line)
-
+        #print(line)
         cv2.line(image,
                 (line[0], line[1]),
                 (line[2], line[3]),
@@ -149,12 +158,12 @@ class TiltChecker:
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
         while cv2.waitKey(1) < 0:
             cv2.imshow(window_name, image)
-            #cv2.imwrite(os.path.join(save_path, f"{index}.jpg"), image)
+            cv2.imwrite(os.path.join(save_path, item), image)
 
 if __name__ == "__main__":
     # PROCESS A SINGLE IMAGE
     # path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\crop_image\DJI_0405.JPG"
-    # path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\crop_image\from_spark.JPG"
+    # path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped\26.JPG"
     # image = cv2.imread(path)
     # checker = TiltChecker()
     # checker.check_pole(image,2,0)
@@ -162,13 +171,15 @@ if __name__ == "__main__":
     # # PROCESS ALL IMAGES IN A FOLDER
     #folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\crop_image"
     folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped"
-    save_path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped\results_1"
+    save_path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped\results_2"
+    # line lenght = 100, line gap 200 so far the best result
     checker = TiltChecker(min_line_lenght=100,
-                          max_line_gap=100)
-    for index, image in enumerate(os.listdir(folder)):
-        path_to_image = os.path.join(folder, image)
-        try:
-            img = cv2.imread(path_to_image)
-            checker.check_pole(img)
-        except:
+                          max_line_gap=200)
+
+    for item in os.listdir(folder):
+        path_to_item = os.path.join(folder, item)
+        if os.path.isdir(path_to_item):
             continue
+        print("\nProcessing:", item)
+        img = cv2.imread(path_to_item)
+        checker.check_pole(img)

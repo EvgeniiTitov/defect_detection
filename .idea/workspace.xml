@@ -2,20 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/defect_detection.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.txt" beforeDir="false" afterPath="$PROJECT_DIR$/README.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/__main__.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/__main__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/detections.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/detections.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/predictors.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/predictors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/preprocessing/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/preprocessing/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/preprocessing/preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/preprocessing/preprocessing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/test_main.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/test_main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/defect_detectors/pole_tilt_checker.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/defect_detectors/pole_tilt_checker.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -30,7 +17,7 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$USER_HOME$/Downloads/opora_incline.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-567">
+                <state relative-caret-position="-693">
                   <folding>
                     <element signature="e#0#10#0" expanded="true" />
                   </folding>
@@ -57,8 +44,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/pole_tilt_checker.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-894">
-                  <caret line="38" selection-start-line="38" selection-end-line="38" />
+                <state relative-caret-position="336">
+                  <caret line="171" lean-forward="true" selection-start-line="171" selection-end-line="171" />
                   <folding>
                     <element signature="e#0#10#0" expanded="true" />
                   </folding>
@@ -302,17 +289,18 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
       <window_info content_ui="combo" id="Project" order="1" visible="true" weight="0.10590095" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="0" weight="0.2665222" />
+      <window_info anchor="bottom" id="Terminal" order="0" weight="0.032502707" />
       <window_info anchor="bottom" id="Event Log" order="1" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="2" />
       <window_info anchor="bottom" id="Message" order="3" />
       <window_info anchor="bottom" id="Find" order="4" weight="0.32936078" />
       <window_info anchor="bottom" id="Version Control" order="5" weight="0.032502707" />
-      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.276273" />
+      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.31852654" />
       <window_info anchor="bottom" id="Debug" order="7" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="8" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="9" weight="0.4" />
@@ -481,7 +469,7 @@
     </entry>
     <entry file="file://$USER_HOME$/Downloads/opora_incline.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-567">
+        <state relative-caret-position="-693">
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -490,8 +478,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/pole_tilt_checker.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-894">
-          <caret line="38" selection-start-line="38" selection-end-line="38" />
+        <state relative-caret-position="336">
+          <caret line="171" lean-forward="true" selection-start-line="171" selection-end-line="171" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
