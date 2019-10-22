@@ -6,10 +6,12 @@ class TiltChecker:
     def __init__(self,
                  min_line_lenght=100,
                  max_line_gap=100,
-                 tilt_threshold=3):
+                 tilt_threshold=3,
+                 resize_coef=1):
         self.min_line_lenght = min_line_lenght
         self.max_line_gap = max_line_gap
         self.tilt_thresh = tilt_threshold
+        self.resize_coef = resize_coef
 
     def check_pole(self, image, pitch=0, roll=0):
         """
@@ -18,8 +20,10 @@ class TiltChecker:
         :param roll: value of the roll angle
         :return: angle of inclination, pole status (green, yellow, red)
         """
-        # Modify the image, find edges
-        modified_image = self.modify_image(image)
+        # Resize image
+        resized = self.resize_image(image)
+        # Modify the image (filters, resizing), find edges
+        modified_image = self.modify_image(resized)
         # Find all lines on the image
         lines = self.extract_lines(modified_image)
 
@@ -43,9 +47,23 @@ class TiltChecker:
         # THEN ANNOUCE IF POLE ON THE PICTURE IS DEFECTED
 
         # FOR TESTING PURPOSES
-        self._draw_line(image, the_line)
+        self._draw_line(resized, the_line)
 
+    def resize_image(self, image):
+        """
+        Resized image
+        :param image:
+        :return:
+        """
+        # Resize image
+        width = int(image.shape[1] * self.resize_coef)
+        height = int(image.shape[0] * self.resize_coef)
+        dim = (width, height)
+        resized_image = cv2.resize(image,
+                                   dim,
+                                   interpolation=cv2.INTER_AREA)
 
+        return resized_image
 
     def modify_image(self, image):
         """
@@ -56,7 +74,7 @@ class TiltChecker:
         # Convert image to grayscale
         gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         # Blur the image
-        blurred_image = cv2.bilateralFilter(gray_image, 3, 75, 75)  # 3,75,75?
+        blurred_image = cv2.bilateralFilter(gray_image, 3, 100, 100)  # 3,75,75?
         # Apply Canny edge detector
         canny = cv2.Canny(blurred_image, 35, 400)
 
@@ -169,9 +187,9 @@ if __name__ == "__main__":
     # checker.check_pole(image,2,0)
 
     # # PROCESS ALL IMAGES IN A FOLDER
-    #folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\crop_image"
     folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped"
-    save_path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped\results_2"
+    #folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\crop_image"
+    save_path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped\blur_150"
     # line lenght = 100, line gap 200 so far the best result
     checker = TiltChecker(min_line_lenght=100,
                           max_line_gap=200)
@@ -181,5 +199,9 @@ if __name__ == "__main__":
         if os.path.isdir(path_to_item):
             continue
         print("\nProcessing:", item)
-        img = cv2.imread(path_to_item)
-        checker.check_pole(img)
+        try:
+            image = cv2.imread(path_to_item)
+            checker.check_pole(image)
+        except:
+            print("Failed on:", item)
+            continue
