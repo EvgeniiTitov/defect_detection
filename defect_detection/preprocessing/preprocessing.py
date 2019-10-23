@@ -4,7 +4,7 @@ import re
 import os, sys
 
 
-class Preprocessor:
+class MetaDataExtractor:
     def __init__(self, kernel_size=9):
         self.kernel_size = kernel_size
 
@@ -17,9 +17,8 @@ class Preprocessor:
             metadata = d.read()
             if not metadata:
                 print(f"The image {os.path.split(path_to_image)[-1]} "
-                      f"provided does not have any metadata associated to it")
+                      f"provided does not have any metadata associated with it")
                 return
-
             start = metadata.find("<x:xmpmeta")
             end = metadata.find("</x:xmpmeta")
             data = metadata[start : end + 1]
@@ -37,13 +36,7 @@ class Preprocessor:
         pitch_angle = re.findall(r"\d+.\d+", pitch)
         roll_degree = re.findall(r"\d+.\d+", roll)
 
-        return float(pitch_angle[0]), float(roll_degree[0])
-
-    def resize(self):
-        pass
-
-    def apply_filter(self):
-        pass
+        return pitch_angle, roll_degree
 
 
 #
@@ -120,6 +113,6 @@ if __name__ == "__main__":
 
     #folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\Full_image"
     image = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\Full_image\DJI_0433.JPG"
-    preprocessor = Preprocessor()
+    preprocessor = MetaDataExtractor()
     pitch_error, roll_error = preprocessor.get_error_values(image)
     print(pitch_error, roll_error)

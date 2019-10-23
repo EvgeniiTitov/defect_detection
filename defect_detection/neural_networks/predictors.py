@@ -192,38 +192,22 @@ class ResultsHandler:
     """
     Class performing BBs drawing, saving objects to disk
     """
-    def __init__(self,
-                image,
-                path_to_image,
-                save_path=r"D:\Desktop\system_output",
-                cropped_path=r"D:\Desktop\system_output\cropped_elements",
-                input_photo=True,
-                video_writer=None,
-                frame_counter=0
-                ):
-
-        self.image = image
-        self.path_to_image = path_to_image
+    def __init__(self, save_path, cropped_path):
         self.save_path = save_path
         self.cropped_path = cropped_path
-        self.input_photo = input_photo  # True - photo, False - video
-        self.video_writer = video_writer
-        self.frame_counter = frame_counter
-        # Extract image name. Yikes approach because can be both .jpg and .jpeg
-        self.image_name = os.path.split(path_to_image)[-1].split('.')[0]
 
-    def line_text_size(self):
+    def line_text_size(self, image):
         """
         Method determining BB line thickness and text size based on the original image's size
         :return:
         """
-        line_thickness = (self.image.shape[0] * self.image.shape[1] // 1_000_000)
-        text_size = 0.5 + (self.image.shape[0] * self.image.shape[1] // 5_000_000)
-        text_boldness = 1 + (self.image.shape[0] * self.image.shape[1] // 2_000_000)
+        line_thickness = (image.shape[0] * image.shape[1] // 1_000_000)
+        text_size = 0.5 + (image.shape[0] * image.shape[1] // 5_000_000)
+        text_boldness = 1 + (image.shape[0] * image.shape[1] // 2_000_000)
 
         return line_thickness, text_size, text_boldness
 
-    def draw_bounding_boxes(self, objects_detected):
+    def draw_bounding_boxes(self, objects_detected, image):
         """
         Method drawing BBs of the objects detected on the image
         :param objects_detected: iterable containing all objects detected
@@ -242,26 +226,29 @@ class ResultsHandler:
                     colour = (255, 0, 0)
                 # Draw BBs using both BBs coordinates and coordinates of the image section relative to the original
                 # image in which this object was detected
-                cv2.rectangle(self.image, (image_section.left + element.BB_left, image_section.top + element.BB_top),
+                cv2.rectangle(image, (image_section.left + element.BB_left, image_section.top + element.BB_top),
                                           (image_section.left + element.BB_right, image_section.top + element.BB_bottom),
-                                          colour, self.line_text_size()[0])
+                                          colour, self.line_text_size(image)[0])
 
                 label = "{}:{:1.2f}".format(element.object_name, element.confidence)
 
                 label_size, base_line = cv2.getTextSize(label,
                                                         cv2.FONT_HERSHEY_SIMPLEX,
-                                                        self.line_text_size()[1], 1)
+                                                        self.line_text_size(image)[1], 1)
 
                 top = max(element.top + image_section.top, label_size[1])
 
-                cv2.putText(self.image, label,
+                cv2.putText(image, label,
                             (element.left + image_section.left, top),
-                            cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size()[1],
-                            (0, 0, 0), self.line_text_size()[-1])
+                            cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size(image)[1],
+                            (0, 0, 0), self.line_text_size(image)[-1])
 
-    def save_objects_detected(self, objects_detected, video_writer=None):
+    def save_objects_detected(self, objects_detected,
+                              video_writer=None,
+                              frame_counter=None,
+                              image_name=None):
         """
-        Class method saving objects detected
+        Class method saving objects detected (croping them out)
         :param objects_detected:
         :return:
         """
@@ -269,14 +256,14 @@ class ResultsHandler:
 
             # Use enumerate() to make sure no objects get overwritten
             for index, element in enumerate(elements, start=1):
-                if self.input_photo:
+                if not video_writer:
                     # Processing image(s)
                     cropped_frame = image_section.frame[element.BB_top + image_section.top:
                                                         element.BB_bottom + image_section.top,
                                                         element.BB_left + image_section.left:
                                                         element.BB_right + image_section.left]
 
-                    file_name = self.image_name + "_" + element.object_name + "_" + str(index) + ".jpg"
+                    file_name = image_name + "_" + element.object_name + "_" + str(index) + ".jpg"
                     cv2.imwrite(os.path.join(self.cropped_path, file_name), cropped_frame)
                 else:
                     # ! NEEDS TESTING Processing video
@@ -284,16 +271,19 @@ class ResultsHandler:
                                                         element.BB_bottom + image_section.top,
                                                         element.BB_left + image_section.left:
                                                         element.BB_right + image_section.left]
-                    frame_name = "TBC"
+                    frame_name = frame_counter + "_" + element.object_name + "_" + str(index) + ".jpg"
                     cv2.imwrite(os.path.join(self.cropped_path, frame_name), cropped_frame)
 
-    def save_frame(self):
+    def save_frame(self,
+                   image,
+                   image_name=None,
+                   video_writer=None):
         """
         Saves a frame with all BBs drawn on it
         :return:
         """
-        if self.input_photo:
-            image_name = "out_" + os.path.split(self.path_to_image)[-1]
-            cv2.imwrite(os.path.join(self.save_path, image_name), self.image)
+        if not image is None:
+            image_name = image_name + "_out.jpg"
+            cv2.imwrite(os.path.join(self.save_path, image_name), image)
         else:
-            self.video_writer.write(self.image.astype(np.uint8))
+            video_writer.write(image.astype(np.uint8))

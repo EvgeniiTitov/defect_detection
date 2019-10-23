@@ -1,11 +1,149 @@
-import os
-import sys
-import argparse
-import time
-import cv2
 from neural_networks import ResultsHandler, PoleDetector, ComponentsDetector
 from neural_networks import NetPoles, NetElements
-from preprocessing import Preprocessor
+from preprocessing import MetaDataExtractor
+from defect_detectors import TiltChecker
+import cv2
+import time
+import sys
+import os
+import argparse
+
+
+class Detector:
+
+    def __init__(self, save_path, crop_path=None):
+        self.save_path = save_path
+        self.crop_path = crop_path
+
+        # Initialize metadata extractor
+        self.metadata_extractor = MetaDataExtractor()
+
+        # Initialize predicting neural nets
+        self.poles_neuralnet = NetPoles()
+        self.components_neuralnet = NetElements()
+
+        # Initialize detectors using the nets above to predict and postprocess the predictions
+        # (represent them in a convenient way we wish)
+        self.pole_detector = PoleDetector(self.poles_neuralnet)
+        self.component_detector = ComponentsDetector(self.components_neuralnet)
+
+        # Initialize defect detector
+        self.tilt_checker = TiltChecker()
+
+        # Initialize results handler that shows/saves detection results
+        self.handler = ResultsHandler(save_path=self.save_path,
+                                      cropped_path=self.crop_path)
+        # Set up a window
+        self.window_name = "Defect Detection"
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+
+    def predict(self,
+               path_to_input,
+               image=None,
+               folder=None,
+               video=None):
+        """
+        Main function that gets fed an input file (image, folder of images, video). It processes
+        the input.
+        :param path_to_input: Path to an input file regardless of its nature (image,folder,video)
+        :param image: Flag indicating the input type
+        :param folder: Flag indicating the input type
+        :param video: Flag indicating the input type
+        :return: 1 once the input's been processed
+        """
+        if all((image, path_to_input)):
+            image_name = os.path.split(path_to_input)[-1].split('.')[0]
+            img = cv2.imread(path_to_input)
+            metadata = self.metadata_extractor.get_error_values(path_to_input)
+            print("Metadata:", metadata)
+            self.process(image=img,
+                         metadata=metadata,
+                         image_name=image_name)
+
+        elif all((folder, path_to_input)):
+            for file in os.listdir(path_to_input):
+                if not any(file.endswith(ext) for ext in [".jpg", ".JPG", ".jpeg", ".JPEG"]):
+                    continue
+                image_name = file.split('.')[0]
+                path_to_image = os.path.join(path_to_input, file)
+                img = cv2.imread(path_to_image)
+                metadata = self.metadata_extractor.get_error_values(path_to_image)
+                self.process(image=img,
+                             metadata=metadata,
+                             image_name=image_name)
+
+        elif all((video, path_to_input)):
+            cap = cv2.VideoCapture(path_to_input)
+            video_name = os.path.split(path_to_input)[-1].split('.')[0]
+            output_name = video_name + "_out.avi"
+            video_writer = cv2.VideoWriter(output_name,
+                                           cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
+                                          (round(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                                           round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
+            self.process(cap=cap,
+                         video_writer=video_writer)
+
+        return 1
+
+    def process(self,
+                image=None,
+                cap=None,
+                video_writer=None,
+                metadata=None,
+                image_name=None):
+        """
+        Function that performs processing of a frame/image. Works both with videos and photos.
+        :param image:
+        :param cap:
+        :param video_writer:
+        :param metadata: camera orientation errors for pole tilt detection
+        :return:
+        """
+        frame_counter = 0
+        # Start a loop to process all video frames, for images just one run through
+        while cv2.waitKey(1)<0:
+            start_time = time.time()
+            objects_detected = dict()
+
+            if all((cap, video_writer)):
+                has_frame, frame = cap.read()
+                if not has_frame:
+                    return
+            else:
+                frame = image
+            # Detect and classify poles on the frame
+            poles = self.pole_detector.predict(frame)
+
+            # Check for concrete ones. Run pillar detecting net. Perform tilt check
+            # Can we do it in parallel to the object detection?
+
+            # Detect components on each pole detected
+            components = self.component_detector.predict(frame, poles)
+            # Combine all objects detected into one dict for further processing
+            for d in (poles, components):
+                objects_detected.update(d)
+
+            # Process the objects detected
+            if self.crop_path:
+                self.handler.save_objects_detected(objects_detected=objects_detected,
+                                                   video_writer=video_writer,
+                                                   frame_counter=frame_counter,
+                                                   image_name=image_name)
+            self.handler.draw_bounding_boxes(objects_detected=objects_detected,
+                                             image=frame)
+            self.handler.save_frame(image=frame,
+                                    image_name=image_name,
+                                    video_writer=video_writer)
+
+            cv2.imshow(self.window_name, frame)
+            frame_counter += 1
+            end_time = time.time()
+            print("Time taken:", end_time - start_time)
+
+            if not image is None:
+                cv2.waitKey(500)
+                return
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -14,83 +152,13 @@ def parse_args():
     parser.add_argument('--video', type=str, help='Path to a video.')
     parser.add_argument('--folder', type=str, help='Path to a folder containing images.')
     # Managing results
-    parser.add_argument('--crop_path', type=str, default=False,
+    parser.add_argument('--crop_path', type=str, default=None,
                         help='Path to crop out and save objects detected')
     parser.add_argument('--save_path', type=str, default=r'D:\Desktop\system_output',
                         help="Path to where save images afterwards")
     arguments = parser.parse_args()
 
     return arguments
-
-
-def detection(save_path,
-              path_to_input,
-              cap=None,
-              image=None,
-              crop_path=None,
-              video_writer=None):
-
-    frame_counter = 0
-    input_type = True
-    objects = dict()
-    # Initialize image preprocessor (angle (metadata) extraction)
-    preprocessor = Preprocessor()
-    # Initialize neural networks
-    pole_neural_net = NetPoles()
-    component_neural_net = NetElements()
-    # Initialize detectors that use the nets to make predictions and postprocess
-    # the results
-    pole_detector = PoleDetector(pole_neural_net)
-    component_detector = ComponentsDetector(component_neural_net)
-    # TBD Initialize defect detectors
-
-
-    while cv2.waitKey(1) < 0:
-        start_time = time.time()
-        if all((cap, video_writer)):
-            input_type = False
-            has_frame, frame = cap.read()
-            if not has_frame:
-                sys.exit()
-        else:
-            frame = image
-
-        handler = ResultsHandler(image=frame,
-                                 path_to_image=path_to_input,
-                                 save_path=save_path,
-                                 cropped_path=crop_path,
-                                 input_photo=input_type,
-                                 video_writer = video_writer,
-                                 frame_counter = frame_counter)
-
-        # BLOCK 1,2. Detect poles and elements on them
-        poles = pole_detector.predict(frame)
-
-        # IF POLES DETECTED. CHECK FOR CONCRETE. EXTRACT IMAGES METADATA, CHECK
-        # FOR ANGLES. RUN TILTCHECKER. (COULD BE DONE IN PARALLEL?)
-
-        components = component_detector.predict(frame, poles)
-        # Merge all objects found into one dictionary
-        for dictionary in (poles, components):
-            objects.update(dictionary)
-
-        # BLOCK 3. TBC. SEND ALL OBJECTS TO DEFECT DETECTOR.
-        # defect_detector.find_defects(objects)
-
-        # SAVE DEFECTS/OBJECTS TO A DATABASE
-        if crop_path:
-            handler.save_objects_detected(objects)
-        handler.draw_bounding_boxes(objects)
-        handler.save_frame()
-
-        cv2.imshow(window_name, frame)
-        frame_counter += 1
-        end_time = time.time()
-        print("Time required:", end_time - start_time)
-        # In case of image break out of WHILE loop. Show image for N sec.
-        if len(image) > 0:
-            cv2.waitKey(2000)
-            return
 
 
 if __name__ == "__main__":
@@ -100,56 +168,32 @@ if __name__ == "__main__":
         print("You have not provided a single source of data. Try again")
         sys.exit()
 
-    window_name = "Defect detection"
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-
     save_path = arguments.save_path
 
     crop_path = None
     if arguments.crop_path:
         crop_path = arguments.crop_path
 
+    detector = Detector(save_path=save_path,
+                        crop_path=crop_path)
+
     if arguments.image:
         if not os.path.isfile(arguments.image):
             print("The provided file is not an image")
             sys.exit()
-        image = cv2.imread(arguments.image)
-        detection(save_path=save_path,
-                  path_to_input=arguments.image,
-                  crop_path=crop_path,
-                  image=image)
+        detector.predict(image=1,
+                         path_to_input=arguments.image)
 
     elif arguments.folder:
         if not os.path.isdir(arguments.folder):
-            print("The provided file is not a folder. Double check!")
+            print("The provided file is not a folder")
             sys.exit()
-        for image in os.listdir(arguments.folder):
-            if not any(image.endswith(ext) for ext in [".jpg", ".JPG", ".jpeg", ".JPEG"]):
-                continue
-            print("\nProcessing:", image)
-
-            # Check for incorrect image name! Try/Except
-
-            path_to_image = os.path.join(arguments.folder, image)
-            image = cv2.imread(path_to_image)
-            detection(save_path=save_path,
-                      path_to_input=path_to_image,
-                      crop_path=crop_path,
-                      image=image)
+        detector.predict(folder=1,
+                         path_to_input=arguments.folder)
 
     elif arguments.video:
         if not os.path.isfile(arguments.video):
             print("The provided file is not a video")
             sys.exit()
-        cap = cv2.VideoCapture(arguments.video)
-        video_name = os.path.split(arguments.video)[-1][:-4]
-        output_file = video_name + "_OUT.avi"
-        video_writer = cv2.VideoWriter(output_file,
-                                       cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
-                                       (round(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                                        round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
-        detection(save_path=save_path,
-                  path_to_input=arguments.video,
-                  crop_path=crop_path,
-                  cap=cap,
-                  video_writer=video_writer)
+        detector.predict(video=1,
+                         path_to_input=arguments.video)

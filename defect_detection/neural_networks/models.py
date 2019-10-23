@@ -246,11 +246,3 @@ class NetElements:
         components = self.process_predictions(image, predictions)
 
         return components
-
-
-class DefectDetector1:
-    pass
-
-
-class DefectDetector2:
-    pass
