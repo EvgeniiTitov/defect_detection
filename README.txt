@@ -44,9 +44,3 @@ Main logic:
 16. Show the frame/image
 17. If working with images (len(image)>0) break out of the while loop. For videos repeat and
     check if there are frames left to process.
-
-Known issues performance:
-1. Performance depends on:
-   thresholds,
-   input width and size,
-   enlargement coefficient (where it searches for components)
