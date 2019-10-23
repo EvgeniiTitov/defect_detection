@@ -227,8 +227,8 @@ class ResultsHandler:
                 # Draw BBs using both BBs coordinates and coordinates of the image section relative to the original
                 # image in which this object was detected
                 cv2.rectangle(image, (image_section.left + element.BB_left, image_section.top + element.BB_top),
-                                          (image_section.left + element.BB_right, image_section.top + element.BB_bottom),
-                                          colour, self.line_text_size(image)[0])
+                                     (image_section.left + element.BB_right, image_section.top + element.BB_bottom),
+                                      colour, self.line_text_size(image)[0])
 
                 label = "{}:{:1.2f}".format(element.object_name, element.confidence)
 
@@ -243,7 +243,9 @@ class ResultsHandler:
                             cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size(image)[1],
                             (0, 0, 0), self.line_text_size(image)[-1])
 
-    def save_objects_detected(self, objects_detected,
+    def save_objects_detected(self,
+                              image,
+                              objects_detected,
                               video_writer=None,
                               frame_counter=None,
                               image_name=None):
@@ -258,10 +260,11 @@ class ResultsHandler:
             for index, element in enumerate(elements, start=1):
                 if not video_writer:
                     # Processing image(s)
-                    cropped_frame = image_section.frame[element.BB_top + image_section.top:
-                                                        element.BB_bottom + image_section.top,
-                                                        element.BB_left + image_section.left:
-                                                        element.BB_right + image_section.left]
+                    # There used to be image_section.frame[]
+                    cropped_frame = image[element.BB_top + image_section.top:
+                                          element.BB_bottom + image_section.top,
+                                          element.BB_left + image_section.left:
+                                          element.BB_right + image_section.left]
 
                     file_name = image_name + "_" + element.object_name + "_" + str(index) + ".jpg"
                     cv2.imwrite(os.path.join(self.cropped_path, file_name), cropped_frame)

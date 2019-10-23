@@ -11,12 +11,20 @@ import argparse
 
 class Detector:
 
-    def __init__(self, save_path, crop_path=None):
+    def __init__(self, save_path,
+                 crop_path=None,
+                 defects_detection=None):
+
         self.save_path = save_path
         self.crop_path = crop_path
 
-        # Initialize metadata extractor
-        self.metadata_extractor = MetaDataExtractor()
+        # Check if a user wants to perform defect detection
+        self.defects_detection = defects_detection
+        if self.defects_detection:
+            # Initialize defect detector in this case
+            self.tilt_checker = TiltChecker()
+            # Initialize metadata extractor
+            self.metadata_extractor = MetaDataExtractor()
 
         # Initialize predicting neural nets
         self.poles_neuralnet = NetPoles()
@@ -26,9 +34,6 @@ class Detector:
         # (represent them in a convenient way we wish)
         self.pole_detector = PoleDetector(self.poles_neuralnet)
         self.component_detector = ComponentsDetector(self.components_neuralnet)
-
-        # Initialize defect detector
-        self.tilt_checker = TiltChecker()
 
         # Initialize results handler that shows/saves detection results
         self.handler = ResultsHandler(save_path=self.save_path,
@@ -51,11 +56,12 @@ class Detector:
         :param video: Flag indicating the input type
         :return: 1 once the input's been processed
         """
+        metadata = None
         if all((image, path_to_input)):
             image_name = os.path.split(path_to_input)[-1].split('.')[0]
             img = cv2.imread(path_to_input)
-            metadata = self.metadata_extractor.get_error_values(path_to_input)
-            print("Metadata:", metadata)
+            # Check if user needs this at all
+            #metadata = self.metadata_extractor.get_error_values(path_to_input)
             self.process(image=img,
                          metadata=metadata,
                          image_name=image_name)
@@ -67,7 +73,8 @@ class Detector:
                 image_name = file.split('.')[0]
                 path_to_image = os.path.join(path_to_input, file)
                 img = cv2.imread(path_to_image)
-                metadata = self.metadata_extractor.get_error_values(path_to_image)
+                # Check if user needs this at all
+                #metadata = self.metadata_extractor.get_error_values(path_to_image)
                 self.process(image=img,
                              metadata=metadata,
                              image_name=image_name)
@@ -82,6 +89,10 @@ class Detector:
                                            round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
             self.process(cap=cap,
                          video_writer=video_writer)
+
+        else:
+            print("ERROR: Incorrect input")
+            sys.exit()
 
         return 1
 
@@ -125,7 +136,8 @@ class Detector:
 
             # Process the objects detected
             if self.crop_path:
-                self.handler.save_objects_detected(objects_detected=objects_detected,
+                self.handler.save_objects_detected(image=frame,
+                                                   objects_detected=objects_detected,
                                                    video_writer=video_writer,
                                                    frame_counter=frame_counter,
                                                    image_name=image_name)
@@ -141,7 +153,6 @@ class Detector:
             print("Time taken:", end_time - start_time)
 
             if not image is None:
-                cv2.waitKey(500)
                 return
 
 
@@ -156,6 +167,7 @@ def parse_args():
                         help='Path to crop out and save objects detected')
     parser.add_argument('--save_path', type=str, default=r'D:\Desktop\system_output',
                         help="Path to where save images afterwards")
+    parser.add_argument('--tilt', default=None, help='Perform pole tilting detection')
     arguments = parser.parse_args()
 
     return arguments
@@ -176,6 +188,10 @@ if __name__ == "__main__":
 
     detector = Detector(save_path=save_path,
                         crop_path=crop_path)
+
+    defects_detection = 0
+    if arguments.tilt:
+        defects_detection = 1
 
     if arguments.image:
         if not os.path.isfile(arguments.image):
