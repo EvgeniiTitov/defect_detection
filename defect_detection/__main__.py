@@ -82,7 +82,7 @@ class Detector:
         elif all((video, path_to_input)):
             cap = cv2.VideoCapture(path_to_input)
             video_name = os.path.split(path_to_input)[-1].split('.')[0]
-            output_name = video_name + "_out.avi"
+            output_name = os.path.join(self.save_path, video_name + "_out.avi")
             video_writer = cv2.VideoWriter(output_name,
                                            cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10,
                                           (round(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
@@ -122,6 +122,12 @@ class Detector:
                     return
             else:
                 frame = image
+
+            # TRICK TO INCREASE VIDEO PROCESSING SPEED. Process 1 in 15 frames
+            if frame_counter % 10 != 0:
+                frame_counter += 1
+                continue
+
             # Detect and classify poles on the frame
             poles = self.pole_detector.predict(frame)
 

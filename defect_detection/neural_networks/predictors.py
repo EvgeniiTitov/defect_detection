@@ -270,10 +270,10 @@ class ResultsHandler:
                     cv2.imwrite(os.path.join(self.cropped_path, file_name), cropped_frame)
                 else:
                     # ! NEEDS TESTING Processing video
-                    cropped_frame = image_section.frame[element.BB_top + image_section.top:
-                                                        element.BB_bottom + image_section.top,
-                                                        element.BB_left + image_section.left:
-                                                        element.BB_right + image_section.left]
+                    cropped_frame = image[element.BB_top + image_section.top:
+                                          element.BB_bottom + image_section.top,
+                                          element.BB_left + image_section.left:
+                                          element.BB_right + image_section.left]
                     frame_name = frame_counter + "_" + element.object_name + "_" + str(index) + ".jpg"
                     cv2.imwrite(os.path.join(self.cropped_path, frame_name), cropped_frame)
 
@@ -285,7 +285,7 @@ class ResultsHandler:
         Saves a frame with all BBs drawn on it
         :return:
         """
-        if not image is None:
+        if video_writer is None:
             image_name = image_name + "_out.jpg"
             cv2.imwrite(os.path.join(self.save_path, image_name), image)
         else:
