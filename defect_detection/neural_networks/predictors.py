@@ -188,6 +188,84 @@ class PoleDetector:
         return poles_detected
 
 
+class PillarDetector:
+    """
+    Class performing pillar detection
+    """
+    def __init__(self, predictor):
+        # Initialize
+        self.pillar_predictor = predictor
+
+    def predict(self, image, poles_detected):
+        """
+        Method running pillars predictions.
+        :param image: Image to crop out image sections containing the poles using the coordinates
+        of the poles predicted
+        :return:
+        """
+        pillars_detected = defaultdict(list)
+        if poles_detected:
+            # FOR loop just to play it safe. We will have only one image section for now - the whole image on
+            # which we attempted to detect poles
+            for window, poles in poles_detected.items():
+                for pole in poles:
+                    # In case more than one pillar gets detected (2+ concrete poles on an image)
+                    pillars = list()
+                    # Skip metal poles.
+                    if pole.object_name == "metal":
+                        continue
+                    # Crop out image section containing a pole predicted (using its coordinates from YOLO)
+                    pole_subimage = np.array(window.frame[pole.top:pole.bottom,
+                                                          pole.left:pole.right])
+                    pole_image_section = DetectionImageSection(pole_subimage, "pillars")
+                    # Save coordinates of the subimage relatively to the original image
+                    pole_image_section.save_relative_coordinates(pole.top, pole.left, pole.right, pole.bottom)
+                    # Detect pillars in this subimage containing a concrete pole
+                    # Pillars is just a list of lists (likely to have onk
+                    pillars += self.pillar_predictor.predict(pole_subimage)
+                    # There's supposed to be only one pillar for each concrete pole,
+                    # process the results that are simple list of lists outputted by YOLO
+                    if pillars:
+                        # ! CHECK FOR MORE THAN 1 PILLAR PREDICTED FOR ONE POLE
+                        if len(pillars) > 1:
+                            # ! SOMETHINGS WRONG. SELECT THE ONE WITH THE HIGHEST CONFIDENCE?
+                            pass
+                        else:
+                            # One object, still use for loop for convenience
+                            for pillar in pillars:
+                                pillars_detected[pole_image_section].append(
+                                    DetectedObject(pillar[0], pillar[1], pillar[2],
+                                                   pillar[3], pillar[4], pillar[5])
+                                                                            )
+        else:
+            pillars = self.pillar_predictor.predict(image)
+            if pillars:
+                image_section = DetectionImageSection(image, "pillars")
+
+                # ! CHECK IF MULTIPLE GOT PREDICTED
+
+                for pillar in pillars:
+                    pillars_detected[image_section].append(
+                        DetectedObject(pillar[0], pillar[1], pillar[2],
+                                       pillar[3], pillar[4], pillar[5])
+                                                          )
+        if pillars_detected:
+            self.determine_object_class(pillars_detected)
+            # ! BBS MODIFICATION?
+
+        return pillars_detected
+
+    def determine_object_class(self, pillars_detected):
+        """
+        Method naming all pillars detected
+        :param pillars_detected:
+        :return:
+        """
+        for window, pillars in pillars_detected.items():
+            for pillar in pillars:
+                pillar.object_name = "pillar"
+
+
 class ResultsHandler:
     """
     Class performing BBs drawing, saving objects to disk
@@ -224,6 +302,8 @@ class ResultsHandler:
                     colour = (210, 0, 210)
                 elif element.object_name == "dump":
                     colour = (255, 0, 0)
+                elif element.object_name == "pillar":
+                    colour = (0, 128, 255)
                 # Draw BBs using both BBs coordinates and coordinates of the image section relative to the original
                 # image in which this object was detected
                 cv2.rectangle(image, (image_section.left + element.BB_left, image_section.top + element.BB_top),

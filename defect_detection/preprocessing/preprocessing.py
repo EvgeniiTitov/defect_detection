@@ -1,7 +1,5 @@
-import cv2
-import numpy as np
 import re
-import os, sys
+import os
 
 
 class MetaDataExtractor:

@@ -1,0 +1,2 @@
+D:\Desktop\Reserve_NNs\weights_configs\try8_pillarsONLY\yolo-obj-pillars.cfg
+D:\Desktop\Reserve_NNs\weights_configs\try8_pillarsONLY\yolo-obj_final.weights

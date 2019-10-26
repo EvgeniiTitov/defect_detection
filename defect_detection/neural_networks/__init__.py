@@ -1,3 +1,3 @@
 from .detections import DetectedObject, DetectionImageSection
-from .models import NetPoles, NetElements
-from .predictors import ComponentsDetector, PoleDetector, ResultsHandler
+from .models import NetPoles, NetElements, NetPillars
+from .predictors import ComponentsDetector, PoleDetector, ResultsHandler, PillarDetector

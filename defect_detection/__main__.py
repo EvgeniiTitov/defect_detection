@@ -1,5 +1,5 @@
-from neural_networks import ResultsHandler, PoleDetector, ComponentsDetector
-from neural_networks import NetPoles, NetElements
+from neural_networks import ResultsHandler, PoleDetector, ComponentsDetector, PillarDetector
+from neural_networks import NetPoles, NetElements, NetPillars
 from preprocessing import MetaDataExtractor
 from defect_detectors import TiltChecker
 import cv2
@@ -23,21 +23,24 @@ class Detector:
         if self.defects_detection:
             # Initialize defect detector in this case
             self.tilt_checker = TiltChecker()
-            # Initialize metadata extractor
+            # HIDE METADATA EXTRACTOR IN TILT CHECKER SO WE DONT TAKE SPACE HERE
             self.metadata_extractor = MetaDataExtractor()
 
         # Initialize predicting neural nets
         self.poles_neuralnet = NetPoles()
         self.components_neuralnet = NetElements()
+        self.pillars_neuralnet = NetPillars()
 
         # Initialize detectors using the nets above to predict and postprocess the predictions
         # (represent them in a convenient way we wish)
         self.pole_detector = PoleDetector(self.poles_neuralnet)
         self.component_detector = ComponentsDetector(self.components_neuralnet)
+        self.pillars_detector = PillarDetector(self.pillars_neuralnet)
 
         # Initialize results handler that shows/saves detection results
         self.handler = ResultsHandler(save_path=self.save_path,
                                       cropped_path=self.crop_path)
+
         # Set up a window
         self.window_name = "Defect Detection"
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
@@ -57,6 +60,7 @@ class Detector:
         :return: 1 once the input's been processed
         """
         metadata = None
+
         if all((image, path_to_input)):
             image_name = os.path.split(path_to_input)[-1].split('.')[0]
             img = cv2.imread(path_to_input)
@@ -124,20 +128,25 @@ class Detector:
                 frame = image
 
             # TRICK TO INCREASE VIDEO PROCESSING SPEED. Process 1 in 15 frames
-            if frame_counter % 10 != 0:
+            if frame_counter % 40 != 0:
                 frame_counter += 1
                 continue
 
             # Detect and classify poles on the frame
             poles = self.pole_detector.predict(frame)
+            # -------------------------------------------------------------------------
+            # HERE IT'D BE NICE TO RUN PILLAR AND COMPONENTS PREDICTION IN PARALLEL
+            # Detect pillars on concrete poles
+            pillars = self.pillars_detector.predict(frame, poles)
 
-            # Check for concrete ones. Run pillar detecting net. Perform tilt check
-            # Can we do it in parallel to the object detection?
+            # Then send those pillars to the TiltChecker class for potential defect detection
 
             # Detect components on each pole detected
             components = self.component_detector.predict(frame, poles)
+            # -------------------------------------------------------------------------
+
             # Combine all objects detected into one dict for further processing
-            for d in (poles, components):
+            for d in (poles, components, pillars):
                 objects_detected.update(d)
 
             # Process the objects detected
@@ -155,8 +164,7 @@ class Detector:
 
             cv2.imshow(self.window_name, frame)
             frame_counter += 1
-            end_time = time.time()
-            print("Time taken:", end_time - start_time)
+            print("Time taken:", time.time() - start_time)
 
             if not image is None:
                 return
