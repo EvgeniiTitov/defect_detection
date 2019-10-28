@@ -1,6 +1,7 @@
 from .pole_tilt_checker import TiltChecker
 import numpy as np
 
+
 class DefectDetector:
     def __init__(self, defects):
         # We want to initialize only those detectors that we need!
@@ -45,13 +46,8 @@ class DefectDetector:
 
             # ! CRACKS DETECTION
 
-
-
-
     def find_defects_dumpers(self, components_detected):
         pass
 
     def find_defects_insulators(self, insulators_detected):
         pass
-
-

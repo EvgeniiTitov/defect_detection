@@ -22,8 +22,11 @@ class TiltChecker:
         :return: angle of inclination, pole status (green, yellow, red)
         """
         # Resize image
-        resized = self.resize_image(image)
-        # Modify the image (filters, resizing), find edges
+        if self.resize_coef == 1:
+            resized = image
+        else:
+            resized = self.resize_image(image)
+        # Modify the image (filters), find Canny edges
         modified_image = self.modify_image(resized)
         # Find all lines on the image
         lines = self.extract_lines(modified_image)
@@ -44,6 +47,8 @@ class TiltChecker:
         longest_lines = self.N_longest_lines(lines)
         # Among those 5 lines find the most vertical line - the line
         the_line = self.find_most_vertical_line(longest_lines)[0]
+        # ----------------------------------------------------------------------------
+
         # Calculate angle between the line and the bottom edge of an image
         angle_rel_to_horizon = self.calculate_angle(resized, the_line)
         # Convert the calculations to be relatively to the vertical line
@@ -167,10 +172,11 @@ class TiltChecker:
 
         # Sort the list by lenght (longest go first)
         longest_lines.sort(key=lambda e: e[-1], reverse=True)
-        # Collect indices from the list above
-        indices_of_longest = [i for i,lenght in longest_lines]
+        # Collect indices of 5 longest lines from the list above (its been sorted,
+        # so they are not in order anymore)
+        indices_of_longest = [i for i, lenght in longest_lines]
 
-        # Return 5 longest lines
+        # Return 5 longest lines from the original list using the indices of the longest ones
         if len(longest_lines) >= 5:
             return [lines[i] for i in indices_of_longest[:5]]
         else:
