@@ -23,7 +23,10 @@ class DefectDetector:
         :return:
         """
 
-        # ! SOMETHING TO STORE DEFECTS DETECTED
+        # ! Add attribute to an object reflecting its status and defect?! GOOD
+
+        # Temporary. For now we just want to return the line and draw it
+        metadata = 0,1
 
         for pole_image_section, pillar in pillars_detected.items():
             # Pillar is a list. There must be only one object!
@@ -31,18 +34,26 @@ class DefectDetector:
             # Create new subimage (use both coordinates of the pillar relative to the pole on which
             # it was detected and coordinates of the pole relative to the whole image. We do the same
             # when draw BBs
-            pillar_subimage = np.array(image[pole_image_section.top + pillar.BB_top:
-                                             pole_image_section.top + pillar.BB_bottom,
-                                             pole_image_section.left + pillar.BB_left:
-                                             pole_image_section.left + pillar.BB_right])
 
+            pillar_subimage = np.array(image[pole_image_section.top + pillar.top:
+                                             pole_image_section.top + pillar.bottom,
+                                             pole_image_section.left + pillar.left:
+                                             pole_image_section.left + pillar.right])
+            # We can check for tilt only if we have metadata (camera angles during the shot)
             if metadata:
                 # Then we can perform tilt detection
                 pitch_angle, roll_angle = metadata
                 tilt_detector = TiltChecker()
-                result = tilt_detector.check_pillar(pillar_subimage,
+                the_line = tilt_detector.check_pillar(pillar_subimage,
                                                     pitch=pitch_angle,
                                                     roll=roll_angle)
+                # Temporary, just to showcase a line on which the decision gets made
+                line_relative = [the_line[0] + pole_image_section.left + pillar.left,
+                                 the_line[1] + pole_image_section.top + pillar.top,
+                                 the_line[2] + pole_image_section.left + pillar.left,
+                                 the_line[3] + pole_image_section.top + pillar.top]
+
+                return line_relative
 
             # ! CRACKS DETECTION
 

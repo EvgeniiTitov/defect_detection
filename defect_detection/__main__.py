@@ -94,7 +94,7 @@ class Detector:
                 # Get metadata required for pole tilt detection
                 if self.detect_pole_defects:
                     # tuple (pitch_angle, roll_angle)
-                    metadata = self.meta_data_extractor.get_error_values(path_to_input)
+                    metadata = self.meta_data_extractor.get_error_values(path_to_image)
                     if not metadata:
                         print("Image", image_name, " has got no metadata. Cannot check for tilt")
 
@@ -161,10 +161,15 @@ class Detector:
             components = self.component_detector.predict(frame, poles)
             # -------------------------------------------------------------------------
 
-            if self.detect_pole_defects and pillars and metadata:
-                pillar_defects = self.defect_detector.find_defects_pillars(pillars, frame, metadata)
+            if self.detect_pole_defects and pillars:
+                # For now just draw a line on which the decision will be made
+                the_line = self.defect_detector.find_defects_pillars(pillars, frame, metadata)
+                if the_line:
+                    self.handler.draw_the_line(frame, the_line)
+
             elif self.detect_dumper_defects and components:
                 dumper_defects = self.defect_detector.find_defects_dumpers(components, frame)
+
             elif self.detect_insulator_defects and components:
                 insulator_defects = self.defect_detector.find_defects_insulators(components, frame)
 

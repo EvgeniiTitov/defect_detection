@@ -30,7 +30,6 @@ class TiltChecker:
         modified_image = self.modify_image(resized)
         # Find all lines on the image
         lines = self.extract_lines(modified_image)
-
         # -----------------DIFFERENT APPROACHES TO PARSE THE LINES-------------------
 
         # Find the coordinates of the longest line
@@ -41,13 +40,17 @@ class TiltChecker:
 
         # Combination of the two
         if lines is None:
-            print("No lines found")
+            print("No lines detected")
             return
         # Find N (5) longest lines
         longest_lines = self.N_longest_lines(lines)
         # Among those 5 lines find the most vertical line - the line
         the_line = self.find_most_vertical_line(longest_lines)[0]
         # ----------------------------------------------------------------------------
+
+        return the_line
+
+        # ! DECISION ABOUT DEFECT
 
         # Calculate angle between the line and the bottom edge of an image
         angle_rel_to_horizon = self.calculate_angle(resized, the_line)
@@ -61,15 +64,6 @@ class TiltChecker:
         else:
             angle += pitch
 
-        # Green, yellow, red
-        pass
-
-        print("angle with error:", angle)
-        # HERE WE HAVE TO CONSIDER THE ERROR PITCH, ROLL
-        # THEN ANNOUCE IF POLE ON THE PICTURE IS DEFECTED
-
-        # FOR TESTING PURPOSES
-        self._draw_line(resized, the_line)
 
     def calculate_angle(self, image, line):
         """
@@ -133,26 +127,6 @@ class TiltChecker:
 
         return lines
 
-    def find_longest_line(self, lines):
-        """
-        NOTE! TIME COMPLEXITY O(n)!
-        Calculates and returns coordinates of the longest line
-        :param lines:
-        :return:
-        """
-        longest_line = (0,0)  # index of the line, its lenght
-        for index, line_coordinates in enumerate(lines):
-            # Extra index since its a list in the list
-            x1 = line_coordinates[0][0]
-            y1 = line_coordinates[0][1]
-            x2 = line_coordinates[0][2]
-            y2 = line_coordinates[0][3]
-            line_lenght = ((x2-x1)**2 + (y2-y1)**2)**0.5
-            if line_lenght > longest_line[-1]:
-                longest_line = (index, line_lenght)
-
-        return lines[longest_line[0]]  # Index of the longest line
-
     def N_longest_lines(self, lines):
         """
         NOTE! TIME COMPLEXITY O(n)!
@@ -202,20 +176,6 @@ class TiltChecker:
 
         return lines[vertical_line[0]]
 
-    def _draw_line(self, image, line):
-        #print(line)
-        cv2.line(image,
-                (line[0], line[1]),
-                (line[2], line[3]),
-                (0, 0, 255), 2,
-                 cv2.LINE_AA)
-
-        window_name = "Lines"
-        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-        while cv2.waitKey(1) < 0:
-            cv2.imshow(window_name, image)
-            #cv2.imwrite(os.path.join(save_path, item), image)
-
 if __name__ == "__main__":
     # PROCESS A SINGLE IMAGE
     path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\crop_image\DJI_0405.JPG"
@@ -224,7 +184,7 @@ if __name__ == "__main__":
     checker = TiltChecker(min_line_lenght=100,
                           max_line_gap=200,
                           resize_coef=0.33)
-    checker.check_pole(image,2,0)
+    checker.check_pillar(image,2,0)
 
     # # PROCESS ALL IMAGES IN A FOLDER
     #folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped"

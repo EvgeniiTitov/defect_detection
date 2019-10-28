@@ -252,7 +252,7 @@ class PillarDetector:
                                                           )
         if pillars_detected:
             self.determine_object_class(pillars_detected)
-            # ! BBS MODIFICATION?
+            self.modify_box_coordinates(pillars_detected)
 
         return pillars_detected
 
@@ -262,9 +262,24 @@ class PillarDetector:
         :param pillars_detected:
         :return:
         """
+        # There is only one pillar and each window (pole image section).
         for window, pillars in pillars_detected.items():
             for pillar in pillars:
                 pillar.object_name = "pillar"
+
+    def modify_box_coordinates(self, pillars_detected):
+        """
+        Modifies pillars coordinates (cuts off the bottom part to try to eliminate any
+        other objects like tree tops etc that can cause problems when it comes to finding
+        the pole's edge via Canny edge detection and HoughLinesP
+        :param pillars_detected:
+        :return:
+        """
+        for image_section, pillar in pillars_detected.items():
+            # Since it is list in the list
+            pillar = pillar[0]
+            new_bot_boundary = int(pillar.BB_bottom * 0.5)
+            pillar.update_object_coordinates(bottom=new_bot_boundary)
 
 
 class ResultsHandler:
@@ -371,3 +386,19 @@ class ResultsHandler:
             cv2.imwrite(os.path.join(self.save_path, image_name), image)
         else:
             video_writer.write(image.astype(np.uint8))
+
+    def draw_the_line(self,
+                      image,
+                      line):
+        """
+        Draws a line which is used for a concrete pole tilt defect detection
+        :param image:
+        :param line:
+        :return:
+        """
+        # Line coordinates are relative to the pillar image, not the original one
+        cv2.line(image,
+                 (line[0], line[1]),
+                 (line[2], line[3]),
+                 (0, 0, 255), 4,
+                 cv2.LINE_AA)
