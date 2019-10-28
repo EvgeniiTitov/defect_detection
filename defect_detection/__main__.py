@@ -1,7 +1,6 @@
 from neural_networks import ResultsHandler, PoleDetector, ComponentsDetector, PillarDetector
 from neural_networks import NetPoles, NetElements, NetPillars
-from preprocessing import MetaDataExtractor
-from defect_detectors import TiltChecker
+from defect_detectors import DefectDetector, MetaDataExtractor
 import cv2
 import time
 import sys
@@ -11,20 +10,28 @@ import argparse
 
 class Detector:
 
-    def __init__(self, save_path,
+    def __init__(self,
+                 save_path,
                  crop_path=None,
-                 defects_detection=None):
+                 defects=None):
 
         self.save_path = save_path
         self.crop_path = crop_path
 
-        # Check if a user wants to perform defect detection
-        self.defects_detection = defects_detection
-        if self.defects_detection:
-            # Initialize defect detector in this case
-            self.tilt_checker = TiltChecker()
-            # HIDE METADATA EXTRACTOR IN TILT CHECKER SO WE DONT TAKE SPACE HERE
-            self.metadata_extractor = MetaDataExtractor()
+        # Initialize defect detector and check what defects need to be checked for
+        self.detect_pole_defects = False
+        self.detect_dumper_defects = False
+        self.detect_insulator_defects = False
+        if defects:
+            self.defect_detector = DefectDetector(defects)
+            for component, detecting_flag in defects.items():
+                if detecting_flag and component == "pole_defects":
+                    self.detect_pole_defects = True
+                    self.meta_data_extractor = MetaDataExtractor()
+                elif detecting_flag and component == "dumper_defects":
+                    self.detect_dumper_defects = True
+                elif detecting_flag and component == "insulator_defects":
+                    self.detect_insulator_defects = True
 
         # Initialize predicting neural nets
         self.poles_neuralnet = NetPoles()
@@ -32,7 +39,7 @@ class Detector:
         self.pillars_neuralnet = NetPillars()
 
         # Initialize detectors using the nets above to predict and postprocess the predictions
-        # (represent them in a convenient way we wish)
+        # (represent them in a convenient way we wish, modify BBs etc.)
         self.pole_detector = PoleDetector(self.poles_neuralnet)
         self.component_detector = ComponentsDetector(self.components_neuralnet)
         self.pillars_detector = PillarDetector(self.pillars_neuralnet)
@@ -64,11 +71,17 @@ class Detector:
         if all((image, path_to_input)):
             image_name = os.path.split(path_to_input)[-1].split('.')[0]
             img = cv2.imread(path_to_input)
-            # Check if user needs this at all
-            #metadata = self.metadata_extractor.get_error_values(path_to_input)
+
+            # Get metadata required for pole tilt detection
+            if self.detect_pole_defects:
+                # tuple (pitch_angle, roll_angle)
+                metadata = self.meta_data_extractor.get_error_values(path_to_input)
+                if not metadata:
+                    print("Image", image_name, " has got no metadata. Cannot check for tilt")
+
             self.process(image=img,
-                         metadata=metadata,
-                         image_name=image_name)
+                         image_name=image_name,
+                         metadata=metadata)
 
         elif all((folder, path_to_input)):
             for file in os.listdir(path_to_input):
@@ -77,11 +90,17 @@ class Detector:
                 image_name = file.split('.')[0]
                 path_to_image = os.path.join(path_to_input, file)
                 img = cv2.imread(path_to_image)
-                # Check if user needs this at all
-                #metadata = self.metadata_extractor.get_error_values(path_to_image)
+
+                # Get metadata required for pole tilt detection
+                if self.detect_pole_defects:
+                    # tuple (pitch_angle, roll_angle)
+                    metadata = self.meta_data_extractor.get_error_values(path_to_input)
+                    if not metadata:
+                        print("Image", image_name, " has got no metadata. Cannot check for tilt")
+
                 self.process(image=img,
-                             metadata=metadata,
-                             image_name=image_name)
+                             image_name=image_name,
+                             metadata=metadata)
 
         elif all((video, path_to_input)):
             cap = cv2.VideoCapture(path_to_input)
@@ -102,16 +121,15 @@ class Detector:
 
     def process(self,
                 image=None,
+                metadata=None,
                 cap=None,
                 video_writer=None,
-                metadata=None,
                 image_name=None):
         """
         Function that performs processing of a frame/image. Works both with videos and photos.
         :param image:
         :param cap:
         :param video_writer:
-        :param metadata: camera orientation errors for pole tilt detection
         :return:
         """
         frame_counter = 0
@@ -127,23 +145,29 @@ class Detector:
             else:
                 frame = image
 
-            # TRICK TO INCREASE VIDEO PROCESSING SPEED. Process 1 in 15 frames
-            if frame_counter % 40 != 0:
+            # TRICK TO INCREASE VIDEO PROCESSING SPEED. Process 1 in N frames
+            if frame_counter % 20 != 0:
                 frame_counter += 1
                 continue
 
             # Detect and classify poles on the frame
             poles = self.pole_detector.predict(frame)
+
             # -------------------------------------------------------------------------
-            # HERE IT'D BE NICE TO RUN PILLAR AND COMPONENTS PREDICTION IN PARALLEL
+            # HERE IT'D BE NICE TO RUN PILLARS AND COMPONENTS DETECTION IN PARALLEL
             # Detect pillars on concrete poles
             pillars = self.pillars_detector.predict(frame, poles)
-
-            # Then send those pillars to the TiltChecker class for potential defect detection
-
             # Detect components on each pole detected
             components = self.component_detector.predict(frame, poles)
             # -------------------------------------------------------------------------
+
+            if self.detect_pole_defects and pillars and metadata:
+                pillar_defects = self.defect_detector.find_defects_pillars(pillars, frame, metadata)
+            elif self.detect_dumper_defects and components:
+                dumper_defects = self.defect_detector.find_defects_dumpers(components, frame)
+            elif self.detect_insulator_defects and components:
+                insulator_defects = self.defect_detector.find_defects_insulators(components, frame)
+
 
             # Combine all objects detected into one dict for further processing
             for d in (poles, components, pillars):
@@ -172,16 +196,21 @@ class Detector:
 
 def parse_args():
     parser = argparse.ArgumentParser()
+
     # Type of input data
     parser.add_argument('--image', type=str,  help='Path to an image.')
     parser.add_argument('--video', type=str, help='Path to a video.')
     parser.add_argument('--folder', type=str, help='Path to a folder containing images.')
+
     # Managing results
     parser.add_argument('--crop_path', type=str, default=None,
                         help='Path to crop out and save objects detected')
     parser.add_argument('--save_path', type=str, default=r'D:\Desktop\system_output',
                         help="Path to where save images afterwards")
-    parser.add_argument('--tilt', default=None, help='Perform pole tilting detection')
+    # Defects to detect
+    parser.add_argument('--pole_defects', default=None, help='Perform defect detection on any poles detected')
+    parser.add_argument('--dumper_defects', default=None, help='Perform defect detection on any dumpers detected')
+    parser.add_argument('--insulator_defects', default=None, help='Perform defect detection on any insulators detected')
     arguments = parser.parse_args()
 
     return arguments
@@ -200,13 +229,23 @@ if __name__ == "__main__":
     if arguments.crop_path:
         crop_path = arguments.crop_path
 
+    # Check what defects user wants to detect
+    defects_to_find = {'pole_defects': 0,
+                       'dumper_defects': 0,
+                       'insulator_defects': 0}
+
+    if arguments.pole_defects:
+        defects_to_find['pole_defects'] = 1
+    elif arguments.dumper_defects:
+        defects_to_find['dumper_defects'] = 1
+    elif arguments.insulator_defects:
+        defects_to_find['insulator_defects'] = 1
+
     detector = Detector(save_path=save_path,
-                        crop_path=crop_path)
+                        crop_path=crop_path,
+                        defects=defects_to_find)
 
-    defects_detection = 0
-    if arguments.tilt:
-        defects_detection = 1
-
+    # Check what user has provided as an input
     if arguments.image:
         if not os.path.isfile(arguments.image):
             print("The provided file is not an image")

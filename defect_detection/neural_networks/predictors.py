@@ -221,7 +221,7 @@ class PillarDetector:
                     # Save coordinates of the subimage relatively to the original image
                     pole_image_section.save_relative_coordinates(pole.top, pole.left, pole.right, pole.bottom)
                     # Detect pillars in this subimage containing a concrete pole
-                    # Pillars is just a list of lists (likely to have onk
+                    # Pillars is just a list of lists (there needs to be just one predicted!)
                     pillars += self.pillar_predictor.predict(pole_subimage)
                     # There's supposed to be only one pillar for each concrete pole,
                     # process the results that are simple list of lists outputted by YOLO
@@ -229,6 +229,7 @@ class PillarDetector:
                         # ! CHECK FOR MORE THAN 1 PILLAR PREDICTED FOR ONE POLE
                         if len(pillars) > 1:
                             # ! SOMETHINGS WRONG. SELECT THE ONE WITH THE HIGHEST CONFIDENCE?
+                            print("WARNING. More than 1 pillar got detected. Fix me!")
                             pass
                         else:
                             # One object, still use for loop for convenience

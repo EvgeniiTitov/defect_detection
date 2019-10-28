@@ -5,15 +5,16 @@ import numpy as np
 class TiltChecker:
     def __init__(self,
                  min_line_lenght=100,
-                 max_line_gap=100,
+                 max_line_gap=200,
                  tilt_threshold=3,
                  resize_coef=1):
+
         self.min_line_lenght = min_line_lenght
         self.max_line_gap = max_line_gap
         self.tilt_thresh = tilt_threshold
         self.resize_coef = resize_coef
 
-    def check_pole(self, image, pitch=0, roll=0):
+    def check_pillar(self, image, pitch=0, roll=0):
         """
         :param image: numpy array. Image section containing a pole cropped
         :param pitch: value of the pitch angle
