@@ -215,6 +215,8 @@ class PillarDetector:
                     if pole.object_name == "metal":
                         continue
                     # Crop out image section containing a pole predicted (using its coordinates from YOLO)
+                    # ! Here we don't really need to use the widened left and right coordinates since the
+                    # pole pillar can only be inside the pole's box unlike dumpers and insulators that stick out
                     pole_subimage = np.array(window.frame[pole.top:pole.bottom,
                                                           pole.left:pole.right])
                     pole_image_section = DetectionImageSection(pole_subimage, "pillars")
@@ -228,7 +230,7 @@ class PillarDetector:
                     if pillar:
                         # Check if more than one pillar got predicted for one pole
                         if len(pillar) > 1:
-                            print("WARNING. More than 1 pillar got detected")
+                            print("WARNING: More than 1 pillar got detected")
                             # Find the one with the highest confidence and select it.
                             the_pillar = (0, 0)  # index, confidence
                             for index, plr in enumerate(pillar):
@@ -250,17 +252,30 @@ class PillarDetector:
                                                    pillar[0][3], pillar[0][4], pillar[0][5])
                                                                         )
         else:
-            pillars = self.pillar_predictor.predict(image)
-            if pillars:
+            # Make pillar detection on the whole image (since a concrete pole has not been detected)
+            pillar = self.pillar_predictor.predict(image)
+            # pillar - list of lists
+            if pillar:
                 image_section = DetectionImageSection(image, "pillars")
-
-                # ! CHECK IF MULTIPLE GOT PREDICTED
-
-                for pillar in pillars:
+                if len(pillar) > 1:
+                    print("WARNING: More than one pillar got detected")
+                    the_pillar = (0, 0)  # index, confidence
+                    for index, plr in enumerate(pillar):
+                        if plr[1] > the_pillar[-1]:
+                            the_pillar = (index, plr[1])
+                    index_best = the_pillar[0]
                     pillars_detected[image_section].append(
-                        DetectedObject(pillar[0], pillar[1], pillar[2],
-                                       pillar[3], pillar[4], pillar[5])
-                                                          )
+                        DetectedObject(pillar[index_best][0], pillar[index_best][1],
+                                       pillar[index_best][2], pillar[index_best][3],
+                                       pillar[index_best][4], pillar[index_best][5])
+                                                           )
+                else:
+                    pillars_detected[image_section].append(
+                        DetectedObject(pillar[0][0], pillar[0][1], pillar[0][2],
+                                       pillar[0][3], pillar[0][4], pillar[0][5])
+                                                           )
+
+        # Postprocess the pillars predicted (name them, cut the BBs)
         if pillars_detected:
             self.determine_object_class(pillars_detected)
             self.modify_box_coordinates(pillars_detected)

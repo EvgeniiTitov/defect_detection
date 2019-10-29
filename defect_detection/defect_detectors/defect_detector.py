@@ -47,13 +47,14 @@ class DefectDetector:
                 the_line = tilt_detector.check_pillar(pillar_subimage,
                                                     pitch=pitch_angle,
                                                     roll=roll_angle)
-                # Temporary, just to showcase a line on which the decision gets made
-                line_relative = [the_line[0] + pole_image_section.left + pillar.left,
-                                 the_line[1] + pole_image_section.top + pillar.top,
-                                 the_line[2] + pole_image_section.left + pillar.left,
-                                 the_line[3] + pole_image_section.top + pillar.top]
+                if not the_line is None:
+                    # Temporary, just to showcase a line on which the decision gets made
+                    line_relative = [the_line[0] + pole_image_section.left + pillar.left,
+                                     the_line[1] + pole_image_section.top + pillar.top,
+                                     the_line[2] + pole_image_section.left + pillar.left,
+                                     the_line[3] + pole_image_section.top + pillar.top]
 
-                return line_relative
+                    return line_relative
 
             # ! CRACKS DETECTION
 
