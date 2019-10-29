@@ -1,4 +1,4 @@
-import cv2, os, sys
+import cv2
 import numpy as np
 
 
@@ -14,11 +14,9 @@ class TiltChecker:
         self.tilt_thresh = tilt_threshold
         self.resize_coef = resize_coef
 
-    def check_pillar(self, image, pitch=0, roll=0):
+    def check_pillar(self, image):
         """
         :param image: numpy array. Image section containing a pole cropped
-        :param pitch: value of the pitch angle
-        :param roll: value of the roll angle
         :return: angle of inclination, pole status (green, yellow, red)
         """
         # Resize image
@@ -30,15 +28,7 @@ class TiltChecker:
         modified_image = self.modify_image(resized)
         # Find all lines on the image
         lines = self.extract_lines(modified_image)
-        # -----------------DIFFERENT APPROACHES TO PARSE THE LINES-------------------
-
-        # Find the coordinates of the longest line
-        #the_line = self.find_longest_line(lines)[0]  # [0] since list in the list gets returned
-
-        # Find the most vertical line (to prevent finding wires)
-        #the_line = self.find_most_vertical_line(lines)[0]
-
-        # Combination of the two
+        # Check if any lines have been detected
         if lines is None:
             print("No lines detected")
             return
@@ -46,29 +36,16 @@ class TiltChecker:
         longest_lines = self.N_longest_lines(lines)
         # Among those 5 lines find the most vertical line - the line
         the_line = self.find_most_vertical_line(longest_lines)[0]
-        # ----------------------------------------------------------------------------
-
-        return the_line
-
-        # ! DECISION ABOUT DEFECT
-
         # Calculate angle between the line and the bottom edge of an image
-        angle_rel_to_horizon = self.calculate_angle(resized, the_line)
+        angle_rel_to_horizon = self.calculate_angle(the_line)
         # Convert the calculations to be relatively to the vertical line
-        angle = 90 - angle_rel_to_horizon
-        print("angle:", angle)
+        tilt_angle = 90 - angle_rel_to_horizon
 
-        # Error management
-        if pitch > 0:
-            angle -= pitch
-        else:
-            angle += pitch
+        return the_line, tilt_angle
 
-
-    def calculate_angle(self, image, line):
+    def calculate_angle(self, line):
         """
         Calculate angle between the line found and image's bot
-        :param image:
         :param line:
         :return:
         """
@@ -82,7 +59,6 @@ class TiltChecker:
 
     def resize_image(self, image):
         """
-        Resized image
         :param image:
         :return:
         """
@@ -175,33 +151,3 @@ class TiltChecker:
                 vertical_line = (index, 90 - abs(angle))
 
         return lines[vertical_line[0]]
-
-if __name__ == "__main__":
-    # PROCESS A SINGLE IMAGE
-    path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\crop_image\DJI_0405.JPG"
-    # path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped\26.JPG"
-    image = cv2.imread(path)
-    checker = TiltChecker(min_line_lenght=100,
-                          max_line_gap=200,
-                          resize_coef=0.33)
-    checker.check_pillar(image,2,0)
-
-    # # PROCESS ALL IMAGES IN A FOLDER
-    #folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped"
-    # folder = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\crop_image"
-    # save_path = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\DEFECTS\pole_tilt_test\my_tests\cropped\blur_150"
-    # # line lenght = 100, line gap 200 so far the best result
-    # checker = TiltChecker(min_line_lenght=100,
-    #                       max_line_gap=200)
-    #
-    # for item in os.listdir(folder)[:1]:
-    #     path_to_item = os.path.join(folder, item)
-    #     if os.path.isdir(path_to_item):
-    #         continue
-    #     print("\nProcessing:", item)
-    #     try:
-    #         image = cv2.imread(path_to_item)
-    #         checker.check_pole(image)
-    #     except:
-    #         print("Failed on:", item)
-    #         continue

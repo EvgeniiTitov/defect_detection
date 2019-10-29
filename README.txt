@@ -3,6 +3,11 @@ python defect_detection --image=..., --save_path=..., --crop_path=...
 python defect_detection --folder=..., --save_path=..., --crop_path=...
 python defect_detection --video=..., --save_path=..., --crop_path=...
 
+Known issues:
+- BBs modification. Overlapping check
+- Components to the top can get cut by the pole's BBs. 0.9 * 2000 and 0.9 * 20 gives different effect!
+
+
 Main logic:
 
 1. Parse user input, initialize things, create opencv window etc.

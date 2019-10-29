@@ -160,19 +160,17 @@ class Detector:
             # Detect components on each pole detected
             components = self.component_detector.predict(frame, poles)
             # -------------------------------------------------------------------------
-
             if self.detect_pole_defects and pillars:
                 # For now just draw a line on which the decision will be made
-                the_line = self.defect_detector.find_defects_pillars(pillars, frame, metadata)
+                the_line, tilt_angle = self.defect_detector.find_defects_pillars(pillars, frame, metadata)
                 if the_line:
-                    self.handler.draw_the_line(frame, the_line)
-
+                    self.handler.draw_the_line(frame, the_line, tilt_angle)
+                    #print("Angle:", tilt_angle)
             elif self.detect_dumper_defects and components:
                 dumper_defects = self.defect_detector.find_defects_dumpers(components, frame)
 
             elif self.detect_insulator_defects and components:
                 insulator_defects = self.defect_detector.find_defects_insulators(components, frame)
-
 
             # Combine all objects detected into one dict for further processing
             for d in (poles, components, pillars):
@@ -193,7 +191,7 @@ class Detector:
 
             cv2.imshow(self.window_name, frame)
             frame_counter += 1
-            print("Time taken:", time.time() - start_time)
+            print("Time taken:", time.time() - start_time, "\n")
 
             if not image is None:
                 return

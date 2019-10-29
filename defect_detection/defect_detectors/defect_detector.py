@@ -25,36 +25,30 @@ class DefectDetector:
 
         # ! Add attribute to an object reflecting its status and defect?! GOOD
 
-        # Temporary. For now we just want to return the line and draw it
-        metadata = 0,1
-
+        tilt_detector = TiltChecker()
         for pole_image_section, pillar in pillars_detected.items():
             # Pillar is a list. There must be only one object!
             pillar = pillar[0]
             # Create new subimage (use both coordinates of the pillar relative to the pole on which
             # it was detected and coordinates of the pole relative to the whole image. We do the same
             # when draw BBs
-
             pillar_subimage = np.array(image[pole_image_section.top + pillar.top:
                                              pole_image_section.top + pillar.bottom,
                                              pole_image_section.left + pillar.left:
                                              pole_image_section.left + pillar.right])
-            # We can check for tilt only if we have metadata (camera angles during the shot)
-            if metadata:
-                # Then we can perform tilt detection
-                pitch_angle, roll_angle = metadata
-                tilt_detector = TiltChecker()
-                the_line = tilt_detector.check_pillar(pillar_subimage,
-                                                    pitch=pitch_angle,
-                                                    roll=roll_angle)
-                if not the_line is None:
-                    # Temporary, just to showcase a line on which the decision gets made
-                    line_relative = [the_line[0] + pole_image_section.left + pillar.left,
-                                     the_line[1] + pole_image_section.top + pillar.top,
-                                     the_line[2] + pole_image_section.left + pillar.left,
-                                     the_line[3] + pole_image_section.top + pillar.top]
+            # Find pole's edge (line, its coordinates) and the angle between this line and the bottom
+            # edge of the image (no drone angle error considered at this point)
+            the_line, tilt_angle = tilt_detector.check_pillar(pillar_subimage)
+            if not the_line is None:
+                line_relative = [the_line[0] + pole_image_section.left + pillar.left,
+                                 the_line[1] + pole_image_section.top + pillar.top,
+                                 the_line[2] + pole_image_section.left + pillar.left,
+                                 the_line[3] + pole_image_section.top + pillar.top]
 
-                    return line_relative
+                return line_relative, tilt_angle
+
+            # HERE WE NEED TO TAKE INTO ACCOUNT THE ANGLES (ERRORS) USING
+            # METADATA PROVIDED
 
             # ! CRACKS DETECTION
 

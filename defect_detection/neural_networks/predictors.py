@@ -413,15 +413,18 @@ class ResultsHandler:
         else:
             video_writer.write(image.astype(np.uint8))
 
-    def draw_the_line(self,
-                      image,
-                      line):
+    def draw_the_line(self, image, line, tilt_angle):
         """
         Draws a line which is used for a concrete pole tilt defect detection
         :param image:
         :param line:
         :return:
         """
+        # height, width
+        label = "Angle: {0:.2f}".format(tilt_angle)
+        cv2.putText(image, label, (10, int(image.shape[0]/2)), cv2.FONT_HERSHEY_SIMPLEX,
+                    self.line_text_size(image)[1],
+                    (0, 0, 0), self.line_text_size(image)[-1])
         # Line coordinates are relative to the pillar image, not the original one
         cv2.line(image,
                  (line[0], line[1]),
