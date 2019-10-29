@@ -146,7 +146,7 @@ class Detector:
                 frame = image
 
             # TRICK TO INCREASE VIDEO PROCESSING SPEED. Process 1 in N frames
-            if frame_counter % 20 != 0:
+            if frame_counter % 5 != 0:
                 frame_counter += 1
                 continue
 
@@ -269,5 +269,8 @@ if __name__ == "__main__":
         if not os.path.isfile(arguments.video):
             print("The provided file is not a video")
             sys.exit()
+        start_time = time.time()
         detector.predict(video=1,
                          path_to_input=arguments.video)
+        end_time = time.time()
+        print("Video has been processed in:", end_time - start_time, " seconds")

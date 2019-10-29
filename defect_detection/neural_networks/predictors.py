@@ -206,11 +206,11 @@ class PillarDetector:
         pillars_detected = defaultdict(list)
         if poles_detected:
             # FOR loop just to play it safe. We will have only one image section for now - the whole image on
-            # which we attempted to detect poles
+            # which we attempted to detect pole(s)
             for window, poles in poles_detected.items():
+                # One an image we might have multiple concrete poles. For each we can potentially
+                # detect a pillar
                 for pole in poles:
-                    # In case more than one pillar gets detected (2+ concrete poles on an image)
-                    pillars = list()
                     # Skip metal poles.
                     if pole.object_name == "metal":
                         continue
@@ -221,23 +221,34 @@ class PillarDetector:
                     # Save coordinates of the subimage relatively to the original image
                     pole_image_section.save_relative_coordinates(pole.top, pole.left, pole.right, pole.bottom)
                     # Detect pillars in this subimage containing a concrete pole
-                    # Pillars is just a list of lists (there needs to be just one predicted!)
-                    pillars += self.pillar_predictor.predict(pole_subimage)
+                    # Pillar is just a list of lists (there needs to be just one predicted!)
+                    pillar = self.pillar_predictor.predict(pole_subimage)
                     # There's supposed to be only one pillar for each concrete pole,
                     # process the results that are simple list of lists outputted by YOLO
-                    if pillars:
-                        # ! CHECK FOR MORE THAN 1 PILLAR PREDICTED FOR ONE POLE
-                        if len(pillars) > 1:
-                            # ! SOMETHINGS WRONG. SELECT THE ONE WITH THE HIGHEST CONFIDENCE?
-                            print("WARNING. More than 1 pillar got detected. Fix me!")
-                            pass
+                    if pillar:
+                        # Check if more than one pillar got predicted for one pole
+                        if len(pillar) > 1:
+                            print("WARNING. More than 1 pillar got detected")
+                            # Find the one with the highest confidence and select it.
+                            the_pillar = (0, 0)  # index, confidence
+                            for index, plr in enumerate(pillar):
+                                if plr[1] > the_pillar[-1]:
+                                    the_pillar = (index, plr[1])
+
+                            # Once we've found the one. Save it
+                            index_best = the_pillar[0]
+                            pillars_detected[pole_image_section].append(
+                                    DetectedObject(pillar[index_best][0], pillar[index_best][1],
+                                                   pillar[index_best][2], pillar[index_best][3],
+                                                   pillar[index_best][4], pillar[index_best][5])
+                                                                        )
+
                         else:
                             # One object, still use for loop for convenience
-                            for pillar in pillars:
-                                pillars_detected[pole_image_section].append(
-                                    DetectedObject(pillar[0], pillar[1], pillar[2],
-                                                   pillar[3], pillar[4], pillar[5])
-                                                                            )
+                            pillars_detected[pole_image_section].append(
+                                    DetectedObject(pillar[0][0], pillar[0][1], pillar[0][2],
+                                                   pillar[0][3], pillar[0][4], pillar[0][5])
+                                                                        )
         else:
             pillars = self.pillar_predictor.predict(image)
             if pillars:
