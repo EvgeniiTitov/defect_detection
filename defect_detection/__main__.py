@@ -146,13 +146,12 @@ class Detector:
                 frame = image
 
             # TRICK TO INCREASE VIDEO PROCESSING SPEED. Process 1 in N frames
-            if frame_counter % 5 != 0:
+            if frame_counter % 2 != 0:
                 frame_counter += 1
                 continue
 
             # Detect and classify poles on the frame
             poles = self.pole_detector.predict(frame)
-
             # -------------------------------------------------------------------------
             # HERE IT'D BE NICE TO RUN PILLARS AND COMPONENTS DETECTION IN PARALLEL
             # Detect pillars on concrete poles
