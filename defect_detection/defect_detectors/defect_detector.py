@@ -1,4 +1,4 @@
-from .pole_tilt_checker import TiltChecker
+from .pole_tilt_checker import TiltCheckerOne, TiltCheckerTwo
 import numpy as np
 
 
@@ -8,7 +8,7 @@ class DefectDetector:
         if defects:
             for component, detecting_flag in defects.items():
                 if detecting_flag and component == "pole_defects":
-                    self.tilt_checker = TiltChecker()
+                    self.tilt_checker = TiltCheckerOne()
                 elif detecting_flag and component == "dumper_defects":
                     print("Initialized dumper defect detectors")
                 elif detecting_flag and component == "insulator_defects":
@@ -25,7 +25,9 @@ class DefectDetector:
 
         # ! Add attribute to an object reflecting its status and defect?! GOOD
 
-        tilt_detector = TiltChecker()
+        tilt_detector = TiltCheckerOne()
+        #tilt_detector = TiltCheckerTwo()
+
         for pole_image_section, pillar in pillars_detected.items():
             # Pillar is a list. There must be only one object!
             pillar = pillar[0]
