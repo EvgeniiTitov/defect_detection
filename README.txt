@@ -3,12 +3,13 @@ python defect_detection --image=..., --save_path=..., --crop_path=..., --pole_de
 python defect_detection --folder=..., --save_path=..., --crop_path=..., --pole_defects=1
 python defect_detection --video=..., --save_path=..., --crop_path=..., --pole_defects=1
 
+Now supports multiple input types --image=path_to_image --folder=path_to_folder
+
 Known issues:
 - BBs modification. Overlapping check.
 - Components to the top can get cut by the pole's BBs. 0.9 * 2000 and 0.9 * 20 gives different effect!
 Often the same happens with dumpers on both sides! For one pole detected it makes sense to widen
 the box even more.
-- Not ideal the line detecting algorithms. Rework, put it into a separate class.
 
 
 Main logic:

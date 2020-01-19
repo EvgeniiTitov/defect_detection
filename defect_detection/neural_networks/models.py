@@ -17,6 +17,7 @@ class NetPoles:
     input_width, input_height = 416, 416
 
     def __init__(self):
+        self.configuration = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs\yolo-obj-poles.cfg"
         self.config, self.weights = self.load_files()
         self.net = self.setup_net()
 
@@ -35,7 +36,7 @@ class NetPoles:
         """
         Initializes the net with the config and weights provided.
         """
-        neural_net = cv2.dnn.readNetFromDarknet(self.config, self.weights)
+        neural_net = cv2.dnn.readNetFromDarknet(self.configuration, self.weights)
         neural_net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
         neural_net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
