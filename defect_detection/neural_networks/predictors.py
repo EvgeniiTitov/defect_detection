@@ -134,19 +134,28 @@ class ComponentsDetector:
         # Name objects detected by unique names instead of default 0,1,2 etc.
         self.determine_object_class(components_detected)
         # Modify pillar's BB
-        # self.modify_pillars_BBs(components_detected)
+        self.modify_pillars_BBs(image, components_detected)
 
         return components_detected
 
 
-    def modify_pillars_BBs(self, componenets_detected):
+    def modify_pillars_BBs(self, image, componenets_detected):
 
         for window, components in componenets_detected.items():
 
             for component in components:
                 if component.class_id == 2:
-                    pass
-                    # CHECK IF IT IS NECESSARY AT ALL
+
+                    # Increase BB's height by moving upper BB border up and bottom down
+                    # UP COULD BE FURTHER PULLED
+                    new_top = component.BB_top * 0.8
+                    new_bot = component.BB_bottom * 1.2 if component.BB_bottom * 1.2 <\
+                                                        image.shape[0] else image.shape[0] - 10
+
+                    # IMPORTANT. Here we overwrite actual object's coordinates that will be used for
+                    # drawing a BB around it
+                    component.BB_top = int(new_top)
+                    component.BB_bottom = int(new_bot)
 
 
 class PoleDetector:
@@ -186,12 +195,14 @@ class PoleDetector:
         """
         for window, poles in poles_detected.items():
             # Let's consider all poles detected on an image and modify their coordinates.
-            # If only one pole's been detected, just widen the box 50% both sides
+            # If only one pole's been detected, just widen the box 60% both sides
             if len(poles) == 1:
-                new_left_boundary = int(poles[0].BB_left * 0.5)
-                new_right_boundary = int(poles[0].BB_right * 1.5) if int(poles[0].BB_right * 1.5) <\
+                new_left_boundary = int(poles[0].BB_left * 0.4)
+                new_right_boundary = int(poles[0].BB_right * 1.6) if int(poles[0].BB_right * 1.6) <\
                                                                     image.shape[1] else (image.shape[1] - 2)
-                new_top_boundary = int(poles[0].BB_top * 0.9)
+                # Move upper border way up, often when a pole is close up many components do not get
+                # included in the box, as a result they do not get found
+                new_top_boundary = int(poles[0].BB_top * 0.1)
                 new_bot_boundary = int(poles[0].BB_bottom * 1.1) if int(poles[0].BB_bottom * 1.1) <\
                                                                     image.shape[0] else (image.shape[0] - 2)
 
@@ -201,13 +212,13 @@ class PoleDetector:
                                                    bottom=new_bot_boundary)
             else:
                 for pole in poles:
-
-                    # ! CHECK FOR OVERLAPPING
+                    # If we've got 1+ poles on one frame or image, hence the shot was likely taken from
+                    # further distance.
 
                     new_left_boundary = int(pole.BB_left * 0.9)
                     new_right_boundary = int(pole.BB_right * 1.1) if int(pole.BB_right * 1.1) < \
                                                                 image.shape[1] else (image.shape[1] - 2)
-                    new_top_boundary = int(pole.BB_top * 0.9)
+                    new_top_boundary = int(pole.BB_top * 0.5)
                     new_bot_boundary = int(pole.BB_bottom * 1.1) if int(pole.BB_bottom * 1.1) < \
                                                                 image.shape[0] else (image.shape[0] - 2)
 

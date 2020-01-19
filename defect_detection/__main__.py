@@ -241,8 +241,6 @@ class Detector:
 
             # DEFECT DETECTIOM
 
-
-
             # STORE ALL DEFECTS FOUND IN ONE PLACE. JSON?
             # Photo name (ideally pole's number) -> all elements detected -> defect on those elements
             # Video name (ideally pole's number) -> same
