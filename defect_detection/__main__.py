@@ -1,4 +1,4 @@
-from neural_networks import PoleDetector, ComponentsDetector, PillarDetector
+from neural_networks import PoleDetector, ComponentsDetector
 from neural_networks import NetPoles, NetElements, NetPillars
 from defect_detectors import DefectDetector
 from utils import ResultsHandler, MetaDataExtractor
@@ -49,8 +49,8 @@ class Detector:
         # Initialize detectors using the nets above to predict and postprocess the predictions
         # such as represent objects detected in the way we need, modify BBs etc.
         self.pole_detector = PoleDetector(self.poles_neuralnet)
-        self.component_detector = ComponentsDetector(self.components_neuralnet)
-        self.pillars_detector = PillarDetector(self.pillars_neuralnet)
+        self.component_detector = ComponentsDetector(components_predictor=self.components_neuralnet,
+                                                     pillar_predictor=self.pillars_neuralnet)
 
         # Initialize results handler that shows/saves detection results
         self.handler = ResultsHandler(save_path=self.save_path,
@@ -236,29 +236,12 @@ class Detector:
 
             # OBJECT DETECTION: Detect and classify poles on the image_to_process
             poles = self.pole_detector.predict(image_to_process)
-
-            # -------------------------------------------------------------------------
-            # TEMPORARY: There will be just one component detector, that depending on the tower's class
-            # will send it to either concrete or metal neural net
-
-            # Detect pillars on concrete poles
-            pillars = self.pillars_detector.predict(image_to_process, poles)
-            # Detect components on each pole detected
+            # Detect components on each pole detected (insulators, dumpers, concrete pillars)
             components = self.component_detector.predict(image_to_process, poles)
-            # -------------------------------------------------------------------------
 
-            # DEFECT DETECTION:
-            # if self.detect_concrete_pole_defects and pillars:
-            #     # For now just draw a line on which the decision will be made
-            #     the_line, tilt_angle = self.defect_detector.find_defects_pillars(pillars, image_to_process, metadata)
-            #     if the_line:
-            #         self.handler.draw_the_line(image_to_process, the_line, tilt_angle)
-            #         #print("Angle:", tilt_angle)
-            # elif self.detect_dumper_defects and components:
-            #     dumper_defects = self.defect_detector.find_defects_dumpers(components, image_to_process)
-            #
-            # elif self.detect_insulator_defects and components:
-            #     insulator_defects = self.defect_detector.find_defects_insulators(components, image_to_process)
+            # DEFECT DETECTIOM
+
+
 
             # STORE ALL DEFECTS FOUND IN ONE PLACE. JSON?
             # Photo name (ideally pole's number) -> all elements detected -> defect on those elements
@@ -266,9 +249,8 @@ class Detector:
 
 
             # Combine all objects detected into one dict for further processing
-            for d in (poles, components, pillars):
+            for d in (poles, components):
                 all_detected_objects.update(d)
-
 
             # Process the objects detected
             if self.crop_path:

@@ -67,26 +67,33 @@ class NetPoles:
         image_height, image_width = image.shape[0], image.shape[1]
         classIds, confidences, boxes = [], [], []
         objects_predicted = list()
+
         # For each prediction from each of 3 YOLO layers
         for prediction in predictions:
+
             # For each detection from each YOLO layer
             for detection in prediction:
                 scores = detection[5:]  # Class scores
                 classId = np.argmax(scores)  # Index of the class with highest probability
                 confidence = scores[classId]  # Value of this BB's confidence
+
                 if confidence > self.confidence_thresh:
                     # Centre of an object relatively to the upper left corner of the image in percent
                     centre_x = int(detection[0] * image_width)
                     centre_y = int(detection[1] * image_height)
+
                     # Width and height of the BB predicted in percent. Catching ERROR when its more 100%
                     width_percent = detection[2] if detection[2] < 0.98 else 0.98
                     height_percent = detection[3] if detection[3] < 0.98 else 0.98
+
                     # Calculate actual size of the BB
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
+
                     # Catching error when left/top value can go below 0
                     left = int(centre_x - (width / 2)) if int(centre_x - (width / 2)) > 0 else 2
                     top = int(centre_y - (height / 2)) if int(centre_y - (height / 2)) > 0 else 2
+
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))
@@ -101,6 +108,7 @@ class NetPoles:
             top = box[1]
             width = box[2]
             height = box[3]
+
             # Catching right and bot edges of BBs being not visible
             right = (left+width) if (left+width) < image_width else image_width-3
             bottom = (top+height) if (top+height) < image_height else image_height-3
@@ -116,12 +124,16 @@ class NetPoles:
         Returns list of objects detected (List of lists) [[obj1], [obj2]]
         """
         blob = self.create_blob(image)
+
         # Pass the blob to the neural net
         self.net.setInput(blob)
+
         # Get output YOLO layers from which read predictions
         layers = self.output_layers(self.net)
+
         # Run forward pass and get predictions from 3 YOLO layers
         predictions = self.net.forward(layers)
+
         # Parse the predictions, save only the valid ones
         poles = self.process_predictions(image, predictions)
 
@@ -192,26 +204,33 @@ class NetElements:
         image_height, image_width = image.shape[0], image.shape[1]
         classIds, confidences, boxes = [], [], []
         objects_predicted = list()
+
         # For each prediction from each of 3 YOLO layers
         for prediction in predictions:
+
             # For each detection from one YOLO layer
             for detection in prediction:
                 scores = detection[5:]
                 classId = np.argmax(scores)  # Index of a BB with highest confidence
                 confidence = scores[classId]  # Value of this BB's confidence
+
                 if confidence > self.confidence_thresh:
                     # Centre of object relatively to the upper left corner in percent
                     centre_x = int(detection[0] * image_width)
                     centre_y = int(detection[1] * image_height)
+
                     # Width and height of the BB predicted. Check for ERROR
                     width_percent = detection[2] if detection[2] < 0.98 else 0.98
                     height_percent = detection[3] if detection[3] < 0.98 else 0.98
+
                     # Calculate actual size of the BB
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
+
                     # ERROR CATCHING WITH ABS
                     left = int(centre_x - (width / 2)) if int(centre_x - (width / 2)) > 0 else 2
                     top = int(centre_y - (height / 2)) if int(centre_y - (height / 2)) > 0 else 2
+
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))
@@ -237,12 +256,16 @@ class NetElements:
         Performs utility pole detection and classification. Returns list of objects detected
         """
         blob = self.create_blob(image)
+
         # Pass the blob to the neural net
         self.net.setInput(blob)
+
         # Get output YOLO layers from which read predictions
         layers = self.output_layers(self.net)
+
         # Run forward pass and get predictions from 3 YOLO layers
         predictions = self.net.forward(layers)
+
         # Parse the predictions, save only the valid ones
         components = self.process_predictions(image, predictions)
 
@@ -307,26 +330,34 @@ class NetPillars:
         image_height, image_width = image.shape[0], image.shape[1]
         classIds, confidences, boxes = [], [], []
         objects_predicted = list()
+
         # For each prediction from each of 3 YOLO layers
         for prediction in predictions:
+
             # For each detection from each YOLO layer
             for detection in prediction:
                 scores = detection[5:]  # Class scores
                 classId = np.argmax(scores)  # Index of the class with highest probability
                 confidence = scores[classId]  # Value of this BB's confidence
+
                 if confidence > self.confidence_thresh:
+
                     # Centre of an object relatively to the upper left corner of the image in percent
                     centre_x = int(detection[0] * image_width)
                     centre_y = int(detection[1] * image_height)
+
                     # Width and height of the BB predicted in percent. Catching ERROR when its more 100%
                     width_percent = detection[2] if detection[2] < 0.98 else 0.98
                     height_percent = detection[3] if detection[3] < 0.98 else 0.98
+
                     # Calculate actual size of the BB
                     width = int(width_percent * image_width)
                     height = int(height_percent * image_height)
+
                     # Catching error when left/top value can go below 0
                     left = int(centre_x - (width / 2)) if int(centre_x - (width / 2)) > 0 else 2
                     top = int(centre_y - (height / 2)) if int(centre_y - (height / 2)) > 0 else 2
+
                     # Save prediction results
                     classIds.append(classId)
                     confidences.append(float(confidence))
@@ -341,6 +372,7 @@ class NetPillars:
             top = box[1]
             width = box[2]
             height = box[3]
+
             # Catching right and bot edges of BBs being not visible
             right = (left+width) if (left+width) < image_width else image_width-3
             bottom = (top+height) if (top+height) < image_height else image_height-3
@@ -356,12 +388,16 @@ class NetPillars:
         Returns list of objects detected (List of lists) [[obj1], [obj2]]
         """
         blob = self.create_blob(image)
+
         # Pass the blob to the neural net
         self.net.setInput(blob)
+
         # Get output YOLO layers from which read predictions
         layers = self.output_layers(self.net)
+
         # Run forward pass and get predictions from 3 YOLO layers
         predictions = self.net.forward(layers)
+
         # Parse the predictions, save only the valid ones
         pillars = self.process_predictions(image, predictions)
 
