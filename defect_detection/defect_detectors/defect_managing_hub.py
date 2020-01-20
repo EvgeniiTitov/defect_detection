@@ -1,19 +1,117 @@
 import numpy as np
+from .inclination_detector import TiltDetector, LineMerger
+from .concrete_polygon_extractor import LineExtender, PolygonRetriever
+import sys
+import cv2
+
+#How to make it scalabable? It needs to be given *tools to use*. Like give it a detector for each defect,
+#Keep interfaces the same - give image, receive some data structure that says if there are any defects found
 
 
 class DefectDetector:
-
+    """
+    TO DO: Consider multiprocessing
+    """
     def __init__(self, defects):
-        # We want to initialize only those detectors that we need!
-        if defects:
-            for component, detecting_flag in defects.items():
-                if detecting_flag and component == "pole_defects":
-                    pass
-                elif detecting_flag and component == "dumper_defects":
-                    print("Initialized dumper defect detectors")
-                elif detecting_flag and component == "insulator_defects":
-                    print("Initialized insulator defect detectors")
-#
+
+        # Initialize detectors and dependencies required
+        for component, detecting_flag in defects.items():
+
+            if component == "concrete_pole_defects" and detecting_flag:
+                # Both share the same first steps (they need predicted lines)
+
+                # 1) Inclination detection
+                # Line merger is there to merge short lines into longer ones where possible
+                # reducing the total amount of data to process and helping to identify the lines
+                # that are pole's edges
+                self.line_merger = LineMerger()
+                self.inclination_detector = TiltDetector(results_handling_way=(0, None),
+                                                         line_merger=self.line_merger,
+                                                         results_processor=None)
+
+                # 2) Cracks
+                # Line extender is there to extend the lines found (pole's edges) in order to
+                # retrieve the concrete area in between the lines
+                self.line_extender = LineExtender()
+                self.concrete_polygon_extractor = PolygonRetriever(line_extender=self.line_extender)
+                # Initialize cracks detecting neural net TO BE IMPLEMENTED
+
+            elif component == "dumper_defects" and detecting_flag:
+                # Call virbation dumper defect detector(s)
+                raise NotImplementedError
+
+            elif component == "insulator_defects" and detecting_flag:
+                # Call insulator defect detectors
+                raise NotImplementedError
+
+    def search_defects_on_objects(
+            self,
+            detected_objects,
+            image,
+            metadata=None
+    ):
+        """
+
+        :param detected_objects:
+        :param image:
+        :param metadata:
+        :return:
+        """
+
+        # ! SOME DATA STRUCTURE TO KEEP TRACK OF DEFECTS (JSON - XML)?
+
+        for detection_image_section, elements in detected_objects.items():
+
+            for element in elements:
+
+                if element.object_name.lower() == "pillar":
+
+                    # Go ahead and search for cracks and pole inclination defects
+                    defects = self.pillars_defects_detector(pillar=element,
+                                                            detection_section=detection_image_section,
+                                                            metadata=metadata)
+
+                elif element.object_name.lower() == "dump":
+                    continue
+                elif element.object_name.lower() == "insul":
+                    continue
+
+    def pillars_defects_detector(
+            self,
+            pillar,
+            detection_section,
+            metadata
+    ):
+
+        component_subimage = np.array(detection_section.frame[pillar.top:pillar.bottom,
+                                                              pillar.left:pillar.right])
+
+        # Angle calculations
+        the_edges = self.inclination_detector.find_pole_edges(image=component_subimage)
+        angle = self.inclination_detector.calculate_angle(the_lines=the_edges)
+
+        if metadata:
+            # TAKE INTO ACCOUNT METADATA (CAMERA MIGHT HAVE BEEN TILTED)
+            pass
+
+        # Cracks detection
+        concrete_polygon = self.concrete_polygon_extractor.retrieve_polygon(image=component_subimage,
+                                                                            the_lines=the_edges)
+        # ONCE WE'VE GOT POLYGON, SEND IT FOR CRACK DETECTION
+
+        print("angle: ", angle)
+
+        cv2.imshow("cropped", concrete_polygon)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        sys.exit()
+
+
+
+
+
+
     # def find_defects_pillars(self, pillars_detected, image, metadata):
     #     """
     #     Method performing defect detection (cracks, tilts) on concrete poles.

@@ -9,7 +9,7 @@ import os
 import argparse
 
 
-class Detector:
+class MainDetector:
     """
 
     """
@@ -27,19 +27,16 @@ class Detector:
         self.detect_concrete_pole_defects = False
         self.detect_dumper_defects = False
         self.detect_insulator_defects = False
+        # Potentially more defects. By default detect all
+
         if defects:
-            self.defect_detector = DefectDetector(defects)
-
-            for component, detecting_flag in defects.items():
-                if detecting_flag and component == "concrete_pole_defects":
-                    self.detect_concrete_pole_defects = True
-                    self.meta_data_extractor = MetaDataExtractor()
-
-                elif detecting_flag and component == "dumper_defects":
-                    self.detect_dumper_defects = True
-
-                elif detecting_flag and component == "insulator_defects":
-                    self.detect_insulator_defects = True
+            self.defects = defects
+            # Implement metadata check here in the main class because otherwise we
+            # will need to open the same image multiple times (not efficient). Check
+            # happens right before sending image along the pipeline
+            self.meta_data_extractor = MetaDataExtractor()
+        else:
+            self.defects = None
 
         # Initialize predicting neural nets
         self.poles_neuralnet = NetPoles()
@@ -52,7 +49,7 @@ class Detector:
         self.component_detector = ComponentsDetector(components_predictor=self.components_neuralnet,
                                                      pillar_predictor=self.pillars_neuralnet)
 
-        # Initialize results handler that shows/saves detection results
+        # Initialize results handler that shows/saves/transforms into JSON detection results
         self.handler = ResultsHandler(save_path=self.save_path,
                                       cropped_path=self.crop_path)
 
@@ -147,10 +144,7 @@ class Detector:
 
         # Check if there is any metadata associated with an image (to check for camera orientation angles for
         # pole inclination detection module). camera_inclination = (pitch_angle, roll_angle)
-        if self.detect_concrete_pole_defects:
-            camera_inclination = self.meta_data_extractor.estimate_camera_inclination(path_to_image)
-        else:
-            camera_inclination = None
+        camera_inclination = self.meta_data_extractor.estimate_camera_inclination(path_to_image)
 
         self.search_defects(image=image,
                             image_name=image_name,
@@ -239,7 +233,15 @@ class Detector:
             # Detect components on each pole detected (insulators, dumpers, concrete pillars)
             components = self.component_detector.predict(image_to_process, poles)
 
-            # DEFECT DETECTIOM
+            # DEFECT DETECTION
+            if self.defects:
+                print("\nInitializing defect detector...")
+
+                self.defect_detector = DefectDetector(self.defects)
+
+                detected_defects = self.defect_detector.search_defects_on_objects(detected_objects=components,
+                                                                                  image=image,
+                                                                                  metadata=metadata)
 
             # STORE ALL DEFECTS FOUND IN ONE PLACE. JSON?
             # Photo name (ideally pole's number) -> all elements detected -> defect on those elements
@@ -325,20 +327,19 @@ if __name__ == "__main__":
                 sys.exit()
 
     # Check what defects user wants to detect
-    defects_to_find = {'concrete_pole_defects': 0,
-                       'dumper_defects': 0,
-                       'insulator_defects': 0}
+    defects_to_find = dict()
 
     if arguments.concrete_pole_defects:
         defects_to_find['concrete_pole_defects'] = 1
-    elif arguments.dumper_defects:
+    if arguments.dumper_defects:
         defects_to_find['dumper_defects'] = 1
-    elif arguments.insulator_defects:
+    if arguments.insulator_defects:
         defects_to_find['insulator_defects'] = 1
 
-    detector = Detector(save_path=arguments.save_path,
-                        crop_path=arguments.crop_path,
-                        defects=defects_to_find)
+    # Initialize main class
+    detector = MainDetector(save_path=arguments.save_path,
+                            crop_path=arguments.crop_path,
+                            defects=defects_to_find)
 
     # Dictionary to keep track of all the data provided by a user that needs
     # to be processed
