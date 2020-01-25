@@ -2,13 +2,26 @@ class DetectedObject:
     """
     Represents an object detected. Keeps its coordinates, class ID, confidence score
     """
-    def __init__(self, class_id, confidence, left, top, right, bottom):
+    def __init__(
+            self,
+            class_id,
+            confidence,
+            left,
+            top,
+            right,
+            bottom
+    ):
+
         self.class_id = class_id
         self.confidence = confidence
         self.BB_top = top
         self.BB_left = left
         self.BB_right = right
         self.BB_bottom = bottom
+
+        self.deficiency_status = None
+        self.object_name = None
+
         # Another set of coordinates to modify BBs of objects detected to achieve certain
         # things. For instance, to address an issue of insulators sticking out and not getting
         # detected because they do not get included in the pole's BB. Widen the BB in this case
@@ -17,7 +30,13 @@ class DetectedObject:
         self.right = right
         self.bottom = bottom
 
-    def update_object_coordinates(self, left=None, top=None, right=None, bottom=None):
+    def update_object_coordinates(
+            self,
+            left=None,
+            top=None,
+            right=None,
+            bottom=None
+    ):
         """
         Modifies object's BBs (mainly applies to utility poles detected) to make sure
         when searching for this object's components nothing gets missed because it didn't
@@ -42,7 +61,7 @@ class DetectedObject:
                 self.BB_top, self.BB_right, self.BB_bottom)
         
         
-class DetectionImageSection:
+class SubImage:
     """
     Represents part, section of the image on which detection takes place. Is used to
     save objects detected by neural networks with reference to the image section on
@@ -50,7 +69,12 @@ class DetectionImageSection:
     whole full size image. Block 2 neural net does detection on the objects found
     by the block1 nets. We need this referencing for proper result handling at the end
     """
-    def __init__(self, frame, name):
+    def __init__(
+            self,
+            frame,
+            name
+    ):
+
         self.frame = frame
         self.name = name
         self.top = 0
@@ -58,7 +82,13 @@ class DetectionImageSection:
         self.right = 0
         self.bottom = 0
         
-    def save_relative_coordinates(self, top, left, right, bottom):
+    def save_relative_coordinates(
+            self,
+            top,
+            left,
+            right,
+            bottom
+    ):
         """
         When it comes to drawing BBs and saving objects detected in order to do so with
         the components, we need to know their relative positive relatively not to the

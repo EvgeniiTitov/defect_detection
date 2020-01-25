@@ -1,6 +1,10 @@
 import numpy as np
+from collections import defaultdict
 from .inclination_detector import TiltDetector, LineMerger
 from .concrete_polygon_extractor import LineExtender, PolygonRetriever
+
+from .concrete_extractor import ConcreteExtractor
+from .line_modifier import LineModifier
 import sys
 import cv2
 
@@ -12,53 +16,24 @@ class DefectDetector:
     """
     TO DO: Consider multiprocessing
     """
-    def __init__(self, defects):
+    def __init__(self, camera_orientation=None):
 
-        # Initialize detectors and dependencies required
-        for component, detecting_flag in defects.items():
+        self.camera_orientation = camera_orientation
 
-            if component == "concrete_pole_defects" and detecting_flag:
-                # Both share the same first steps (they need predicted lines)
+    def initialize_detector(self):
 
-                # 1) Inclination detection
-                # Line merger is there to merge short lines into longer ones where possible
-                # reducing the total amount of data to process and helping to identify the lines
-                # that are pole's edges
-                self.line_merger = LineMerger()
-                self.inclination_detector = TiltDetector(results_handling_way=(0, None),
-                                                         line_merger=self.line_merger,
-                                                         results_processor=None)
+        pass
 
-                # 2) Cracks
-                # Line extender is there to extend the lines found (pole's edges) in order to
-                # retrieve the concrete area in between the lines
-                self.line_extender = LineExtender()
-                self.concrete_polygon_extractor = PolygonRetriever(line_extender=self.line_extender)
-                # Initialize cracks detecting neural net TO BE IMPLEMENTED
-
-            elif component == "dumper_defects" and detecting_flag:
-                # Call virbation dumper defect detector(s)
-                raise NotImplementedError
-
-            elif component == "insulator_defects" and detecting_flag:
-                # Call insulator defect detectors
-                raise NotImplementedError
-
-    def search_defects_on_objects(
+    def search_defects(
             self,
             detected_objects,
-            image,
-            metadata=None
     ):
         """
 
         :param detected_objects:
-        :param image:
-        :param metadata:
         :return:
         """
-
-        # ! SOME DATA STRUCTURE TO KEEP TRACK OF DEFECTS (JSON - XML)?
+        defects = defaultdict(list)
 
         for detection_image_section, elements in detected_objects.items():
 
@@ -73,6 +48,7 @@ class DefectDetector:
 
                 elif element.object_name.lower() == "dump":
                     continue
+
                 elif element.object_name.lower() == "insul":
                     continue
 

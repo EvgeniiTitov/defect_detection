@@ -1,161 +1,6 @@
 from collections import defaultdict
-from .detections import DetectedObject, DetectionImageSection
+from .detections import DetectedObject, SubImage
 import numpy as np
-
-
-class ComponentsDetector:
-    """
-    Class performing predictions of utility pole components on image / image
-    sections provided.
-    All components detected get represented as class objects and are saved in a dictionary
-    as values, whereas the image section on which the detection was performed serves the
-    role of a dictionary key.
-    """
-    def __init__(
-            self,
-            components_predictor,
-            pillar_predictor=None
-    ):
-        # Initialize components predictor
-        self.components_predictor = components_predictor
-        # TEMPORARY. Will be replaced with 3 class predictor for concrete poles
-        self.pillar_predictor = pillar_predictor
-
-    def determine_object_class(self, components_detected):
-        """
-        Checks object's class and names it. Since we've got multiple nets predicting objects
-        like 0,1,2 classes, we want to make sure we don't get confused later.
-        Dynamically creates new attribute
-        :return: Nothing. Simply names objects
-        """
-        for window, components in components_detected.items():
-
-            for component in components:
-                if component.class_id == 0:
-                    component.object_name = "insl"  # Insulator
-
-                elif component.class_id == 1:
-                    component.object_name = "dump"  # Vibration dumper
-
-                else:
-                    component.object_name = "pillar"
-
-    def predict(self, image, pole_predictions):
-        """
-        Predicts components. Saves them in the appropriate format
-        :param image: original image in case no poles have been found
-        :param pole_predictions: poles predicted by the pole predicting net (dictionary)
-        :return: separate dictionary with components found as values and coordinates of a
-        pole on which they were detected as a key.
-        """
-        # Dictionary to keep components detected
-        components_detected = defaultdict(list)
-
-        # If poles detecting neural net detected any poles. Find all components on them
-        if pole_predictions:
-            # FOR loop below just to play it safe. There should be only one item in the dictionary
-            # original image (class object) : poles detected on it (list of lists)
-            for window, poles in pole_predictions.items():
-
-                # Consider all poles detected on the original image
-                for pole in poles:
-                    # For each pole create a separate list for its components to temporary store them
-                    components = list()
-
-                    # Crop out the pole detected to send for components detection (modified coordinates)
-                    pole_subimage = np.array(window.frame[pole.top:pole.bottom,
-                                                          pole.left:pole.right])
-                    # Keep track of new subimage cropped out of the original one for components detection
-                    pole_image_section = DetectionImageSection(pole_subimage, "components")
-
-                    # Save coordinates of this subimage relatively to the original image for
-                    # painless BB drawing and saving objects detected to disk (Relative coordinates)
-                    pole_image_section.save_relative_coordinates(pole.top,
-                                                                 pole.left,
-                                                                 pole.right,
-                                                                 pole.bottom)
-
-                    # ! Depending on the pole's class we want to detect different number of objects
-                    if pole.class_id == 0:  # metal
-                        components += self.components_predictor.predict(pole_subimage)
-
-                    elif pole.class_id == 1:  # concrete
-                        # TEMPORARY: Will be replaced with ONE 3 class predictor
-                        components += self.components_predictor.predict(pole_subimage)
-
-                        pillar = self.pillar_predictor.predict(pole_subimage)
-
-                        # REMOVE ME AFTER TESTS AND RESEARCH
-                        if len(pillar) > 1:
-                            print("WARNING: MORE THAN ONE PILLAR DETECTED")
-
-                        # This since we use 2 nets in sequence predicting 2 and 1 classes, so there is
-                        # confusion how to keep track what class each object predicted belongs to.
-                        if pillar:
-                            components.append([2, pillar[0][1], pillar[0][2],
-                                               pillar[0][3], pillar[0][4], pillar[0][5]])
-
-                    # Check if any components have been detected on the pole
-                    if components:
-                        # Represent each component detected as a class object. Save components detected
-                        # to the dictionary with the appropriate key - image section (pole) on which they
-                        # were detected
-                        for component in components:
-                            components_detected[pole_image_section].append(
-                                DetectedObject(component[0], component[1], component[2],
-                                               component[3], component[4], component[5])
-                                                                          )
-
-        else:
-            # In case no poles have been detected, send the whole image for components detection
-            # in case there are any close-up components on the image
-            components = self.components_predictor.predict(image)
-
-            # TEMPORARY:
-            pillar = self.pillar_predictor.predict(image)
-
-            if len(pillar) > 1:
-                print("WARNING: MORE THAN ONE PILLAR DETECTED")
-
-            if pillar:
-                components.append([2, pillar[0][1], pillar[0][2],
-                                   pillar[0][3], pillar[0][4], pillar[0][5]])
-
-            if components:
-                whole_image = DetectionImageSection(image, "components")
-
-                for component in components:
-                    components_detected[whole_image].append(
-                        DetectedObject(component[0], component[1], component[2],
-                                       component[3], component[4], component[5])
-                                                            )
-
-        # TO DO: Could be combined in one function to speed up a bit
-        # Name objects detected by unique names instead of default 0,1,2 etc.
-        self.determine_object_class(components_detected)
-        # Modify pillar's BB
-        self.modify_pillars_BBs(image, components_detected)
-
-        return components_detected
-
-
-    def modify_pillars_BBs(self, image, componenets_detected):
-
-        for window, components in componenets_detected.items():
-
-            for component in components:
-                if component.class_id == 2:
-
-                    # Increase BB's height by moving upper BB border up and bottom down
-                    # UP COULD BE FURTHER PULLED
-                    new_top = component.BB_top * 0.8
-                    new_bot = component.BB_bottom * 1.2 if component.BB_bottom * 1.2 <\
-                                                        image.shape[0] else image.shape[0] - 10
-
-                    # IMPORTANT. Here we overwrite actual object's coordinates that will be used for
-                    # drawing a BB around it
-                    component.BB_top = int(new_top)
-                    component.BB_bottom = int(new_bot)
 
 
 class PoleDetector:
@@ -167,7 +12,10 @@ class PoleDetector:
     role. In this case we consider the whole image.
     As input it accepts a plain image.
     """
-    def __init__(self, predictor):
+    def __init__(
+            self,
+            predictor
+    ):
         # Initialize predictor
         self.poles_predictor = predictor
 
@@ -236,7 +84,7 @@ class PoleDetector:
         poles_detected = defaultdict(list)
 
         # Specify image section on which predictions take place
-        detecting_image_section = DetectionImageSection(image, "poles")
+        detecting_image_section = SubImage(image, "poles")
 
         # Call neural net to get predictions. poles - list of lists, each object is represented as
         # a list of 6 items: class, confidence, coordinates
@@ -247,9 +95,12 @@ class PoleDetector:
         # Check if any poles have been detected otherwise return the empty dictionary
         if poles:
             for pole in poles:
-                poles_detected[detecting_image_section].append(
-                        DetectedObject(pole[0], pole[1], pole[2], pole[3], pole[4], pole[5])
-                                                               )
+                poles_detected[detecting_image_section].append(DetectedObject(class_id=pole[0],
+                                                                              confidence=pole[1],
+                                                                              left=pole[2],
+                                                                              top=pole[3],
+                                                                              right=pole[4],
+                                                                              bottom=pole[5]))
             # Modify poles coordinates to widen them for better components detection (some might stick out, so
             # they don't end up inside the objects BB. Hence, they get missed since component detection happens only
             # inside the objects box.
@@ -258,3 +109,170 @@ class PoleDetector:
             self.determine_object_class(poles_detected)
 
         return poles_detected
+
+
+class ComponentsDetector:
+    """
+    Class performing predictions of utility pole components on image / image
+    sections provided.
+    All components detected get represented as class objects and are saved in a dictionary
+    as values, whereas the image section on which the detection was performed serves the
+    role of a dictionary key.
+    """
+    def __init__(
+            self,
+            components_predictor,
+            pillar_predictor=None
+    ):
+        # Initialize components predictor
+        self.components_predictor = components_predictor
+
+        # TEMPORARY. Will be replaced with 3 class predictor for concrete poles
+        self.pillar_predictor = pillar_predictor
+
+    def determine_object_class(self, components_detected):
+        """
+        Checks object's class and names it. Since we've got multiple nets predicting objects
+        like 0,1,2 classes, we want to make sure it doesn't get confusing during saving data and
+        drawing BBs
+        :return: Nothing. Changes object's state
+        """
+        for window, components in components_detected.items():
+
+            for component in components:
+                if component.class_id == 0:
+                    component.object_name = "insl"  # Insulator
+
+                elif component.class_id == 1:
+                    component.object_name = "dump"  # Vibration dumper
+
+                else:
+                    component.object_name = "pillar"
+
+    def predict(self, image, pole_predictions):
+        """
+        Predicts components. Saves them in the appropriate format
+        :param image: original image in case no poles have been found
+        :param pole_predictions: poles predicted by the pole predicting net (dictionary)
+        :return: separate dictionary with components found as values and coordinates of a
+        pole on which they were detected as a key.
+        """
+        # Dictionary to keep components detected
+        components_detected = defaultdict(list)
+
+        # If poles detecting neural net detected any poles. Find all components on them
+        if pole_predictions:
+            # FOR loop below just to play it safe. There should be only one item in the dictionary
+            # original image (class object) : poles detected on it (list of lists)
+            for window, poles in pole_predictions.items():
+
+                # Consider all poles detected on the original image
+                for pole in poles:
+                    # For each pole create a separate list for its components to temporary store them
+                    components = list()
+
+                    # Crop out the pole detected to send for components detection (modified coordinates)
+                    pole_subimage = np.array(window.frame[pole.top:pole.bottom,
+                                                          pole.left:pole.right])
+                    # Keep track of new subimage cropped out of the original one for components detection
+                    pole_image_section = SubImage(frame=pole_subimage,
+                                                  name="components")
+
+                    # Save coordinates of this subimage relatively to the original image for
+                    # BB drawing and saving objects detected to disk (Relative coordinates)
+                    pole_image_section.save_relative_coordinates(top=pole.top,
+                                                                 left=pole.left,
+                                                                 right=pole.right,
+                                                                 bottom=pole.bottom)
+
+                    # ! Depending on the pole's class we want to detect different number of objects
+                    if pole.class_id == 0:  # metal
+                        components += self.components_predictor.predict(pole_subimage)
+
+                    elif pole.class_id == 1:  # concrete
+                        # TEMPORARY: Will be replaced with ONE 3 class predictor
+                        components += self.components_predictor.predict(pole_subimage)
+
+                        pillar = self.pillar_predictor.predict(pole_subimage)
+
+                        # REMOVE ME AFTER TESTS AND RESEARCH
+                        if len(pillar) > 1:
+                            print("WARNING: MORE THAN ONE PILLAR DETECTED")
+
+                        # This since we use 2 nets in sequence predicting 2 and 1 classes, so there is
+                        # confusion how to keep track what class each object predicted belongs to.
+                        if pillar:
+                            components.append([2, pillar[0][1], pillar[0][2],
+                                               pillar[0][3], pillar[0][4], pillar[0][5]])
+
+                    # Check if any components have been detected on the pole
+                    if components:
+                        # Represent each component detected as a class object. Save components detected
+                        # to the dictionary with the appropriate key - image section (pole) on which they
+                        # were detected
+                        for component in components:
+                            components_detected[pole_image_section].append(
+                                                                DetectedObject(class_id=component[0],
+                                                                               confidence=component[1],
+                                                                               left=component[2],
+                                                                               top=component[3],
+                                                                               right=component[4],
+                                                                               bottom=component[5])
+                                                                          )
+
+        else:
+            # In case no poles have been detected, send the whole image for components detection
+            # in case there are any close-up components on the image
+            components = self.components_predictor.predict(image)
+
+            # TEMPORARY:
+            pillar = self.pillar_predictor.predict(image)
+
+            if len(pillar) > 1:
+                print("WARNING: MORE THAN ONE PILLAR DETECTED")
+
+            if pillar:
+                components.append([2, pillar[0][1], pillar[0][2],
+                                   pillar[0][3], pillar[0][4], pillar[0][5]])
+
+            if components:
+                whole_image = SubImage(image, "components")
+
+                for component in components:
+                    components_detected[whole_image].append(
+                                                DetectedObject(class_id=component[0],
+                                                               confidence=component[1],
+                                                               left=component[2],
+                                                               top=component[3],
+                                                               right=component[4],
+                                                               bottom=component[5])
+                                                            )
+
+        # TO DO: Could be combined in one function to speed up a bit
+
+        # TO DO: Is the step below even necessary with giving them names?
+        # Name objects detected by unique names instead of default 0,1,2 etc.
+        self.determine_object_class(components_detected)
+        # Modify pillar's BB
+        self.modify_pillars_BBs(image, components_detected)
+
+        return components_detected
+
+
+    def modify_pillars_BBs(self, image, componenets_detected):
+
+        for window, components in componenets_detected.items():
+
+            for component in components:
+                if component.class_id == 2:
+
+                    # Increase BB's height by moving upper BB border up and bottom down
+                    # UP COULD BE FURTHER PULLED
+                    new_top = component.BB_top * 0.8
+                    new_bot = component.BB_bottom * 1.2 if component.BB_bottom * 1.2 <\
+                                                        image.shape[0] else image.shape[0] - 10
+
+                    # IMPORTANT. Here we overwrite actual object's coordinates that will be used for
+                    # drawing a BB around it
+                    component.BB_top = int(new_top)
+                    component.BB_bottom = int(new_bot)
