@@ -17,7 +17,7 @@ class ResultsHandler:
         Method determining BB line thickness and text size based on the original image's size
         :return:
         """
-        line_thickness = (image.shape[0] * image.shape[1] // 1_000_000)
+        line_thickness = int(image.shape[0] * image.shape[1] // 1_000_000)
         text_size = 0.5 + (image.shape[0] * image.shape[1] // 5_000_000)
         text_boldness = 1 + (image.shape[0] * image.shape[1] // 2_000_000)
 

@@ -9,10 +9,12 @@ class DetectedObject:
             left,
             top,
             right,
-            bottom
+            bottom,
+            object_name=None
     ):
 
         self.class_id = class_id
+        self.object_name = object_name
         self.confidence = confidence
         self.BB_top = top
         self.BB_left = left
@@ -20,7 +22,6 @@ class DetectedObject:
         self.BB_bottom = bottom
 
         self.deficiency_status = None
-        self.object_name = None
 
         # Another set of coordinates to modify BBs of objects detected to achieve certain
         # things. For instance, to address an issue of insulators sticking out and not getting

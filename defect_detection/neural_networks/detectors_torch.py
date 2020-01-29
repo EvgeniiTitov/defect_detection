@@ -1,9 +1,10 @@
 from collections import defaultdict
 from .detections import DetectedObject, SubImage
 import numpy as np
+import sys
 
 
-class PoleDetector:
+class PolesDetector:
     """
     Class performing utility poles prediction using the YOLOv3 neural net and
     saving objects detected as class objects in a dictionary for subsequent
@@ -14,24 +15,71 @@ class PoleDetector:
     """
     def __init__(
             self,
-            predictor
+            detector
     ):
         # Initialize predictor
-        self.poles_predictor = predictor
+        self.poles_predictor = detector
 
-    def determine_object_class(self, poles_detected):
+        # Detector's dependencies
+        config_path = r"D:\Desktop\Reserve_NNs\weights_configs\try_9_poles\yolo-obj.cfg"
+        weights_path = r"D:\Desktop\Reserve_NNs\weights_configs\try_9_poles\yolo-obj_best.weights"
+        classes_path = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies\poles_classes.txt"
+        confidence = 0.2
+        NMS_thresh = 0.2
+        net_res = 416
+
+        # Initialize neural network and prepare it for predictions
+        self.poles_predictor.initialize_model(config=config_path,
+                                              weights=weights_path,
+                                              classes=classes_path,
+                                              confidence=confidence,
+                                              NMS_threshold=NMS_thresh,
+                                              network_resolution=net_res)
+
+        print("Pole detecting network initialized")
+
+    def predict(self, image):
         """
-        Checks object's class and names it. Since we've got multiple nets predicting objects
-        like 0,1,2 classes, we want to make sure we don't get confused later.
-        Dynamically creates new attribute
-        :return: Nothing. Simply names objects
+        :param image: Image on which to perform pole detection (the whole original image)
+        :return: Dictionary containing all poles detected on the image
         """
-        for window, poles in poles_detected.items():
+        # Create a dictionary to store any poles detected
+        poles_detected = defaultdict(list)
+
+        # Specify image section on which predictions take place
+        detecting_image_section = SubImage(image, "poles")
+
+        # Call neural net to get predictions. poles - list of lists, each object is represented as
+        # a list of 8 items: image index in the batch (0),4BBs coordinates, objectness score,
+        # the score of class with max confidence, index on this class
+        poles = self.poles_predictor.predict(image)
+
+        # Represent each object detected as a class object. Add all objects
+        # to the dictionary as values.
+        # Check if any poles have been detected otherwise return the empty dictionary
+        if poles:
             for pole in poles:
-                if pole.class_id == 0:
-                    pole.object_name = "metal"
+                # Check what class it is. Do it this way, otherwise after 2 nets in sequence you will have
+                # objects with class ids 0,1 and 0,1,2. Objects from both nets mix together. Add extra attr
+                if pole[7] == 0:
+                    class_name = "metal"
                 else:
-                    pole.object_name = "concrete"
+                    class_name = "concrete"
+
+                poles_detected[detecting_image_section].append(DetectedObject(class_id=pole[7],
+                                                                              object_name=class_name,
+                                                                              confidence=pole[5],
+                                                                              left=int(pole[1]),
+                                                                              top=int(pole[2]),
+                                                                              right=int(pole[3]),
+                                                                              bottom=int(pole[4])))
+
+            # Modify poles coordinates to widen them for better components detection (some might stick out, so
+            # they don't end up inside the objects BB. Hence, they get missed since component detection happens only
+            # inside the objects box.
+            self.modify_box_coordinates(image, poles_detected)
+
+        return poles_detected
 
     def modify_box_coordinates(self, image, poles_detected):
         """
@@ -75,40 +123,6 @@ class PoleDetector:
                                                    right=new_right_boundary,
                                                    bottom=new_bot_boundary)
 
-    def predict(self, image):
-        """
-        :param image: Image on which to perform pole detection (the whole original image)
-        :return: Dictionary containing all poles detected on the image
-        """
-        # Create a dictionary to keep the predictions made
-        poles_detected = defaultdict(list)
-
-        # Specify image section on which predictions take place
-        detecting_image_section = SubImage(image, "poles")
-
-        # Call neural net to get predictions. poles - list of lists, each object is represented as
-        # a list of 6 items: class, confidence, coordinates
-        poles = self.poles_predictor.predict(image)
-
-        # Represent each object detected as a class object. Add all objects
-        # to the dictionary as values.
-        # Check if any poles have been detected otherwise return the empty dictionary
-        if poles:
-            for pole in poles:
-                poles_detected[detecting_image_section].append(DetectedObject(class_id=pole[0],
-                                                                              confidence=pole[1],
-                                                                              left=pole[2],
-                                                                              top=pole[3],
-                                                                              right=pole[4],
-                                                                              bottom=pole[5]))
-            # Modify poles coordinates to widen them for better components detection (some might stick out, so
-            # they don't end up inside the objects BB. Hence, they get missed since component detection happens only
-            # inside the objects box.
-            self.modify_box_coordinates(image, poles_detected)
-            # Name objects detected by unique names instead of default 0,1,2 etc.
-            self.determine_object_class(poles_detected)
-
-        return poles_detected
 
 
 class ComponentsDetector:
@@ -124,11 +138,44 @@ class ComponentsDetector:
             components_predictor,
             pillar_predictor=None
     ):
+        confidence = 0.15
+        NMS_thresh = 0.25
+        net_res = 608
+
         # Initialize components predictor
         self.components_predictor = components_predictor
-
         # TEMPORARY. Will be replaced with 3 class predictor for concrete poles
         self.pillar_predictor = pillar_predictor
+
+        # Component detector's dependencies
+        comp_config_path = r"D:\Desktop\Reserve_NNs\weights_configs\try_6_components\yolo-obj.cfg"
+        comp_weights_path = r"D:\Desktop\Reserve_NNs\weights_configs\try_6_components\yolo-obj_best.weights"
+        comp_classes_path = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies\poles_classes.txt"
+
+        # Initialize neural network and prepare it for predictions
+        self.components_predictor.initialize_model(config=comp_config_path,
+                                                   weights=comp_weights_path,
+                                                   classes=comp_classes_path,
+                                                   confidence=confidence,
+                                                   NMS_threshold=NMS_thresh,
+                                                   network_resolution=net_res)
+
+        print("Components detecting network initialized")
+
+        # Pillar detector's dependencies
+        config_path = r"D:\Desktop\Reserve_NNs\weights_configs\try8_pillarsONLY\yolo-obj-pillars.cfg"
+        weights_path = r"D:\Desktop\Reserve_NNs\weights_configs\try8_pillarsONLY\yolo-obj_final.weights"
+        classes_path = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies\pillars_classes.txt"
+
+        # Initialize neural network and prepare it for predictions
+        self.pillar_predictor.initialize_model(config=config_path,
+                                                weights=weights_path,
+                                                classes=classes_path,
+                                                confidence=confidence,
+                                                NMS_threshold=NMS_thresh,
+                                                network_resolution=net_res)
+
+        print("Pillar detecting network initialized")
 
     def determine_object_class(self, components_detected):
         """
@@ -213,12 +260,12 @@ class ComponentsDetector:
                         # were detected
                         for component in components:
                             components_detected[pole_image_section].append(
-                                                                DetectedObject(class_id=component[0],
-                                                                               confidence=component[1],
-                                                                               left=component[2],
-                                                                               top=component[3],
-                                                                               right=component[4],
-                                                                               bottom=component[5])
+                                                                DetectedObject(class_id=component[7],
+                                                                               confidence=component[5],
+                                                                               left=int(component[1]),
+                                                                               top=int(component[2]),
+                                                                               right=int(component[3]),
+                                                                               bottom=int(component[4]))
                                                                           )
 
         else:
@@ -241,13 +288,13 @@ class ComponentsDetector:
 
                 for component in components:
                     components_detected[whole_image].append(
-                                                DetectedObject(class_id=component[0],
-                                                               confidence=component[1],
-                                                               left=component[2],
-                                                               top=component[3],
-                                                               right=component[4],
-                                                               bottom=component[5])
-                                                            )
+                                                DetectedObject(class_id=component[7],
+                                                               confidence=component[5],
+                                                               left=int(component[1]),
+                                                               top=int(component[2]),
+                                                               right=int(component[3]),
+                                                               bottom=int(component[4]))
+                                                           )
 
         # TO DO: Could be combined in one function to speed up a bit
 

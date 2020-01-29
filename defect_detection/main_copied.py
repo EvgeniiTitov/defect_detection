@@ -1,5 +1,5 @@
-from neural_networks import PolesDetector, ComponentsDetector
-from neural_networks import YOLOv3
+from neural_networks import PoleDetector, ComponentsDetector
+from neural_networks import NetPoles, NetElements, NetPillars
 from defect_detectors import DefectDetector
 from utils import ResultsHandler, MetaDataExtractor
 from collections import defaultdict
@@ -36,16 +36,15 @@ class MainDetector:
             self.defects = None
 
         # Initialize predicting neural nets
-        # self.poles_neuralnet = NetPoles()
-        poles_network = YOLOv3()
-        components_network = YOLOv3()
-        pillars_network = YOLOv3()
+        self.poles_neuralnet = NetPoles()
+        self.components_neuralnet = NetElements()
+        self.pillars_neuralnet = NetPillars()
 
         # Initialize detectors using the nets above to predict and postprocess the predictions
         # such as represent objects detected in the way we need, modify BBs etc.
-        self.pole_detector = PolesDetector(detector=poles_network)
-        self.component_detector = ComponentsDetector(components_predictor=components_network,
-                                                     pillar_predictor=pillars_network)
+        self.pole_detector = PoleDetector(self.poles_neuralnet)
+        self.component_detector = ComponentsDetector(components_predictor=self.components_neuralnet,
+                                                     pillar_predictor=self.pillars_neuralnet)
 
         # Initialize results handler that shows/saves/transforms into JSON detection results
         self.handler = ResultsHandler(save_path=self.save_path,
@@ -417,9 +416,7 @@ def parse_args():
 if __name__ == "__main__":
 
     SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
-    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\28.jpg"
-    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-
+    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\1.jpg"
     pole_number = 123
 
     detector = MainDetector(save_path=SAVE_PATH)
