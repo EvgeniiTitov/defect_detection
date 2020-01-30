@@ -17,7 +17,7 @@ class PolesDetector:
             self,
             detector
     ):
-        # Initialize predictor
+        # Initialize predictor - neural network
         self.poles_predictor = detector
 
         # Detector's dependencies
@@ -59,6 +59,7 @@ class PolesDetector:
         # Check if any poles have been detected otherwise return the empty dictionary
         if poles:
             for pole in poles:
+
                 # Check what class it is. Do it this way, otherwise after 2 nets in sequence you will have
                 # objects with class ids 0,1 and 0,1,2. Objects from both nets mix together. Add extra attr
                 if pole[7] == 0:
@@ -66,6 +67,7 @@ class PolesDetector:
                 else:
                     class_name = "concrete"
 
+                # Save poles detected as class objects - DetectedObject
                 poles_detected[detecting_image_section].append(DetectedObject(class_id=pole[7],
                                                                               object_name=class_name,
                                                                               confidence=pole[5],
@@ -110,6 +112,9 @@ class PolesDetector:
                 for pole in poles:
                     # If we've got 1+ poles on one frame or image, hence the shot was likely taken from
                     # further distance.
+
+                    # TO DO: Overlapping check here. If BBs overlap and a component happens to be in between,
+                    # it will be detected twice
 
                     new_left_boundary = int(pole.BB_left * 0.9)
                     new_right_boundary = int(pole.BB_right * 1.1) if int(pole.BB_right * 1.1) < \
@@ -235,23 +240,28 @@ class ComponentsDetector:
 
                     # ! Depending on the pole's class we want to detect different number of objects
                     if pole.class_id == 0:  # metal
-                        components += self.components_predictor.predict(pole_subimage)
+                        predictions = self.components_predictor.predict(pole_subimage)
+
+                        if predictions:
+                            components += predictions
 
                     elif pole.class_id == 1:  # concrete
                         # TEMPORARY: Will be replaced with ONE 3 class predictor
-                        components += self.components_predictor.predict(pole_subimage)
+                        predictions = self.components_predictor.predict(pole_subimage)
+
+                        if predictions:
+                            components += predictions
+
 
                         pillar = self.pillar_predictor.predict(pole_subimage)
-
-                        # REMOVE ME AFTER TESTS AND RESEARCH
-                        if len(pillar) > 1:
-                            print("WARNING: MORE THAN ONE PILLAR DETECTED")
 
                         # This since we use 2 nets in sequence predicting 2 and 1 classes, so there is
                         # confusion how to keep track what class each object predicted belongs to.
                         if pillar:
-                            components.append([2, pillar[0][1], pillar[0][2],
-                                               pillar[0][3], pillar[0][4], pillar[0][5]])
+                            assert len(pillar) == 1, "\nERROR: More than 1 pillar detected!"
+                            # Change class id to 2 for pillars to differ from the rest
+                            pillar[0][-1] = 2
+                            components.append(pillar[0])
 
                     # Check if any components have been detected on the pole
                     if components:
@@ -271,17 +281,20 @@ class ComponentsDetector:
         else:
             # In case no poles have been detected, send the whole image for components detection
             # in case there are any close-up components on the image
-            components = self.components_predictor.predict(image)
+            components = list()
+            predictions = self.components_predictor.predict(image)
+
+            if predictions:
+                components += predictions
 
             # TEMPORARY:
             pillar = self.pillar_predictor.predict(image)
 
-            if len(pillar) > 1:
-                print("WARNING: MORE THAN ONE PILLAR DETECTED")
+            assert pillar is None or len(pillar) == 1, "ERROR: More than 1 pillar detected"
 
             if pillar:
-                components.append([2, pillar[0][1], pillar[0][2],
-                                   pillar[0][3], pillar[0][4], pillar[0][5]])
+                pillar[0][-1] = 2
+                components.append(pillar[0])
 
             if components:
                 whole_image = SubImage(image, "components")

@@ -86,12 +86,13 @@ class YOLOv3:
         # 8: 4 BBs coordinates, objectness score, max conf score and its index
         output = self.process_predictions(raw_predictions)
 
-        if output is None:
+        # Got 0 instead of Tensor object. Nothing's been detected
+        if type(output) == int:
             return
 
         # UNFOLDING REDUCED (RESIZED) IMAGE. CONFIRM!
         im_dim = im_dim.repeat(output.size(0), 1)
-        scaling_factor = torch.min(416 / im_dim, 1)[0].view(-1, 1)
+        scaling_factor = torch.min(self.network_resolution / im_dim, 1)[0].view(-1, 1)
 
         output[:, [1, 3]] -= (self.input_dimension - scaling_factor * im_dim[:, 0].view(-1, 1)) / 2
         output[:, [2, 4]] -= (self.input_dimension - scaling_factor * im_dim[:, 1].view(-1, 1)) / 2

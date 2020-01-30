@@ -332,7 +332,7 @@ class MainDetector:
 
             # TEMPORARY: Process 1 in N frames to increase performance speed
             # TO CONSIDER: You can get total N of frames in advance. Might be useful
-            if frame_counter_object_detection % 5 != 0:
+            if frame_counter_object_detection % 7 != 0:
                 frame_counter_object_detection += 1
                 continue
 
@@ -417,8 +417,9 @@ def parse_args():
 if __name__ == "__main__":
 
     SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
-    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\28.jpg"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_3400.jpg"
     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
+    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES"
 
     pole_number = 123
 
