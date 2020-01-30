@@ -174,11 +174,11 @@ class ComponentsDetector:
 
         # Initialize neural network and prepare it for predictions
         self.pillar_predictor.initialize_model(config=config_path,
-                                                weights=weights_path,
-                                                classes=classes_path,
-                                                confidence=confidence,
-                                                NMS_threshold=NMS_thresh,
-                                                network_resolution=net_res)
+                                               weights=weights_path,
+                                               classes=classes_path,
+                                               confidence=confidence,
+                                               NMS_threshold=NMS_thresh,
+                                               network_resolution=416)
 
         print("Pillar detecting network initialized")
 
