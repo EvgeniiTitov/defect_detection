@@ -115,6 +115,7 @@ class MainDetector:
 
                 if any(item.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
 
+                    print("Image:", item)
                     path_to_image = os.path.join(path_to_data, item)
                     if_processed, defects = self.process_image(path_to_image=path_to_image,
                                                                pole_number=pole_number)
@@ -127,6 +128,7 @@ class MainDetector:
 
                 elif any(item.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
 
+                    print("Video:", item)
                     path_to_video = os.path.join(path_to_data, item)
                     if_processed, defects = self.process_video(path_to_video=path_to_video,
                                                                pole_number=pole_number)
@@ -353,10 +355,10 @@ def parse_args():
 if __name__ == "__main__":
 
     SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
-    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.jpg"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.jpg"
     #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\02639.jpg"
     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES"
+    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES"
 
     pole_number = 123
 

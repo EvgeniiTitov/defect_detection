@@ -136,7 +136,6 @@ class PolesDetector:
                                                    bottom=new_bot_boundary)
 
 
-
 class ComponentsDetector:
     """
     Class performing predictions of utility pole components on image / image

@@ -93,18 +93,18 @@ class DefectDetector:
 
         # Run inclination calculation
         inclination = self.calculate_angle(the_lines=pillar_edges)
-
         # TO DO: Check if metadata is available
 
         # Run cracks detection
         concrete_polygon = self.concrete_extractor.retrieve_polygon(the_lines=pillar_edges,
                                                                     image=pillar_subimage)
 
-        cv2.imshow("cropped", concrete_polygon)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        sys.exit()
+        # TO DO: Send polygon for cracks detection
+        import random, os
+        cv2.imwrite(os.path.join("D:\Desktop\system_output\cropped_elements", str(random.randint(0,10**3)))+'.jpg', concrete_polygon)
+        #cv2.imshow("cropped", concrete_polygon)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
 
     def calculate_angle(self, the_lines):
         """

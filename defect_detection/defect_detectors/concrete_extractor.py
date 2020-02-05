@@ -28,7 +28,7 @@ class ConcreteExtractor:
         # the_lines = [the_lines[1]]
 
         extended_lines += self.line_modifier().extend_lines(lines_to_extend=the_lines,
-                                                          image=image)
+                                                            image=image)
 
         # Once line's been extended, use them to extract the image section
         # restricted, defined by them
