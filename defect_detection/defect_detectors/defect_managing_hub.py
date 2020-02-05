@@ -13,35 +13,43 @@ class DefectDetector:
     """
     def __init__(
             self,
+            line_modifier,
+            concrete_extractor,
             cracks_detector=None,
-            dumpers_defect_defector=None,
+            dumpers_defect_detector=None,
             insulators_defect_detector=None,
-            camera_orientation=None
     ):
 
-        self.camera_orientation = camera_orientation
+        # Auxiliary modules
+        self.line_modifier = line_modifier
+        self.concrete_extractor = concrete_extractor(line_modifier=self.line_modifier)
 
-        # Actual defect detecting modules
+        # Defect detecting modules
         self.cracks_tester = cracks_detector
-        self.dumper_tester = dumpers_defect_defector
+        self.dumper_tester = dumpers_defect_detector
         self.insulator_tester = insulators_defect_detector
-
-        self.auxiliary_modules_initialized = False
 
         # Cache the lines once they have been found
         self.the_lines = None
 
+        print("Defect detecting hub initialized")
+
     def search_defects(
             self,
             detected_objects,
+            camera_orientation,
+            pole_number
     ):
         """
-
-        :param detected_objects:
+        Finds defects on objects provided
+        :param detected_objects: objects
+        :param camera_orientation: metadata in case image and its got metadata
+        :param pole_number: number of the pole which image's getting processed
         :return:
         """
         # Subimage is either a subimage of a pole if any have been detected or the whole original
-        # image on case no poles were found. Elements are objects detected within this subimage
+        # image ib case no pole have been found. Elements are objects detected within this subimage
+
         for subimage, elements in detected_objects.items():
 
             for element in elements:
@@ -49,7 +57,8 @@ class DefectDetector:
 
                     # Do not return anything. Change object's state - declare it defected or not
                     self.pillars_defects_detector(pillar=element,
-                                                  detection_section=subimage)
+                                                  detection_section=subimage,
+                                                  camera_angle=camera_orientation)
 
                 elif element.object_name.lower() == "dump":
                     # Search for defects on vibration dumpers
@@ -62,7 +71,8 @@ class DefectDetector:
     def pillars_defects_detector(
             self,
             pillar,
-            detection_section
+            detection_section,
+            camera_angle
     ):
         """
         Pipeline for detecting pillars inclination and cracks
@@ -70,34 +80,62 @@ class DefectDetector:
         :param detection_section:
         :return:
         """
-        # Check if inclination and cracks detectors have been already initialized
-        if not self.auxiliary_modules_initialized:
-            line_modifier = LineModifier(image=detection_section)
-            concrete_extractor = ConcreteExtractor(image=detection_section,
-                                                   line_modifier=line_modifier)
+        # Generate lines
+        # Reconstruct image of the pillar detected
+        pillar_subimage = np.array(detection_section.frame[pillar.top:pillar.bottom,
+                                                           pillar.left:pillar.right])
 
-            self.auxiliary_modules_initialized = True
+        # Search for pole's edges
+        pillar_edges = self.concrete_extractor.find_pole_edges(image=pillar_subimage)
 
-        # Find the edges first as a separate task
+        if not pillar_edges:
+            return
 
+        # Run inclination calculation
+        inclination = self.calculate_angle(the_lines=pillar_edges)
 
+        # TO DO: Check if metadata is available
 
+        # Run cracks detection
+        concrete_polygon = self.concrete_extractor.retrieve_polygon(the_lines=pillar_edges,
+                                                                    image=pillar_subimage)
 
-
-        component_subimage = np.array(detection_section.frame[pillar.top:pillar.bottom,
-                                                              pillar.left:pillar.right])
-
-        #
-
-        cv2.imshow("cropped", )
+        cv2.imshow("cropped", concrete_polygon)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
         sys.exit()
 
+    def calculate_angle(self, the_lines):
+        """
+        Calculates angle of the line(s) provided
+        :param the_lines: list of lists, lines found and filtered
+        :return: angle
+        """
+        if len(the_lines) == 2:
+            x1_1 = the_lines[0][0][0]
+            y1_1 = the_lines[0][0][1]
+            x2_1 = the_lines[0][1][0]
+            y2_1 = the_lines[0][1][1]
 
+            angle_1 = round(90 - np.rad2deg(np.arctan2(abs(y2_1 - y1_1), abs(x2_1 - x1_1))), 2)
 
+            x1_2 = the_lines[1][0][0]
+            y1_2 = the_lines[1][0][1]
+            x2_2 = the_lines[1][1][0]
+            y2_2 = the_lines[1][1][1]
 
+            angle_2 = round(90 - np.rad2deg(np.arctan2(abs(y2_2 - y1_2), abs(x2_2 - x1_2))), 2)
+
+            return round((angle_1 + angle_2) / 2, 2)
+
+        else:
+            x1 = the_lines[0][0][0]
+            y1 = the_lines[0][0][1]
+            x2 = the_lines[0][1][0]
+            y2 = the_lines[0][1][1]
+
+            return round(90 - np.rad2deg(np.arctan2(abs(y2 - y1), abs(x2 - x1))), 2)
 
 
     # def find_defects_pillars(self, pillars_detected, image, metadata):

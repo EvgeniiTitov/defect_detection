@@ -9,13 +9,11 @@ class ConcreteExtractor:
     def __init__(
             self,
             line_modifier,
-            image
     ):
 
         self.line_modifier = line_modifier
-        self.image = image
 
-    def retrieve_polygon(self, the_lines):
+    def retrieve_polygon(self, the_lines, image):
         """
 
         :param the_lines:
@@ -29,7 +27,8 @@ class ConcreteExtractor:
         # To check when just one line was detected
         # the_lines = [the_lines[1]]
 
-        extended_lines += self.line_modifier.extend_lines(the_lines=the_lines)
+        extended_lines += self.line_modifier().extend_lines(lines_to_extend=the_lines,
+                                                          image=image)
 
         # Once line's been extended, use them to extract the image section
         # restricted, defined by them
@@ -38,7 +37,7 @@ class ConcreteExtractor:
 
         points = np.array(extended_lines)
 
-        mask = np.zeros((self.image.shape[0], self.image.shape[1]))
+        mask = np.zeros((image.shape[0], image.shape[1]))
 
         # Fills  in the shape defined by the points to be white in the mask. The
         # rest is black
@@ -51,11 +50,11 @@ class ConcreteExtractor:
         mask = mask.astype(np.bool)
 
         # Create a white empty image
-        output = np.zeros_like(self.image)
+        output = np.zeros_like(image)
 
         # Use the Boolean mask to index into the image to extract out the pixels
         # we need. All pixels that happened to be mapped as True are taken
-        output[mask] = self.image[mask]
+        output[mask] = image[mask]
 
         output_copy = output.copy()
 
@@ -70,14 +69,14 @@ class ConcreteExtractor:
 
         return output_copy
 
-    def find_pole_edges(self):
+    def find_pole_edges(self, image):
         """Runs an image provided along the pole inclination angle
         calculating pipeline.
 
         :return: angle calculated if any pole edges found. Else returns None
         """
         # Find all lines on the image
-        raw_lines = self.generate_lines(self.image)
+        raw_lines = self.generate_lines(image)
 
         # Rewrite lines in a proper form (x1,y1), (x2,y2) if any found. List of lists
         if raw_lines is not None:
@@ -91,13 +90,13 @@ class ConcreteExtractor:
 
         # Process results: merge raw lines where possible to decrease the total
         # number of lines we are working with
-        merged_lines = self.line_modifier.merge_lines(lines_to_merge)
+        merged_lines = self.line_modifier().merge_lines(lines_to_merge=lines_to_merge)
 
         # Pick lines based on which the angle will be calculated. Ideally we are looking for 2 lines
         # which represent both pole's edges. If there is 1, warn user and calculate the angle based
         # on it. Pick two opposite and parrallel lines within the merged ones. We assume this is pole
         if len(merged_lines) > 1:
-            the_lines = self.retrieve_pole_lines(merged_lines, self.image)
+            the_lines = self.retrieve_pole_lines(merged_lines, image)
 
         elif len(merged_lines) == 1:
             print("WARNING: Only one line found, angle will be calculated based on it")
@@ -110,37 +109,6 @@ class ConcreteExtractor:
         assert the_lines and len(the_lines) == 1 or len(the_lines) == 2, "ERROR: Wrong number of lines found"
 
         return the_lines
-
-    # def calculate_angle(self, the_lines):
-    #     """
-    #     Calculates angle of the line(s) provided
-    #     :param the_lines: list of lists, lines found and filtered
-    #     :return: angle
-    #     """
-    #     if len(the_lines) == 2:
-    #         x1_1 = the_lines[0][0][0]
-    #         y1_1 = the_lines[0][0][1]
-    #         x2_1 = the_lines[0][1][0]
-    #         y2_1 = the_lines[0][1][1]
-    #
-    #         angle_1 = round(90 - np.rad2deg(np.arctan2(abs(y2_1 - y1_1), abs(x2_1 - x1_1))), 2)
-    #
-    #         x1_2 = the_lines[1][0][0]
-    #         y1_2 = the_lines[1][0][1]
-    #         x2_2 = the_lines[1][1][0]
-    #         y2_2 = the_lines[1][1][1]
-    #
-    #         angle_2 = round(90 - np.rad2deg(np.arctan2(abs(y2_2 - y1_2), abs(x2_2 - x1_2))), 2)
-    #
-    #         return round((angle_1 + angle_2) / 2, 2)
-    #
-    #     else:
-    #         x1 = the_lines[0][0][0]
-    #         y1 = the_lines[0][0][1]
-    #         x2 = the_lines[0][1][0]
-    #         y2 = the_lines[0][1][1]
-    #
-    #         return round(90 - np.rad2deg(np.arctan2(abs(y2 - y1), abs(x2 - x1))), 2)
 
     def retrieve_pole_lines(self, merged_lines, image):
         """

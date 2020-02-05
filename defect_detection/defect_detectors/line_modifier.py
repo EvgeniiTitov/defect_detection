@@ -9,19 +9,17 @@ class LineModifier:
     Allows to extend the lines representing concrete pole's edges in order to
     extract the area confined by these lines later
     """
-    def __init__(
-            self,
-            image,
-    ):
+    def __init__(self):
 
-        self.image = image
-
-        # TO DO: Use setters with value check to set values for these parameters.
         self._angle_thresh = 70
         self._min_distance_to_merge = 30
         self._min_angle_to_merge = 30
 
-    def extend_lines(self, lines_to_extend):
+    def extend_lines(
+            self,
+            lines_to_extend,
+            image
+    ):
         """
 
         :param lines_to_extend:
@@ -42,13 +40,13 @@ class LineModifier:
 
                 # y = image.shape[0]
                 x_bottom = int(
-                    round(x2 + (x2 - x1) / curr_lenght * (self.image.shape[0] - y2))
+                    round(x2 + (x2 - x1) / curr_lenght * (image.shape[0] - y2))
                 )
                 # Dots are intentionally appended *flat* to the list, not typical
                 # syntax (x1,y1), (x2,y2) etc
                 # lines_extended.append([(x_top, 0), (x_bottom, image.shape[0])])
                 lines_extended.append([x_top, 0])
-                lines_extended.append([x_bottom, self.image.shape[0]])
+                lines_extended.append([x_bottom, image.shape[0]])
 
         else:
             # If the algorithm failed to find two lines and returned only one,
@@ -64,18 +62,18 @@ class LineModifier:
 
             # y = image.shape[0]
             x_bottom = int(
-                round(x2 + (x2 - x1) / curr_lenght * (self.image.shape[0] - y2))
+                round(x2 + (x2 - x1) / curr_lenght * (image.shape[0] - y2))
             )
 
             lines_extended.append([x_top, 0])
-            lines_extended.append([x_bottom, self.image.shape[0]])
+            lines_extended.append([x_bottom, image.shape[0]])
 
             # Draw second approximate line parallel to the first one.
-            x_new_top = self.image.shape[1] - x_bottom
-            x_new_bottom = self.image.shape[1] - x_top
+            x_new_top = image.shape[1] - x_bottom
+            x_new_bottom = image.shape[1] - x_top
 
             lines_extended.append([x_new_top, 0])
-            lines_extended.append([x_new_bottom, self.image.shape[0]])
+            lines_extended.append([x_new_bottom, image.shape[0]])
 
         return lines_extended
 

@@ -1,7 +1,7 @@
 from collections import defaultdict
 from .detections import DetectedObject, SubImage
 import numpy as np
-import sys
+import os
 
 
 class PolesDetector:
@@ -12,7 +12,11 @@ class PolesDetector:
     Image section on which poles have been detected serves the dictionary's key
     role. In this case we consider the whole image.
     As input it accepts a plain image.
+    Weights: Pole try 9.
     """
+    path_to_dependencies = r"D:\Desktop\Reserve_NNs\DEPENDENCIES"
+    dependencies = "poles"
+
     def __init__(
             self,
             detector
@@ -21,9 +25,12 @@ class PolesDetector:
         self.poles_predictor = detector
 
         # Detector's dependencies
-        config_path = r"D:\Desktop\Reserve_NNs\weights_configs\try_9_poles\yolo-obj.cfg"
-        weights_path = r"D:\Desktop\Reserve_NNs\weights_configs\try_9_poles\yolo-obj_best.weights"
-        classes_path = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies\poles_classes.txt"
+        config_path = os.path.join(self.path_to_dependencies, self.dependencies + ".cfg")
+        weights_path = os.path.join(self.path_to_dependencies, self.dependencies + ".weights")
+        classes_path = os.path.join(self.path_to_dependencies, self.dependencies + ".txt")
+
+        # Detector's parameters
+        # TO DO: Move it to txt file, so that a user doesn't need to open the code to change it.
         confidence = 0.2
         NMS_thresh = 0.2
         net_res = 416
@@ -137,30 +144,38 @@ class ComponentsDetector:
     All components detected get represented as class objects and are saved in a dictionary
     as values, whereas the image section on which the detection was performed serves the
     role of a dictionary key.
+    Weights: Try 6 components
     """
+    path_to_dependencies = r"D:\Desktop\Reserve_NNs\DEPENDENCIES"
+    dependencies_comp = "components"
+    dependencies_pil = "pillars"
+
     def __init__(
             self,
             components_predictor,
             pillar_predictor=None
     ):
-        confidence = 0.15
-        NMS_thresh = 0.25
-        net_res = 608
 
         # Initialize components predictor
         self.components_predictor = components_predictor
         # TEMPORARY. Will be replaced with 3 class predictor for concrete poles
         self.pillar_predictor = pillar_predictor
 
-        # Component detector's dependencies
-        comp_config_path = r"D:\Desktop\Reserve_NNs\weights_configs\try_6_components\yolo-obj.cfg"
-        comp_weights_path = r"D:\Desktop\Reserve_NNs\weights_configs\try_6_components\yolo-obj_best.weights"
-        comp_classes_path = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies\poles_classes.txt"
+        # Detector's parameters
+        # TO DO: Move it to txt file, so that a user doesn't need to open the code to change it.
+        confidence = 0.15
+        NMS_thresh = 0.25
+        net_res = 608
+
+        # Detector's dependencies
+        config_path_comp = os.path.join(self.path_to_dependencies, self.dependencies_comp + ".cfg")
+        weights_path_comp = os.path.join(self.path_to_dependencies, self.dependencies_comp + ".weights")
+        classes_path_comp = os.path.join(self.path_to_dependencies, self.dependencies_comp + ".txt")
 
         # Initialize neural network and prepare it for predictions
-        self.components_predictor.initialize_model(config=comp_config_path,
-                                                   weights=comp_weights_path,
-                                                   classes=comp_classes_path,
+        self.components_predictor.initialize_model(config=config_path_comp,
+                                                   weights=weights_path_comp,
+                                                   classes=classes_path_comp,
                                                    confidence=confidence,
                                                    NMS_threshold=NMS_thresh,
                                                    network_resolution=net_res)
@@ -168,14 +183,14 @@ class ComponentsDetector:
         print("Components detecting network initialized")
 
         # Pillar detector's dependencies
-        config_path = r"D:\Desktop\Reserve_NNs\weights_configs\try8_pillarsONLY\yolo-obj-pillars.cfg"
-        weights_path = r"D:\Desktop\Reserve_NNs\weights_configs\try8_pillarsONLY\yolo-obj_final.weights"
-        classes_path = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies\pillars_classes.txt"
+        config_path_pil = os.path.join(self.path_to_dependencies, self.dependencies_pil + ".cfg")
+        weights_path_pil = os.path.join(self.path_to_dependencies, self.dependencies_pil + ".weights")
+        classes_path_pil = os.path.join(self.path_to_dependencies, self.dependencies_pil + ".txt")
 
         # Initialize neural network and prepare it for predictions
-        self.pillar_predictor.initialize_model(config=config_path,
-                                               weights=weights_path,
-                                               classes=classes_path,
+        self.pillar_predictor.initialize_model(config=config_path_pil,
+                                               weights=weights_path_pil,
+                                               classes=classes_path_pil,
                                                confidence=confidence,
                                                NMS_threshold=NMS_thresh,
                                                network_resolution=416)

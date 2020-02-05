@@ -1,6 +1,6 @@
 from neural_networks import PolesDetector, ComponentsDetector
 from neural_networks import YOLOv3
-from defect_detectors import DefectDetector
+from defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
 from utils import ResultsHandler, MetaDataExtractor
 from collections import defaultdict
 import cv2
@@ -33,7 +33,7 @@ class MainDetector:
             # happens right before sending image along the pipeline
             self.meta_data_extractor = MetaDataExtractor()
         else:
-            self.defects = None
+            self.defects = False
 
         # Initialize predicting neural nets
         # self.poles_neuralnet = NetPoles()
@@ -46,6 +46,12 @@ class MainDetector:
         self.pole_detector = PolesDetector(detector=poles_network)
         self.component_detector = ComponentsDetector(components_predictor=components_network,
                                                      pillar_predictor=pillars_network)
+
+        self.defect_detector = DefectDetector(line_modifier=LineModifier,
+                                              concrete_extractor=ConcreteExtractor,
+                                              cracks_detector=None,
+                                              dumpers_defect_detector=None,
+                                              insulators_defect_detector=None)
 
         # Initialize results handler that shows/saves/transforms into JSON detection results
         self.handler = ResultsHandler(save_path=self.save_path,
@@ -140,75 +146,6 @@ class MainDetector:
 
         else:
             raise TypeError("ERROR: Wrong input. Neither folder nor file")
-
-    # def process_input_data(self, input_data):
-    #     """
-    #     Main function that receives a dictionary containing all input data from a user (image,
-    #     video, folder (that can contain image(s) and video(s))
-    #     It runs across the dicrionary and depending on object's type if send it to the appropriate
-    #     handling method.
-    #     """
-    #     for input_type, path_to_data in input_data.items():
-    #
-    #         if input_type == "image":
-    #             # Check if an image provided is actually of a format that can be opened
-    #             if not any(
-    #                     os.path.split(path_to_data)[-1].endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]
-    #                        ):
-    #                 print(f"ERROR: {path_to_data} is not an image. Cant be processed")
-    #                 continue
-    #
-    #             # Process an image, check its extension, metadata and send for defect detection
-    #             successfully_processed = self.process_image(path_to_data)
-    #
-    #             image_name = os.path.splitext(os.path.basename(path_to_data))[0]
-    #             if successfully_processed:
-    #                 print(f"Image: {image_name}'s been processed and saved to {self.save_path}")
-    #             else:
-    #                 continue
-    #
-    #         elif input_type == "video":
-    #             # Check video's extension
-    #             if not any(
-    #                     os.path.split(path_to_data)[-1].endswith(ext) for ext in ["avi", "MP4", "AVI"]
-    #                        ):
-    #                 print(f"ERROR: Cannot open video {path_to_data}. Wrong extension!")
-    #                 continue
-    #
-    #             successfully_processed = self.process_video(path_to_data)
-    #
-    #             video_name = os.path.splitext(os.path.basename(path_to_data))
-    #             if successfully_processed:
-    #                 print(f"Video: {video_name}'s been processed and saved to {self.save_path}")
-    #             else:
-    #                 continue
-    #
-    #         elif input_type == "folder":
-    #             # There might be multiple image(s) or video(s) in a folder provided
-    #             for filename in os.listdir(path_to_data):
-    #
-    #                 # Check if a file is an image
-    #                 if any(filename.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
-    #                     processed = self.process_image(os.path.join(path_to_data, filename))
-    #
-    #                     if processed:
-    #                         print(f"Image {filename}'s been processed and saved to {self.save_path}")
-    #                     else:
-    #                         continue
-    #
-    #                 # Check if a file is a video
-    #                 if any(filename.endswith(ext) for ext in ["avi", "MP4", "AVI"]):
-    #                     processed = self.process_video(os.path.join(path_to_data, filename))
-    #
-    #                     if processed:
-    #                         print(f"Video: {filename}'s been processed and saved to {self.save_path}")
-    #
-    #                 # If a file is neither a video nor an image, skip it
-    #                 else:
-    #                     continue
-    #         else:
-    #             print("ERROR: Something went wrong. Wrong input type")
-    #             sys.exit()
 
     def process_image(
             self,
@@ -306,10 +243,9 @@ class MainDetector:
         """
         # Run object detection using networks once in N frames
         frame_counter_object_detection = 0
+
         # Run object detection AND defect detection once in M frames
         frame_counter_defect_detection = 0
-
-        defect_detector = DefectDetector(camera_orientation=camera_orientation)
 
         # TO DO:
         # - FRAME TO FRAME TRACKING FOR VIDEOS TO ENSURE SAME DEFECTS APPEAR ON MULTIPLE FRAMES
@@ -317,7 +253,7 @@ class MainDetector:
 
         # Start a loop to process all video frames, for images just one run through
         while cv2.waitKey(1) < 0:
-            time_1 = time.time()
+            start = time.time()
 
             if cap and video_writer:
                 has_frame, image_to_process = cap.read()
@@ -342,13 +278,12 @@ class MainDetector:
             # Detect components on each pole detected (insulators, dumpers, concrete pillars)
             components = self.component_detector.predict(image_to_process, poles)
 
-            # # DEFECT DETECTION
-            # if self.defects and components:
-            #     print("\nInitializing defect detector...")
-            #
-            #     # ARE WE RETURNING ANYTHING? WE FIND DEFECTS AND CHANGE OBJECT'S ATTRUBUTE TO DEFECTED
-            #     detected_defects = defect_detector.search_defects(detected_objects=components,
-            #                                                       image=image)
+            # DEFECT DETECTION
+            if self.defects and components:
+
+                 detected_defects = self.defect_detector.search_defects(detected_objects=components,
+                                                                        camera_orientation=camera_orientation,
+                                                                        pole_number=pole_number)
 
             # STORE ALL DEFECTS FOUND IN ONE PLACE. JSON?
             # Photo name (ideally pole's number) -> all elements detected -> defect on those elements
@@ -381,7 +316,8 @@ class MainDetector:
             frame_counter_object_detection += 1
             frame_counter_defect_detection += 1
 
-            print("Time taken:", time.time() - time_1, "\n")
+            total_time = time.time() - start
+            print("Time taken:", total_time, "\n")
 
             # Break out of the while loop in case we are dealing with an image.
             if image is not None:
@@ -417,9 +353,10 @@ def parse_args():
 if __name__ == "__main__":
 
     SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_3400.jpg"
+    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.jpg"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\02639.jpg"
     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES"
 
     pole_number = 123
 
@@ -427,73 +364,3 @@ if __name__ == "__main__":
 
     defects = detector.process_data(path_to_data=PATH_TO_DATA,
                                     pole_number=pole_number)
-
-
-
-    # arguments = parse_args()
-    #
-    # # TO DO: potentially can get more than 1 input, needs to be addressed
-    # if not any((arguments.image, arguments.video, arguments.folder)):
-    #     print("ERROR: No data to process has been provided")
-    #     sys.exit()
-    #
-    # if not os.path.exists(arguments.save_path):
-    #     os.mkdir(arguments.save_path)
-    # else:
-    #     if not os.path.isdir(arguments.save_path):
-    #         print("ERROR: Wrong SAVE PATH. It is not a folder")
-    #         sys.exit()
-    #
-    # if arguments.crop_path:
-    #     if not os.path.exists(arguments.crop_path):
-    #         os.mkdir(arguments.crop_path)
-    #     else:
-    #         if not os.path.isdir(arguments.crop_path):
-    #             print("ERROR: Wrong CROP PATH. It is not a folder")
-    #             sys.exit()
-    #
-    # # Check what defects user wants to detect
-    # defects_to_find = dict()
-    #
-    # if arguments.concrete_pole_defects:
-    #     defects_to_find['concrete_pole_defects'] = 1
-    # if arguments.dumper_defects:
-    #     defects_to_find['dumper_defects'] = 1
-    # if arguments.insulator_defects:
-    #     defects_to_find['insulator_defects'] = 1
-    #
-    # # Initialize main class
-    # detector = MainDetector(save_path=arguments.save_path,
-    #                         crop_path=arguments.crop_path,
-    #                         defects=defects_to_find)
-    #
-    # # Dictionary to keep track of all the data provided by a user that needs
-    # # to be processed
-    # data_to_process = dict()
-    #
-    # if arguments.image:
-    #     if not os.path.isfile(arguments.image):
-    #         print("ERROR: Provided image is not an image")
-    #         sys.exit()
-    #
-    #     data_to_process["image"] = arguments.image
-    #
-    # if arguments.video:
-    #     if not os.path.isfile(arguments.video):
-    #         print("ERROR: Provided video is not a video")
-    #         sys.exit()
-    #
-    #     data_to_process["video"] = arguments.video
-    #
-    # if arguments.folder:
-    #     if not os.path.isdir(arguments.folder):
-    #         print("The provided file is not a folder")
-    #         sys.exit()
-    #
-    #     data_to_process["folder"] = arguments.folder
-    #
-    # start_time = time.time()
-    # detector.process_input_data(data_to_process)
-    # time_elapsed = time.time() - start_time
-    #
-    # print("\nAll data's been processed in:", time_elapsed)
