@@ -12,8 +12,8 @@ def predict():
     # SEND POLE'S NUMBER
     pole_number = data["pole_number"]
 
-    defects = detector.process_data(path_to_data=path_to_data,
-                                    pole_number=pole_number)
+    defects = detector.parse_input_data(path_to_data=path_to_data,
+                                        pole_number=pole_number)
 
     output = {"defects": defects}
 

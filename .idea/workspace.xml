@@ -2,16 +2,20 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/../aim_assistant/.idea/aim_assistant.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/database/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/database/databases.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/defect_detection/defect_detectors/concrete_extractor.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/defect_detectors/concrete_extractor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/defect_detectors/concrete_polygon_extractor.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/defect_detection/defect_detectors/defect_managing_hub.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/defect_detectors/defect_managing_hub.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/defect_detectors/inclination_detector.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/defect_detectors/line_modifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/defect_detectors/line_modifier.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/defect_detection/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/main_copied.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/detectors_torch.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/detectors_torch.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/old_models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/predictors.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/old_detectors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/detectors_torch.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/neural_networks/detectors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/neural_networks/models_torch.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/templates/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/utils.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -20,14 +24,17 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.57155555">
+    <splitter split-orientation="horizontal" split-proportion="0.48305753">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/defect_detection/main.py">
+            <entry file="file://$PROJECT_DIR$/defect_detection/driver_concurrent.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="349">
-                  <caret line="122" column="44" lean-forward="true" selection-start-line="122" selection-start-column="44" selection-end-line="122" selection-end-column="44" />
+                <state relative-caret-position="830">
+                  <caret line="289" column="4" lean-forward="true" selection-start-line="289" selection-start-column="4" selection-end-line="289" selection-end-column="4" />
+                  <folding>
+                    <element signature="e#0#61#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -36,11 +43,38 @@
       </split-first>
       <split-second>
         <leaf>
-          <file pinned="false" current-in-tab="true">
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/defect_managing_hub.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="600">
-                  <caret line="103" column="133" selection-start-line="103" selection-start-column="133" selection-end-line="103" selection-end-column="133" />
+                <state relative-caret-position="484">
+                  <caret line="103" column="50" lean-forward="true" selection-start-line="103" selection-start-column="50" selection-end-line="103" selection-end-column="50" />
+                  <folding>
+                    <element signature="e#0#18#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/concrete_extractor.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="198">
+                  <caret line="48" column="80" selection-start-line="48" selection-start-column="80" selection-end-line="48" selection-end-column="80" />
+                  <folding>
+                    <element signature="e#0#18#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/line_modifier.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="286">
+                  <caret line="82" column="60" lean-forward="true" selection-start-line="82" selection-start-column="60" selection-end-line="82" selection-end-column="60" />
+                  <folding>
+                    <element signature="e#0#11#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -61,6 +95,7 @@
     <findStrings>
       <find>process_in</find>
       <find>time</find>
+      <find>.cpu</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -75,8 +110,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/defect_detection/neural_networks/network_block1.py" />
-        <option value="$PROJECT_DIR$/defect_detection/neural_networks/initialization.py" />
         <option value="$PROJECT_DIR$/defect_detection/weights_configs/obj.names.txt" />
         <option value="$PROJECT_DIR$/defect_detection/neural_networks/postprocessing.py" />
         <option value="$PROJECT_DIR$/defect_detection/weights_configs/settings" />
@@ -108,7 +141,6 @@
         <option value="$PROJECT_DIR$/defect_detection/__main__.py" />
         <option value="$PROJECT_DIR$/defect_detection/templates/index.html" />
         <option value="$PROJECT_DIR$/defect_detection/app2.py" />
-        <option value="$PROJECT_DIR$/defect_detection/app.py" />
         <option value="$PROJECT_DIR$/defect_detection/defect_detectors/LineModifier.py" />
         <option value="$PROJECT_DIR$/defect_detection/defect_detectors/ConcreteExtractor.py" />
         <option value="$PROJECT_DIR$/defect_detection/neural_networks/predictors.py" />
@@ -117,15 +149,18 @@
         <option value="$PROJECT_DIR$/defect_detection/neural_networks/models.py" />
         <option value="$PROJECT_DIR$/defect_detection/neural_networks/predictors_torch.py" />
         <option value="$PROJECT_DIR$/defect_detection/main_copied.py" />
-        <option value="$PROJECT_DIR$/defect_detection/utils.py" />
         <option value="$PROJECT_DIR$/defect_detection/neural_networks/detections.py" />
-        <option value="$PROJECT_DIR$/defect_detection/neural_networks/__init__.py" />
         <option value="$PROJECT_DIR$/defect_detection/neural_networks/models_torch.py" />
-        <option value="$PROJECT_DIR$/defect_detection/defect_detectors/line_modifier.py" />
-        <option value="$PROJECT_DIR$/defect_detection/defect_detectors/concrete_extractor.py" />
+        <option value="$PROJECT_DIR$/defect_detection/app.py" />
         <option value="$PROJECT_DIR$/defect_detection/neural_networks/detectors_torch.py" />
-        <option value="$PROJECT_DIR$/defect_detection/defect_detectors/defect_managing_hub.py" />
+        <option value="$PROJECT_DIR$/defect_detection/neural_networks/__init__.py" />
+        <option value="$PROJECT_DIR$/defect_detection/neural_networks/detectors.py" />
         <option value="$PROJECT_DIR$/defect_detection/main.py" />
+        <option value="$PROJECT_DIR$/defect_detection/utils.py" />
+        <option value="$PROJECT_DIR$/defect_detection/defect_detectors/line_modifier.py" />
+        <option value="$PROJECT_DIR$/defect_detection/driver_concurrent.py" />
+        <option value="$PROJECT_DIR$/defect_detection/defect_detectors/defect_managing_hub.py" />
+        <option value="$PROJECT_DIR$/defect_detection/defect_detectors/concrete_extractor.py" />
       </list>
     </option>
   </component>
@@ -141,7 +176,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -154,26 +188,34 @@
               <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
               <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
+              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
+              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
+              <item name="defect_detectors" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="TEXT" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/defect_detection/neural_networks" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection" />
-      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs" />
-    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\database" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\neural_networks" />
+      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection" />
+      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -337,13 +379,13 @@
     <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="1" visible="true" weight="0.11347517" />
+      <window_info content_ui="combo" id="Project" order="1" weight="0.09889677" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="0" visible="true" weight="0.09" />
+      <window_info anchor="bottom" id="Terminal" order="0" weight="0.033333335" />
       <window_info anchor="bottom" id="Event Log" order="1" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="2" />
       <window_info anchor="bottom" id="Message" order="3" />
-      <window_info anchor="bottom" id="Find" order="4" weight="0.036666665" />
+      <window_info anchor="bottom" id="Find" order="4" weight="0.17888889" />
       <window_info anchor="bottom" id="Version Control" order="5" weight="0.032502707" />
       <window_info anchor="bottom" id="Run" order="6" weight="0.033333335" />
       <window_info anchor="bottom" id="Debug" order="7" weight="0.4" />
@@ -356,7 +398,7 @@
     </layout>
     <layout-to-restore>
       <window_info id="Favorites" order="0" side_tool="true" />
-      <window_info content_ui="combo" id="Project" order="1" weight="0.093774624" />
+      <window_info content_ui="combo" id="Project" order="1" weight="0.14460205" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="0" visible="true" weight="0.033333335" />
       <window_info anchor="bottom" id="Event Log" order="1" side_tool="true" />
@@ -379,25 +421,8 @@
     <option name="LAST_COMMIT_MESSAGE" value="test" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/defect_detection/delete_me.py" />
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/predictors(old).py" />
-    <entry file="file://$PROJECT_DIR$/defect_detection/weights_configs/settings.txt" />
-    <entry file="file://$PROJECT_DIR$/defect_detection/weights_configs/obj.names.txt" />
-    <entry file="file://D:/Desktop/Reserve_NNs/Codes/Code_Project0.5_EndOfStage1/OpenCV/OD_original_code.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="390">
-          <caret line="127" column="32" selection-start-line="127" selection-start-column="17" selection-end-line="127" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://D:/Desktop/Reserve_NNs/Codes/Code_Project0.5_EndOfStage1/OpenCV/OD_original_code.py" />
     <entry file="file://$PROJECT_DIR$/defect_detection/__main__(old).py" />
-    <entry file="file://$PROJECT_DIR$/defect_detection/database/databases.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="126">
-          <caret line="6" column="18" selection-start-line="6" selection-start-column="18" selection-end-line="6" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/defect_detection/preprocessing/__init__.py" />
     <entry file="file://$USER_HOME$/Downloads/interface_2.py" />
     <entry file="file://$PROJECT_DIR$/requirements.txt">
@@ -448,18 +473,8 @@
     <entry file="file://$PROJECT_DIR$/sample_output/DJI_0195_600_out.jpg">
       <provider selected="true" editor-type-id="images" />
     </entry>
-    <entry file="file://D:/Desktop/Reserve_NNs/Configs/config_2classes_poles/yolo-obj.cfg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-13869" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/templates/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="17" column="7" lean-forward="true" selection-start-line="17" selection-start-column="7" selection-end-line="17" selection-end-column="7" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://D:/Desktop/Reserve_NNs/Configs/config_2classes_poles/yolo-obj.cfg" />
+    <entry file="file://$PROJECT_DIR$/defect_detection/templates/index.html" />
     <entry file="file://$PROJECT_DIR$/defect_detection/app2.py" />
     <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/old_detectors.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -495,100 +510,7 @@
     <entry file="file://$PROJECT_DIR$/defect_detection/dependencies/components_classes.txt">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1200">
-          <caret line="48" column="6" selection-start-line="48" selection-start-column="6" selection-end-line="48" selection-end-column="6" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="50">
-          <caret line="2" column="62" selection-start-line="2" selection-start-column="62" selection-end-line="2" selection-end-column="62" />
-          <folding>
-            <element signature="e#0#48#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="3" lean-forward="true" selection-start-line="3" selection-end-line="3" />
-          <folding>
-            <element signature="e#0#47#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/app.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="700">
-          <caret line="28" lean-forward="true" selection-start-line="28" selection-end-line="28" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/concrete_extractor.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1300">
-          <caret line="31" lean-forward="true" selection-start-line="31" selection-end-line="31" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/line_modifier.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="20" column="14" selection-start-line="20" selection-start-column="14" selection-end-line="20" selection-end-column="14" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/main_copied.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7770">
-          <caret line="427" lean-forward="true" selection-start-line="427" selection-end-line="427" />
-          <folding>
-            <element signature="e#0#60#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/detections.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="649">
-          <caret line="104" selection-start-line="104" selection-end-line="104" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/darknet_torch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="6" lean-forward="true" selection-start-line="6" selection-end-line="6" />
-          <folding>
-            <element signature="e#0#32#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/models_torch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="25">
-          <caret line="3" column="18" selection-start-line="3" selection-start-column="18" selection-end-line="3" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/main_copied.py" />
     <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/old_models.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2350">
@@ -599,47 +521,132 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/detectors_torch.py">
+    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/inclination_detector.py" />
+    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/concrete_polygon_extractor.py" />
+    <entry file="file://$PROJECT_DIR$/defect_detection/database/databases.py" />
+    <entry file="file://$PROJECT_DIR$/defect_detection/database/__init__.py" />
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/detections.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="769">
-          <caret line="140" column="43" lean-forward="true" selection-start-line="140" selection-start-column="43" selection-end-line="140" selection-end-column="43" />
+        <state relative-caret-position="425">
+          <caret line="23" column="37" lean-forward="true" selection-start-line="23" selection-start-column="37" selection-end-line="23" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/darknet_torch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="200">
+          <caret line="8" column="22" lean-forward="true" selection-start-line="8" selection-start-column="22" selection-end-line="8" selection-end-column="22" />
+          <folding>
+            <element signature="e#0#32#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/Downloads/Telegram Desktop/code.platinum" />
+    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="66">
+          <caret line="3" lean-forward="true" selection-start-line="3" selection-end-line="3" />
+          <folding>
+            <element signature="e#0#47#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/models_new.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="44">
+          <caret line="2" column="56" selection-start-line="2" selection-start-column="56" selection-end-line="2" selection-end-column="56" />
+          <folding>
+            <element signature="e#0#48#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/detectors.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-814">
+          <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
           <folding>
             <element signature="e#0#35#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/inclination_detector.py">
+    <entry file="file://$PROJECT_DIR$/defect_detection/neural_networks/models.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-5408">
-          <caret line="16" column="24" lean-forward="true" selection-start-line="16" selection-start-column="24" selection-end-line="16" selection-end-column="24" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/concrete_polygon_extractor.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3750">
-          <caret line="150" lean-forward="true" selection-start-line="150" selection-end-line="150" />
+        <state relative-caret-position="286">
+          <caret line="43" column="18" selection-start-line="43" selection-start-column="18" selection-end-line="43" selection-end-column="18" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/defect_managing_hub.py">
+    <entry file="file://$PROJECT_DIR$/defect_detection/app.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="600">
-          <caret line="103" column="133" selection-start-line="103" selection-start-column="133" selection-end-line="103" selection-end-column="133" />
+        <state relative-caret-position="66">
+          <caret line="3" column="21" lean-forward="true" selection-start-line="3" selection-start-column="21" selection-end-line="3" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#29#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="946">
+          <caret line="315" column="42" selection-start-line="315" selection-start-column="42" selection-end-line="315" selection-end-column="42" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/defect_detection/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="349">
-          <caret line="122" column="44" lean-forward="true" selection-start-line="122" selection-start-column="44" selection-end-line="122" selection-end-column="44" />
+        <state relative-caret-position="5702">
+          <caret line="321" column="12" selection-start-line="321" selection-start-column="12" selection-end-line="321" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/line_modifier.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="286">
+          <caret line="82" column="60" lean-forward="true" selection-start-line="82" selection-start-column="60" selection-end-line="82" selection-end-column="60" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/driver_concurrent.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="830">
+          <caret line="289" column="4" lean-forward="true" selection-start-line="289" selection-start-column="4" selection-end-line="289" selection-end-column="4" />
+          <folding>
+            <element signature="e#0#61#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/defect_managing_hub.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="484">
+          <caret line="103" column="50" lean-forward="true" selection-start-line="103" selection-start-column="50" selection-end-line="103" selection-end-column="50" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/defect_detectors/concrete_extractor.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="48" column="80" selection-start-line="48" selection-start-column="80" selection-end-line="48" selection-end-column="80" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

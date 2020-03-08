@@ -173,7 +173,7 @@ class MainDetector:
         if self.defects:
             # Check if there is any metadata associated with an image (to check for camera orientation angles for
             # pole inclination detection module). camera_inclination = (pitch_angle, roll_angle)
-            camera_inclination = self.meta_data_extractor.estimate_camera_inclination(path_to_image)
+            camera_inclination = self.meta_data_extractor.get_angles(path_to_image)
         else:
             camera_inclination = None
 
@@ -255,7 +255,6 @@ class MainDetector:
 
         # Start a loop to process all video frames, for images just one run through
         while cv2.waitKey(1) < 0:
-            start = time.time()
 
             if cap and video_writer:
                 has_frame, image_to_process = cap.read()
@@ -275,17 +274,24 @@ class MainDetector:
                 continue
 
             # OBJECT DETECTION: Detect and classify poles on the image_to_process
+            start = time.time()
             poles = self.pole_detector.predict(image_to_process)
+            poles_time = time.time() - start
 
             # Detect components on each pole detected (insulators, dumpers, concrete pillars)
+            start = time.time()
             components = self.component_detector.predict(image_to_process, poles)
+            components_time = time.time() - start
 
             # DEFECT DETECTION
+            defect_time = None
             if self.defects and components:
-
-                 detected_defects = self.defect_detector.search_defects(detected_objects=components,
+                start = time.time()
+                detected_defects = self.defect_detector.search_defects(detected_objects=components,
                                                                         camera_orientation=camera_orientation,
-                                                                        pole_number=pole_number)
+                                                                        pole_number=pole_number,
+                                                                        image_name=image_name)
+                defect_time = time.time() - start
 
             # STORE ALL DEFECTS FOUND IN ONE PLACE. JSON?
             # Photo name (ideally pole's number) -> all elements detected -> defect on those elements
@@ -309,17 +315,19 @@ class MainDetector:
             self.handler.draw_bounding_boxes(objects_detected=all_detected_objects,
                                              image=image_to_process)
 
-            self.handler.save_frame(image=image_to_process,
-                                    image_name=image_name,
-                                    video_writer=video_writer)
+            # self.handler.save_frame(image=image_to_process,
+            #                         image_name=image_name,
+            #                         video_writer=video_writer)
 
             cv2.imshow(self.window_name, image_to_process)
 
             frame_counter_object_detection += 1
             frame_counter_defect_detection += 1
 
-            total_time = time.time() - start
-            print("Time taken:", total_time, "\n")
+            print(f"Time taken. Poles {round(poles_time, 3)}, C"
+                  f"omponents: {round(components_time, 3)}, "
+                  f"Defects: {defect_time}")
+            print()
 
             # Break out of the while loop in case we are dealing with an image.
             if image is not None:
@@ -354,11 +362,11 @@ def parse_args():
 
 if __name__ == "__main__":
 
-    SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.jpg"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\02639.jpg"
-    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\IMAGES_ROW_DS\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES"
+    SAVE_PATH = r"D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\results"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.JPG"
+    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\cracks\00027.jpg"
+    PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
+    #PATH_TO_DATA = r'D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\cracks'
 
     pole_number = 123
 

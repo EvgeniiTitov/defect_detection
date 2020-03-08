@@ -17,9 +17,9 @@ class LineModifier:
 
     def extend_lines(
             self,
-            lines_to_extend,
-            image
-    ):
+            lines_to_extend: list,
+            image: np.ndarray
+    ) -> list:
         """
 
         :param lines_to_extend:
@@ -77,7 +77,7 @@ class LineModifier:
 
         return lines_extended
 
-    def merge_lines(self, lines_to_merge):
+    def merge_lines(self, lines_to_merge: list) -> list:
         """
         Merges lines provided they are similarly oriented
         :param lines_to_merge: List of lists. Lines to merge
@@ -124,17 +124,15 @@ class LineModifier:
 
             x1 = line[0][0]
             y1 = line[0][1]
-            x2 = line[1][0]
-            y2 = line[1][1]
+            x2 = line[0][2]
+            y2 = line[0][3]
 
             angle = abs(round(np.rad2deg(np.arctan2((y2 - y1), (x2 - x1))), 2))
 
             if angle < self._angle_thresh:
                 continue
 
-            vertical_lines.append(
-                        [(line[0][0], line[0][1]), (line[1][0], line[1][1])]
-                                  )
+            vertical_lines.append([(x1, y1), (x2, y2)])
 
         return vertical_lines
 

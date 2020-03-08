@@ -4,6 +4,19 @@ import numpy as np
 import os
 
 
+class ObjectDetector(object):
+    """
+    An idea: One class within which we can detect all objects. Poles, then componenets without having to
+    return data back to the CPU twice.
+
+    BLOCKERS:
+    1. New weights for poles - 3 classes
+    2. New weights for components - 3 classes
+    3. Find out how to run inferences without moving data btwn CPU - GPU
+    """
+    pass
+
+
 class PolesDetector:
     """
     Class performing utility poles prediction using the YOLOv3 neural net and

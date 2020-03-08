@@ -13,22 +13,83 @@ class ConcreteExtractor:
 
         self.line_modifier = line_modifier
 
-    def retrieve_polygon(self, the_lines, image):
+    def retrieve_polygon_v2(
+            self,
+            image: np.ndarray,
+            the_edges: list,
+            width: int=224,
+            height: int=1200
+    ):
         """
 
+        :param image:
+        :param the_edges:
+        :param width:
+        :param height:
+        :return:
+        """
+        extended_lines = self.line_modifier().extend_lines(lines_to_extend=the_edges,
+                                                           image=image)
+
+        # Change coordinates order as per warp perspective requirements
+        extended_lines.append(extended_lines.pop(extended_lines.index(extended_lines[1])))
+
+        points = np.array(extended_lines, dtype="float32")
+        dim = (width, height)
+
+        return cv2.resize(self.wrap_perspective(image, points),
+                          dim,
+                          interpolation=cv2.INTER_AREA)
+
+    def wrap_perspective(
+            self,
+            image,
+            points):
+        """
+        Rebuild image based on the points provided - make it look bird-like view
+        :param image:
+        :param points:
+        :return:
+        """
+        top_left, top_right, bot_right, bot_left = points
+
+        # Find max distance
+        width_1 = np.sqrt(((bot_right[0] - bot_left[0]) ** 2) + ((bot_right[1] - bot_left[1]) ** 2))
+        width_2 = np.sqrt(((top_right[0] - top_left[0]) ** 2) + ((top_right[1] - top_left[1]) ** 2))
+        max_width = max(int(width_1), int(width_2))
+
+        # Compute new height
+        height_1 = np.sqrt(((top_right[0] - bot_right[0]) ** 2) + ((top_right[1] - bot_right[1]) ** 2))
+        height_2 = np.sqrt(((top_left[0] - bot_left[0]) ** 2) + ((top_left[1] - bot_left[1]) ** 2))
+        max_height = max(int(height_1), int(height_2))
+
+        # Build set of destination top-down view like points
+        dst = np.array([
+            [0, 0],
+            [max_width - 1, 0],
+            [max_width - 1, max_height - 1],
+            [0, max_height - 1]], dtype="float32")
+
+        transform = cv2.getPerspectiveTransform(src=points, dst=dst)
+        warped = cv2.warpPerspective(src=image, M=transform, dsize=(max_width, max_height))
+
+        return warped
+
+    def retrieve_polygon(
+            self,
+            the_lines: list,
+            image: np.ndarray
+    ) -> np.ndarray:
+        """
         :param the_lines:
         :return:
         """
         # Since lines are usually of varying length and almost always are
         # shorter than image's height, extend them first to successfully extract
         # the area confined by them
-        extended_lines = list()
 
-        # To check when just one line was detected
-        # the_lines = [the_lines[1]]
-
-        extended_lines += self.line_modifier().extend_lines(lines_to_extend=the_lines,
-                                                            image=image)
+        extended_lines = self.line_modifier().extend_lines(lines_to_extend=the_lines,
+                                                           image=image)
 
         # Once line's been extended, use them to extract the image section
         # restricted, defined by them
@@ -69,28 +130,22 @@ class ConcreteExtractor:
 
         return output_copy
 
-    def find_pole_edges(self, image):
-        """Runs an image provided along the pole inclination angle
-        calculating pipeline.
+    def find_pole_edges(self, image: np.ndarray) -> list:
+        """
+        Find pole's edges by means of generating lines (Canny, HoughTrans) ands .
 
-        :return: angle calculated if any pole edges found. Else returns None
+        :return: edges found (list of lists)
         """
         # Find all lines on the image
         raw_lines = self.generate_lines(image)
 
         # Rewrite lines in a proper form (x1,y1), (x2,y2) if any found. List of lists
-        if raw_lines is not None:
-            lines_to_merge = list()
-            for line in self.get_lines(raw_lines):
-                lines_to_merge.append(
-                            [(line[0], line[1]), (line[2], line[3])]
-                                      )
-        else:
-            return None, None
+        if raw_lines is None:
+            return []
 
         # Process results: merge raw lines where possible to decrease the total
         # number of lines we are working with
-        merged_lines = self.line_modifier().merge_lines(lines_to_merge=lines_to_merge)
+        merged_lines = self.line_modifier().merge_lines(lines_to_merge=raw_lines)
 
         # Pick lines based on which the angle will be calculated. Ideally we are looking for 2 lines
         # which represent both pole's edges. If there is 1, warn user and calculate the angle based
@@ -99,14 +154,14 @@ class ConcreteExtractor:
             the_lines = self.retrieve_pole_lines(merged_lines, image)
 
         elif len(merged_lines) == 1:
-            print("WARNING: Only one line found, angle will be calculated based on it")
+            print("WARNING: Only one edge detected!")
             the_lines = merged_lines
 
         else:
-            print("No lines found, angle cannot be calculated")
-            return
+            print("WARNING: No edges detected")
+            return []
 
-        assert the_lines and len(the_lines) == 1 or len(the_lines) == 2, "ERROR: Wrong number of lines found"
+        assert the_lines and 1 <= len(the_lines) <= 2, "ERROR: Wrong number of lines found"
 
         return the_lines
 
@@ -224,10 +279,3 @@ class ConcreteExtractor:
                                     cv2.THRESH_BINARY)
 
         return thresh
-
-    def get_lines(self, lines_in):
-
-        if cv2.__version__ < "3.0":
-            return lines_in[0]
-
-        return [line[0] for line in lines_in]

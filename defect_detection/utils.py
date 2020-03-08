@@ -1,14 +1,210 @@
+from queue import Queue
+from threading import Thread
 import cv2
 import os
 import numpy as np
 import re
 
 
+class FrameReader(object):
+    """
+    Thread tasked with reading frames and adding them to the Q
+    """
+    def __init__(
+            self,
+            path: str,
+            Q_size: int = 2
+    ):
+        self.cap = cv2.VideoCapture(path)
+
+        if not self.cap.isOpened():
+            raise IOError("Failed to open the cap")
+
+        self.Q = Queue(maxsize=Q_size)
+
+        self.done = False
+
+    def decode_frames(self):
+        """
+        Decodes a frame and puts it into the Q
+        :return:
+        """
+        while 1:
+
+            if self.done:
+                break
+
+            if not self.Q.full():
+                has_frame, frame = self.cap.read()
+
+                if not has_frame:
+                    self.stop()
+                    return
+
+                self.Q.put(frame)
+
+    def start(self):
+        """
+        Start the thread
+        :return:
+        """
+        thread = Thread(target=self.decode_frames, args=())
+        # Runs in the background
+        thread.daemon = True
+        thread.start()
+
+        return self
+
+    def get_frame(self):
+        """
+        Get a frame from the Q
+        :return:
+        """
+
+        return self.Q.get()
+
+    def has_frames(self):
+        """
+        Check if there're decoded frame in the Q ready to go
+        :return:
+        """
+        return self.Q.qsize() > 0
+
+    def stop(self):
+
+        self.done = True
+
+
+class GetFrame(object):
+    """
+    Decodes a single frame in advance
+    """
+    def __init__(
+            self,
+            path: str
+    ):
+        self.stream = cv2.VideoCapture(path)
+
+        if not self.stream.isOpened():
+            print("\nERROR: Failed to open the cap")
+            return
+
+        # Read the first frame
+        self.frame_ready, self.frame = self.stream.read()
+
+        self.done = False
+
+    def decode_frame(self):
+        """
+        :return:
+        """
+        while not self.done:
+
+            if not self.frame_ready:
+                self.stop()
+
+            else:
+                self.frame_ready, self.frame = self.stream.read()
+
+    def stop(self):
+        self.done = True
+
+    def start(self):
+        Thread(target=self.decode_frame, args=()).start()
+
+
+class FrameWriter(object):
+    """
+    Thread tasked with:
+    1. Drawing BBs
+    2. Saving frames back on the disk
+    3. Constructing JSON file if processing photo / video's over
+    """
+    def __init__(self):
+
+        self.frame = None
+        self.done = False
+        # Extra attributes to use during processing the results
+        # 1. BBs coordinates to draw
+        # CAN WE CREATE INSTANCE OF RESULTS HANDLER HERE?
+
+    def process_results(self):
+        """
+
+        :return:
+        """
+
+        #TODO: Main logic here
+        pass
+
+    def stop(self):
+
+        self.done = True
+
+    def start(self):
+        """
+
+        :return:
+        """
+        thread = Thread(target=self.process_results, args=())
+        # Runs in the background
+        thread.daemon = True
+        thread.start()
+
+        return self
+
+
+class FrameDisplayer(object):
+    """
+
+    """
+    def __int__(
+            self,
+            frame: np.ndarray=None
+    ):
+
+        self.frame = frame
+        self.done = False
+
+
+    def show(self):
+        """
+
+        :return:
+        """
+        while not self.done:
+
+            cv2.imshow("Frame", self.frame)
+
+            if cv2.waitKey(1) == ord("q"):
+                self.stop()
+
+    def stop(self):
+
+        self.done = True
+
+    def start_thread(self):
+        """
+
+        :return:
+        """
+        thread = Thread(target=self.show, args=())
+        # Runs in the background
+        thread.daemon = True
+        thread.start()
+
+        return self
+
+
 class ResultsHandler:
     """
     Class performing BBs drawing, saving objects to disk
     """
-    def __init__(self, save_path, cropped_path):
+    def __init__(
+            self,
+            save_path,
+            cropped_path
+    ):
         self.save_path = save_path
         self.cropped_path = cropped_path
 
@@ -23,7 +219,11 @@ class ResultsHandler:
 
         return line_thickness, text_size, text_boldness
 
-    def draw_bounding_boxes(self, objects_detected, image):
+    def draw_bounding_boxes(
+            self,
+            objects_detected,
+            image
+    ):
         """
         Method drawing BBs of the objects detected on the image
         :param objects_detected: iterable containing all objects detected
@@ -35,6 +235,7 @@ class ResultsHandler:
             # There might be multiple objects detected in a certain image section (whole image:poles),
             # pole1:elements, pole2:elements etc.
             for element in elements:
+
                 # Check element class and change BBs colour
                 if element.object_name == "insl":
                     colour = (210, 0, 210)
@@ -42,6 +243,7 @@ class ResultsHandler:
                     colour = (255, 0, 0)
                 elif element.object_name == "pillar":
                     colour = (0, 128, 255)
+
                 # Draw BBs using both BBs coordinates and coordinates of the image section relative to the original
                 # image in which this object was detected
                 cv2.rectangle(image, (image_section.left + element.BB_left, image_section.top + element.BB_top),
@@ -61,12 +263,14 @@ class ResultsHandler:
                             cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size(image)[1],
                             (0, 0, 0), self.line_text_size(image)[-1])
 
-    def save_objects_detected(self,
-                              image,
-                              objects_detected,
-                              video_writer=None,
-                              frame_counter=None,
-                              image_name=None):
+    def save_objects_detected(
+            self,
+            image,
+            objects_detected,
+            video_writer=None,
+            frame_counter=None,
+            image_name=None
+    ):
         """
         Class method saving objects detected (croping them out)
         :param objects_detected:
@@ -95,10 +299,12 @@ class ResultsHandler:
                     frame_name = frame_counter + "_" + element.object_name + "_" + str(index) + ".jpg"
                     cv2.imwrite(os.path.join(self.cropped_path, frame_name), cropped_frame)
 
-    def save_frame(self,
-                   image,
-                   image_name=None,
-                   video_writer=None):
+    def save_frame(
+            self,
+            image,
+            image_name=None,
+            video_writer=None
+    ):
         """
         Saves a frame with all BBs drawn on it
         :return:
@@ -131,10 +337,13 @@ class ResultsHandler:
 
 class MetaDataExtractor:
 
-    def __init__(self, kernel_size=9):
+    def __init__(
+            self,
+            kernel_size=9
+    ):
         self.kernel_size = kernel_size
 
-    def estimate_camera_inclination(self, path_to_image):
+    def get_angles(self, path_to_image):
         """
         Extracts metadata if any regarding camera's orientation when an image was taken
         :return:

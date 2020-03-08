@@ -1,10 +1,6 @@
-from .concrete_extractor import ConcreteExtractor
-from .line_modifier import LineModifier
 import numpy as np
-import sys
+import os
 import cv2
-
-#How to make it scalabable? It needs to be given *tools to use*. Like give it a detector for each defect
 
 
 class DefectDetector:
@@ -29,17 +25,18 @@ class DefectDetector:
         self.dumper_tester = dumpers_defect_detector
         self.insulator_tester = insulators_defect_detector
 
-        # Cache the lines once they have been found
+        # Memorize the edges once they have been generated
         self.the_lines = None
 
-        print("Defect detecting hub initialized")
+        print("Defect detecting hub initialized\n")
 
     def search_defects(
             self,
-            detected_objects,
-            camera_orientation,
-            pole_number
-    ):
+            detected_objects: dict,
+            camera_orientation: tuple,
+            pole_number: int,
+            image_name: str
+    ) -> None:
         """
         Finds defects on objects provided
         :param detected_objects: objects
@@ -53,12 +50,14 @@ class DefectDetector:
         for subimage, elements in detected_objects.items():
 
             for element in elements:
+
                 if element.object_name.lower() == "pillar":
 
                     # Do not return anything. Change object's state - declare it defected or not
                     self.pillars_defects_detector(pillar=element,
                                                   detection_section=subimage,
-                                                  camera_angle=camera_orientation)
+                                                  camera_angle=camera_orientation,
+                                                  image_name=image_name)
 
                 elif element.object_name.lower() == "dump":
                     # Search for defects on vibration dumpers
@@ -72,7 +71,8 @@ class DefectDetector:
             self,
             pillar,
             detection_section,
-            camera_angle
+            camera_angle,
+            image_name
     ):
         """
         Pipeline for detecting pillars inclination and cracks
@@ -91,20 +91,22 @@ class DefectDetector:
         if not pillar_edges:
             return
 
-        # Run inclination calculation
+        # TODO: Check if metadata is available
+        # Run inclination calculation and dynamically save the result
         inclination = self.calculate_angle(the_lines=pillar_edges)
-        # TO DO: Check if metadata is available
+        pillar.inclination = inclination
+        print("Angle:", inclination)
 
         # Run cracks detection
-        concrete_polygon = self.concrete_extractor.retrieve_polygon(the_lines=pillar_edges,
-                                                                    image=pillar_subimage)
+        concrete_polygon = self.concrete_extractor.retrieve_polygon_v2(the_edges=pillar_edges,
+                                                                       image=pillar_subimage)
 
         # TO DO: Send polygon for cracks detection
-        import random, os
-        cv2.imwrite(os.path.join("D:\Desktop\system_output\cropped_elements", str(random.randint(0,10**3)))+'.jpg', concrete_polygon)
-        #cv2.imshow("cropped", concrete_polygon)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
+        #cv2.imwrite(
+        #    os.path.join("D:\Desktop\system_output\RESULTS\cropped", image_name + '.jpg'), concrete_polygon)
+        cv2.imshow("cropped", concrete_polygon)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     def calculate_angle(self, the_lines):
         """
@@ -172,14 +174,3 @@ class DefectDetector:
     #                              the_line[3] + pole_image_section.top + pillar.top]
     #
     #             return line_relative, tilt_angle
-    #
-    #         # HERE WE NEED TO TAKE INTO ACCOUNT THE ANGLES (ERRORS) USING
-    #         # METADATA PROVIDED
-    #
-    #         # ! CRACKS DETECTION
-    #
-    # def find_defects_dumpers(self, components_detected):
-    #     pass
-    #
-    # def find_defects_insulators(self, insulators_detected):
-    #     pass
