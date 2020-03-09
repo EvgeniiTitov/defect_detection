@@ -91,6 +91,12 @@ class DefectDetector:
         if not pillar_edges:
             return
 
+        for edge in pillar_edges:
+            cv2.line(pillar_subimage, edge[0], edge[1], (255, 0, 0), 4)
+
+        cv2.imwrite(
+            os.path.join("D:\Desktop\system_output\RESULTS\lines", image_name + '.jpg'), pillar_subimage)
+
         # TODO: Check if metadata is available
         # Run inclination calculation
         inclination = self.calculate_angle(the_lines=pillar_edges)

@@ -291,6 +291,7 @@ class ConcreteExtractor:
                           threshold1=50,
                           threshold2=200,
                           apertureSize=3)
+
         # Based on the edges found, find lines
         lines = cv2.HoughLinesP(edges,
                                 rho=1,
@@ -313,6 +314,11 @@ class ConcreteExtractor:
         fgd_model = np.zeros((1, 65), np.float64)
 
         # start_x, start_y, width, height
+        # rect = (int(image.shape[1] * 0.1),
+        #         0,
+        #         image.shape[1] - int(image.shape[1] * 0.2),
+        #         image.shape[0])
+
         rect = (int(image.shape[1] * 0.1),
                 0,
                 image.shape[1] - int(image.shape[1] * 0.2),
@@ -323,7 +329,7 @@ class ConcreteExtractor:
                     rect,
                     bgd_model,
                     fgd_model,
-                    10,
+                    3,
                     cv2.GC_INIT_WITH_RECT)
 
         mask2 = np.where((mask == 2) | (mask == 0), 0, 1).astype("uint8")

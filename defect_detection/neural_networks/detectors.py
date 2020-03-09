@@ -317,8 +317,11 @@ class ComponentsDetector:
             # TEMPORARY:
             pillar = self.pillar_predictor.predict(image)
 
-            assert pillar is None or len(pillar) == 1, "ERROR: More than 1 pillar detected"
+            #assert pillar is None or len(pillar) == 1, "ERROR: More than 1 pillar detected"
+            if len(pillar) > 1:
+                print("ATTENTION: MORE THAN ONE PILLAR DETECTED!")
 
+            # Change its class to 2 (separate net, will be changed after retraining)
             if pillar:
                 pillar[0][-1] = 2
                 components.append(pillar[0])

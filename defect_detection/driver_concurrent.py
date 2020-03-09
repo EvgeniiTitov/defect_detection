@@ -103,6 +103,10 @@ class MainDetector:
 
             # How do we keep store multiple JSON files from each processed object? We need some sort
             # of container - a dictionary.
+            time_taken = []
+            N_of_files = len(os.listdir(path_to_data))
+
+
             processing_results = defaultdict(list)
 
             for item in os.listdir(path_to_data):
@@ -114,8 +118,10 @@ class MainDetector:
                     print("\nImage:", item)
                     path_to_image = os.path.join(path_to_data, item)
 
+                    t = time.time()
                     defects = self.search_defects(path_to_image=path_to_image,
                                                   pole_number=pole_number)
+                    time_taken.append((item, time.time() - t))
 
                     # If successfully processed, store defects found
                     if defects:
@@ -146,6 +152,11 @@ class MainDetector:
 
         else:
             raise TypeError("ERROR: Wrong input. Neither folder nor file")
+
+        total_time = sum(time for filename, time in time_taken)
+        longest_processing = max(time_taken, key=lambda e: e[1])
+        print("\nAVG Time:", round(total_time/N_of_files, 3))
+        print("Longest to process:", longest_processing)
 
     def search_defects(
             self,
@@ -283,10 +294,10 @@ if __name__ == "__main__":
 
     SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
     #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.jpg"
-    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\cracks\00027.jpg"
+    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\02596.JPG"
     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    PATH_TO_DATA = r'D:\Desktop\system_output\DELETE_ME'
+    PATH_TO_DATA = r'D:\Desktop\system_output\TEST_IMAGES'
 
     pole_number = 123
 
