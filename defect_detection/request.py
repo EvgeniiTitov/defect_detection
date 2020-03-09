@@ -13,4 +13,3 @@ if __name__ == "__main__":
     r = requests.post(url=REST_API_URl,
                       json=payload)
 
-    print(r)

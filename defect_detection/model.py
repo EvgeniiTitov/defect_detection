@@ -190,7 +190,6 @@ class MainDetector:
             # video_stream.daemon = True
             # video_stream.start()
             # time.sleep(1)
-
             video_stream = GetFrame(path=path_to_image)
 
             # Here we can potentially check image metadata -> tuple: (pitch_angle, roll_angle)
@@ -302,18 +301,18 @@ class MainDetector:
 
         return defects
 
-if __name__ == "__main__":
-
-    SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
-    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
-    PATH_TO_DATA = r"D:\Desktop\system_output\FINAL_TILT_TEST\DJI_0109_1950.jpg"
-    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    #PATH_TO_DATA = r'D:\Desktop\system_output\TEST_concrete_only'
-
-    pole_number = 123
-
-    detector = MainDetector(save_path=SAVE_PATH)
-
-    defects = detector.predict(path_to_data=PATH_TO_DATA,
-                               pole_number=pole_number)
+# if __name__ == "__main__":
+#
+#     SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
+#     #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
+#     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
+#     PATH_TO_DATA = r"D:\Desktop\system_output\FINAL_TILT_TEST\DJI_0109_1950.jpg"
+#     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
+#     #PATH_TO_DATA = r'D:\Desktop\system_output\TEST_concrete_only'
+#
+#     pole_number = 123
+#
+#     detector = MainDetector(save_path=SAVE_PATH)
+#
+#     defects = detector.predict(path_to_data=PATH_TO_DATA,
+#                                pole_number=pole_number)

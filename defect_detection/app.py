@@ -3,7 +3,6 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-
 @app.route('/predict', methods=["POST"])
 def predict():
 
@@ -11,8 +10,6 @@ def predict():
 
     if request.method == "POST":
         data = request.get_json()
-
-        print("DATA SENT:", data)
 
         path_to_data = data["path_to_data"]
         pole_number = data["pole_number"]
