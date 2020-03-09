@@ -22,6 +22,7 @@ class DetectedObject:
         self.BB_bottom = bottom
 
         self.deficiency_status = None
+        self.inclination = None
 
         # Another set of coordinates to modify BBs of objects detected to achieve certain
         # things. For instance, to address an issue of insulators sticking out and not getting

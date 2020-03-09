@@ -59,6 +59,8 @@ class MainDetector:
         self.handler = ResultsHandler(save_path=self.save_path,
                                       cropped_path=self.crop_path)
 
+        #self.Q_to_block_1 = Queue(maxsize=12)
+
     def parse_input_data(
             self,
             path_to_data: str,
@@ -109,7 +111,7 @@ class MainDetector:
 
                 if any(item.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
 
-                    print("Image:", item)
+                    print("\nImage:", item)
                     path_to_image = os.path.join(path_to_data, item)
 
                     defects = self.search_defects(path_to_image=path_to_image,
@@ -165,7 +167,8 @@ class MainDetector:
             #     print("Failed to open:", os.path.basename(path_to_image))
             #     return {}
 
-            # video_stream = FrameReader(path=path_to_image)
+            # video_stream = FrameReader(path=path_to_image, Q=self.Q_to_block_1)
+            # video_stream.daemon = True
             # video_stream.start()
             # time.sleep(1)
 
@@ -180,7 +183,7 @@ class MainDetector:
             camera_orientation = (0, 0)
 
             #Launch a thread for reading video frames
-            # video_stream = FrameReader(path=path_to_video)
+            # video_stream = FrameReader(path=path_to_video, Q=self.Q_to_block_1)
             # video_stream.start()
             # time.sleep(1)
 
@@ -221,17 +224,13 @@ class MainDetector:
             #             #     continue
 
             # OBJECT DETECTION: Detect and classify poles on the image_to_process
-            start = time.time()
             poles = self.pole_detector.predict(image_to_process)
-            poles_time = time.time() - start
 
             # Detect components on each pole detected (insulators, dumpers, concrete pillars)
-            start = time.time()
             components = self.component_detector.predict(image_to_process, poles)
-            components_time = time.time() - start
 
-            # DEFECT DETECTION
-            defect_time = None
+            #DEFECT DETECTION
+            defect_time = time.time()
             if self.defects and components:
                 start = time.time()
                 detected_defects = self.defect_detector.search_defects(detected_objects=components,
@@ -251,12 +250,12 @@ class MainDetector:
             # TO DO: Send pole number for post processing
 
             # Process the objects detected
-            if self.crop_path:
-                self.handler.save_objects_detected(image=image_to_process,
-                                                   objects_detected=detected_objects,
-                                                   video_writer=video_writer,
-                                                   frame_counter=frame_counter,
-                                                   image_name=filename)
+            # if self.crop_path:
+            #     self.handler.save_objects_detected(image=image_to_process,
+            #                                        objects_detected=detected_objects,
+            #                                        video_writer=video_writer,
+            #                                        frame_counter=frame_counter,
+            #                                        image_name=filename)
 
             self.handler.draw_bounding_boxes(objects_detected=detected_objects,
                                              image=image_to_process)
@@ -265,20 +264,17 @@ class MainDetector:
                                     image_name=filename,
                                     video_writer=video_writer)
 
-            cv2.imshow("Frame", image_to_process)
+            #cv2.imshow("Frame", image_to_process)
 
             frame_counter += 1
 
-            print(f"Time taken. Poles {round(poles_time, 3)}, C"
-                  f"omponents: {round(components_time, 3)}, "
-                  f"Defects: {0}")
-
+            print(f"Defects: {round(defect_time, 3)}")
 
             fps.update()
 
         fps.stop()
-        print("Elapsed time: {:.2f}".format(fps.elapsed()))
-        print("Approx FPS: {:.2f}".format(fps.fps()))
+        #print("Elapsed time: {:.2f}".format(fps.elapsed()))
+        #print("Approx FPS: {:.2f}".format(fps.fps()))
 
         video_stream.stop()
         cv2.destroyAllWindows()
@@ -286,11 +282,11 @@ class MainDetector:
 if __name__ == "__main__":
 
     SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\02639.JPG"
-    PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.jpg"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.jpg"
     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\cracks\00027.jpg"
     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    #PATH_TO_DATA = r'D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\cracks'
+    PATH_TO_DATA = r'D:\Desktop\system_output\DELETE_ME'
 
     pole_number = 123
 

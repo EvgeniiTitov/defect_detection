@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import sys
 
 
 class ConcreteExtractor:
@@ -165,59 +166,114 @@ class ConcreteExtractor:
 
         return the_lines
 
-    def retrieve_pole_lines(self, merged_lines, image):
+    def retrieve_pole_lines(
+            self,
+            merged_lines: list,
+            image: np.ndarray
+    ) -> list:
         """
-        Among all lines found we need to pick only 2 - the ones that most likely
-        going to pole's edges
+        Performs all sorts of filtering to pick only 2 lines - the ones that most likely
+        going to pole's edges.
         :param merged_lines: Lines detected (list of lists)
         :param image: image getting processed
-        :return: 2 lines (list of lists)
+        :return: lines (list of list(s))
         """
 
         # Sort all lines based on their position relatively to imaginary dividing line
-        # in the middle of the image. We allow 5% margin along the dividing line to account
+        # in the middle of the image. We allow 10% margin along the dividing line to account
         # for lines which might have a point slightly shifted to the *wrong* side along X axis
+        import math
         lines_to_the_left = list()
         lines_to_the_right = list()
         left_section_and_margin = int(image.shape[1] * 0.6)
         right_section_and_margin = int(image.shape[1] * 0.4)
 
+        if len(merged_lines) > 10:
+            print("WARNING: MORE THAN 10 LINES TO SORT. O(N2) WONT PROMISE YOU THAT")
+
         while merged_lines:
+
             line = merged_lines.pop()
+            line_angle = round(90 - np.rad2deg(np.arctan2(abs(line[1][1] - line[0][1]),
+                                                          abs(line[1][0] - line[0][0]))), 2)
+            line_lenght = math.sqrt((line[1][1] - line[0][1])**2 + (line[1][0] - line[0][0])**2)
 
             if line[0][0] <= left_section_and_margin and line[1][0] <= left_section_and_margin:
-                lines_to_the_left.append(line)
-                continue  # to make sure the same line doesn't get added to both
+                lines_to_the_left.append((line, line_angle, line_lenght))
+                # to make sure the same line doesn't get added to both subgroups if it lies in the margin
+                continue
 
             if line[0][0] >= right_section_and_margin and line[1][0] >= right_section_and_margin:
-                lines_to_the_right.append(line)
+                lines_to_the_right.append((line, line_angle, line_lenght))
 
         # Pick 2 best lines (2 most parallel)
         # O(n2). Slow, but we do not deal with large number of lines anyway
         optimal_lines = 180, None, None  # angle difference, line 1, line 2
 
-        for left_line in lines_to_the_left:
+        # Possible that the whole pole lies in the left part of the image
+        if lines_to_the_left and not lines_to_the_right:
+            # Select only among the lines to the left
+            if len(lines_to_the_left) == 1:
+                # Return only coordinates without angle and lenght
+                return [lines_to_the_left[0][0]]
 
-            x1 = left_line[0][0]
-            y1 = left_line[0][1]
-            x2 = left_line[1][0]
-            y2 = left_line[1][1]
-            left_line_angle = round(90 - np.rad2deg(np.arctan2(abs(y2 - y1), abs(x2 - x1))), 2)
+            elif len(lines_to_the_left) == 2:
+                # Check if both lines to the left are relatively parallel -> pole
+                if abs(lines_to_the_left[0][1] - lines_to_the_left[1][1]) <= 2:
+                    return [lines_to_the_left[0][0], lines_to_the_left[1][0]]
+                # Else return the longest one - likely to be pole's edge + some noise
+                else:
+                    return [lines_to_the_left[0][0]] if lines_to_the_left[0][2] > lines_to_the_left[1][2] else\
+                           [lines_to_the_left[1][0]]
 
-            for right_line in lines_to_the_right:
+            # Have more than 2 lines to the left. Need to find the 2
+            else:
+                for i in range(len(lines_to_the_left) - 1):
+                    for j in range(i + 1, len(lines_to_the_left)):
 
-                x1_1 = right_line[0][0]
-                y1_1 = right_line[0][1]
-                x2_2 = right_line[1][0]
-                y2_2 = right_line[1][1]
-                right_line_angle = round(90 - np.rad2deg(np.arctan2(abs(y2_2 - y1_1), abs(x2_2 - x1_1))), 2)
+                        delta = abs(lines_to_the_left[i][1] - lines_to_the_left[j][1])
 
-                delta = abs(left_line_angle - right_line_angle)
+                        if not delta < optimal_lines[0]:
+                            continue
+                        else:
+                            optimal_lines = delta, lines_to_the_left[i][0], lines_to_the_left[j][0]
 
-                if not delta < optimal_lines[0]:
-                    continue
+        # Possible that the whole pole lies in the right part of the image
+        elif lines_to_the_right and not lines_to_the_left:
+            # Select only among the lines to the right
+            if len(lines_to_the_right) == 1:
+                return [lines_to_the_right[0][0]]
 
-                optimal_lines = delta, left_line, right_line
+            elif len(lines_to_the_right) == 2:
+                # Check if both lines to the right are relatively parallel -> pole
+                if abs(lines_to_the_right[0][1] - lines_to_the_right[1][1]) <= 2:
+                    return [lines_to_the_right[0][0], lines_to_the_right[1][0]]
+                else:
+                    return [lines_to_the_right[0][0]] if lines_to_the_right[0][2] > lines_to_the_right[1][2] else\
+                           [lines_to_the_right[1][0]]
+
+            else:
+                for i in range(len(lines_to_the_right) - 1):
+                    for j in range(i + 1, len(lines_to_the_right)):
+
+                        delta = abs(lines_to_the_right[i][1] - lines_to_the_right[j][1])
+
+                        if not delta < optimal_lines[0]:
+                            continue
+                        else:
+                            optimal_lines = delta, lines_to_the_right[i][0], lines_to_the_right[j][0]
+
+        # Ideal case - lines are to the left and to the rest. Find the best 2 (most parallel ones)
+        else:
+            for left_line, left_angle, left_length in lines_to_the_left:
+                for right_line, right_angle, right_length in lines_to_the_right:
+
+                    delta = abs(left_angle - right_angle)
+
+                    if not delta < optimal_lines[0]:
+                        continue
+
+                    optimal_lines = delta, left_line, right_line
 
         return [optimal_lines[1], optimal_lines[2]]
 

@@ -92,7 +92,7 @@ class DefectDetector:
             return
 
         # TODO: Check if metadata is available
-        # Run inclination calculation and dynamically save the result
+        # Run inclination calculation
         inclination = self.calculate_angle(the_lines=pillar_edges)
         pillar.inclination = inclination
         print("Angle:", inclination)
@@ -102,11 +102,12 @@ class DefectDetector:
                                                                        image=pillar_subimage)
 
         # TO DO: Send polygon for cracks detection
-        #cv2.imwrite(
-        #    os.path.join("D:\Desktop\system_output\RESULTS\cropped", image_name + '.jpg'), concrete_polygon)
-        cv2.imshow("cropped", concrete_polygon)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        cv2.imwrite(
+           os.path.join("D:\Desktop\system_output\RESULTS\cropped", image_name + '.jpg'), concrete_polygon)
+
+        # cv2.imshow("cropped", concrete_polygon)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
     def calculate_angle(self, the_lines):
         """

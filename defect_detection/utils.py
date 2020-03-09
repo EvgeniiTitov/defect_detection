@@ -1,4 +1,5 @@
 from queue import Queue
+import threading
 from threading import Thread
 import cv2
 import os
@@ -6,61 +7,50 @@ import numpy as np
 import re
 
 
-class FrameReader(object):
+class FrameReader(threading.Thread):
     """
     Thread tasked with reading frames and adding them to the Q
     """
     def __init__(
             self,
             path: str,
-            Q_size: int = 2
+            Q,
+            *args,
+            **kwargs
     ):
-        self.cap = cv2.VideoCapture(path)
-
-        if not self.cap.isOpened():
-            raise IOError("Failed to open the cap")
-
-        self.Q = Queue(maxsize=Q_size)
-
+        super().__init__(*args, **kwargs)
+        self.Q = Q
         self.done = False
 
-    def decode_frames(self):
-        """
-        Decodes a frame and puts it into the Q
-        :return:
-        """
-        while 1:
+        try:
+            self.stream = cv2.VideoCapture(path)
+        except:
+            print("Failed to open the cap")
+            self.Q.put("END")
 
+    def run(self) -> None:
+
+        while True:
             if self.done:
                 break
 
             if not self.Q.full():
-                has_frame, frame = self.cap.read()
+                has_frame, frame = self.stream.read()
 
                 if not has_frame:
                     self.stop()
-                    return
+                    break
 
                 self.Q.put(frame)
 
-    def start(self):
-        """
-        Start the thread
-        :return:
-        """
-        thread = Thread(target=self.decode_frames, args=())
-        # Runs in the background
-        thread.daemon = True
-        thread.start()
-
-        return self
+        self.stream.release()
+        self.Q.put("END")
 
     def get_frame(self):
         """
         Get a frame from the Q
         :return:
         """
-
         return self.Q.get()
 
     def has_frames(self):
@@ -71,7 +61,6 @@ class FrameReader(object):
         return self.Q.qsize() > 0
 
     def stop(self):
-
         self.done = True
 
 
@@ -243,6 +232,10 @@ class ResultsHandler:
                     colour = (255, 0, 0)
                 elif element.object_name == "pillar":
                     colour = (0, 128, 255)
+
+                    if element.inclination:
+                        text = f"Angle: {element.inclination}"
+                        cv2.putText(image, text, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
                 # Draw BBs using both BBs coordinates and coordinates of the image section relative to the original
                 # image in which this object was detected
