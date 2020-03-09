@@ -36,7 +36,7 @@ class DefectDetector:
             camera_orientation: tuple,
             pole_number: int,
             image_name: str
-    ) -> None:
+    ) -> dict:
         """
         Finds defects on objects provided
         :param detected_objects: objects
@@ -44,12 +44,16 @@ class DefectDetector:
         :param pole_number: number of the pole which image's getting processed
         :return:
         """
+        detected_defects = {
+            "pillar": [],
+            "dumper": [],
+            "insulator": []
+        }
         # Subimage is either a subimage of a pole if any have been detected or the whole original
         # image ib case no pole have been found. Elements are objects detected within this subimage
-
         for subimage, elements in detected_objects.items():
 
-            for element in elements:
+            for index, element in enumerate(elements):
 
                 if element.object_name.lower() == "pillar":
 
@@ -59,6 +63,12 @@ class DefectDetector:
                                                   camera_angle=camera_orientation,
                                                   image_name=image_name)
 
+                    if element.inclination:
+                        detected_defects["pillar"].append((index, element.inclination))
+
+                    if element.cracked:
+                        pass
+
                 elif element.object_name.lower() == "dump":
                     # Search for defects on vibration dumpers
                     continue
@@ -66,6 +76,8 @@ class DefectDetector:
                 elif element.object_name.lower() == "insul":
                     # Search for defects on insulators
                     continue
+
+        return detected_defects
 
     def pillars_defects_detector(
             self,
@@ -108,13 +120,13 @@ class DefectDetector:
         print("Angle:", inclination)
 
         # Run cracks detection
-        concrete_polygon = self.concrete_extractor.retrieve_polygon_v2(the_edges=pillar_edges,
-                                                                       image=pillar_subimage)
-
-        # TO DO: Send polygon for cracks detection
-        cv2.imwrite(
-           os.path.join("D:\Desktop\system_output\RESULTS\cropped", image_name + '.jpg'), concrete_polygon)
-
+        # concrete_polygon = self.concrete_extractor.retrieve_polygon_v2(the_edges=pillar_edges,
+        #                                                                image=pillar_subimage)
+        #
+        # # TO DO: Send polygon for cracks detection
+        # cv2.imwrite(
+        #    os.path.join("D:\Desktop\system_output\RESULTS\cropped", image_name + '.jpg'), concrete_polygon)
+        #
         # cv2.imshow("cropped", concrete_polygon)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()

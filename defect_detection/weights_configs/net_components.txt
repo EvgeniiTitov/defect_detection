@@ -1,2 +1,0 @@
-D:\Desktop\Reserve_NNs\weights_configs\try_6_components\yolo-obj.cfg
-D:\Desktop\Reserve_NNs\weights_configs\try_6_components\yolo-obj_best.weights

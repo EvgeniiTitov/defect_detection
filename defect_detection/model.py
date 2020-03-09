@@ -72,6 +72,8 @@ class MainDetector:
         comply with the naming convention for saving the processed data
         :return:
         """
+        detected_defects = {}
+
         # API call sends a link to data on the server to process. It can be an image, a video or
         # a folder with image(s) and video(s)
         if os.path.isfile(path_to_data):
@@ -86,14 +88,14 @@ class MainDetector:
                 defects = self.search_defects(path_to_image=path_to_data,
                                               pole_number=pole_number)
 
-                return defects
+                detected_defects[item_name] = defects
 
             elif any(item_name.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
 
                 defects = self.search_defects(path_to_video=path_to_data,
                                               pole_number=pole_number)
 
-                return defects
+                detected_defects[item_name] = defects
 
             else:
                 raise TypeError("ERROR: File's extension cannot be processed")
@@ -105,9 +107,6 @@ class MainDetector:
             # of container - a dictionary.
             time_taken = []
             N_of_files = len(os.listdir(path_to_data))
-
-
-            processing_results = defaultdict(list)
 
             for item in os.listdir(path_to_data):
 
@@ -125,9 +124,9 @@ class MainDetector:
 
                     # If successfully processed, store defects found
                     if defects:
-                        processing_results[item].append(defects)
+                        detected_defects[item] = defects
                     else:
-                        processing_results[item].append(dict())
+                        detected_defects[item] = {}
 
                 elif any(item.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
 
@@ -139,9 +138,9 @@ class MainDetector:
 
                     # If successfully processed, store defects found
                     if defects:
-                        processing_results[item].append(defects)
+                        detected_defects[item] = defects
                     else:
-                        processing_results[item].append(dict())
+                        detected_defects[item] = {}
 
                 # TO CONFIRM: We could potentially add processing of sub-folder via recursion.
                 elif os.path.isdir(os.path.join(path_to_data, item)):
@@ -153,13 +152,19 @@ class MainDetector:
         else:
             raise TypeError("ERROR: Wrong input. Neither folder nor file")
 
-        total_time = sum(time for filename, time in time_taken)
-        time_taken.sort(key=lambda e:e[1], reverse=True)
-        #longest_processing = max(time_taken, key=lambda e: e[1])
-        print("\nAVG Time:", round(total_time/N_of_files, 3))
-        print("\nLongest to process:")
-        for e in time_taken:
-            print(e)
+        # total_time = sum(time for filename, time in time_taken)
+        # time_taken.sort(key=lambda e:e[1], reverse=True)
+        # #longest_processing = max(time_taken, key=lambda e: e[1])
+        # print("\nAVG Time:", round(total_time/N_of_files, 3))
+        # print("\nLongest to process:")
+        # for e in time_taken:
+        #     print(e)
+
+        print("\nDETECTED DEFECTS:")
+        for k, v in detected_defects.items():
+            print(k, v)
+
+        return detected_defects
 
     def search_defects(
             self,
@@ -205,6 +210,9 @@ class MainDetector:
             video_stream.start()
 
         video_writer = None
+
+        # Keep track of detected defects (keys - video frames, values - dict of defects)
+        defects = {}
 
         # Run inference once in N frames
         frame_counter = 0
@@ -253,9 +261,8 @@ class MainDetector:
                                                                        image_name=filename)
                 defect_time = time.time() - start
 
-            # STORE ALL DEFECTS FOUND IN ONE PLACE. JSON?
-            # Photo name (ideally pole's number) -> all elements detected -> defect on those elements
-            # Video name (ideally pole's number) -> same
+                # Could potentially use pole number here
+                defects[frame_counter] = detected_defects
 
             # Combine all objects detected into one dict for further processing
             for d in (poles, components):
@@ -293,14 +300,16 @@ class MainDetector:
         video_stream.stop()
         cv2.destroyAllWindows()
 
+        return defects
+
 if __name__ == "__main__":
 
     SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
     #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\02596.JPG"
+    PATH_TO_DATA = r"D:\Desktop\system_output\FINAL_TILT_TEST\DJI_0109_1950.jpg"
     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    PATH_TO_DATA = r'D:\Desktop\system_output\FINAL_TILT_TEST'
+    #PATH_TO_DATA = r'D:\Desktop\system_output\TEST_concrete_only'
 
     pole_number = 123
 

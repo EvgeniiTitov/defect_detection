@@ -1,23 +1,30 @@
-from driver_old import MainDetector
+from model import MainDetector
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
+
 @app.route('/predict', methods=["POST"])
 def predict():
 
-    data = request.get_json()
+    data = {"success": False}
 
-    path_to_data = data["path"]
-    # SEND POLE'S NUMBER
-    pole_number = data["pole_number"]
+    if request.method == "POST":
+        data = request.get_json()
 
-    defects = detector.parse_input_data(path_to_data=path_to_data,
-                                        pole_number=pole_number)
+        print("DATA SENT:", data)
 
-    output = {"defects": defects}
+        path_to_data = data["path_to_data"]
+        pole_number = data["pole_number"]
 
-    return output
+        defects = detector.predict(path_to_data=path_to_data,
+                                   pole_number=pole_number)
+
+        data["predictions"] = defects
+        data["success"] = True
+
+    return jsonify(data)
+
 
 if __name__ == "__main__":
     # Some place on the server

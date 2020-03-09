@@ -1,2 +1,0 @@
-D:\Desktop\Reserve_NNs\weights_configs\try_5_poles\poles_improved.cfg
-D:\Desktop\Reserve_NNs\weights_configs\try_5_poles\yolo-obj_0128.weights
