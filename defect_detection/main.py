@@ -2,12 +2,16 @@ from neural_networks import PolesDetector, ComponentsDetector
 from neural_networks import YOLOv3
 from defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
 from utils import ResultsHandler, MetaDataExtractor
+from utils import FrameReader, FrameWriter, FrameDisplayer, GetFrame
 from collections import defaultdict
+from imutils.video import FPS
+from queue import Queue
+from threading import Thread
 import cv2
 import time
 import sys
 import os
-import argparse
+import time
 
 
 class MainDetector:
@@ -16,18 +20,16 @@ class MainDetector:
     """
     def __init__(
             self,
-            save_path,
-            crop_path=None,
-            defects=True
+            save_path: str,
+            crop_path: str=None,
+            search_defects: bool=True
     ):
-
-        self._performance_tracking = True
 
         self.save_path = save_path
         self.crop_path = crop_path
 
-        if defects:
-            self.defects = defects
+        if search_defects:
+            self.defects = True
             # Implement metadata check here in the main class because otherwise we
             # will need to open the same image multiple times (not efficient). Check
             # happens right before sending image along the pipeline
@@ -57,18 +59,14 @@ class MainDetector:
         self.handler = ResultsHandler(save_path=self.save_path,
                                       cropped_path=self.crop_path)
 
-        # Set up a window
-        # TO DO: Move it to a separate class in utils
-        self.window_name = "Defect Detection"
-        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        #self.Q_to_block_1 = Queue(maxsize=12)
 
-    def process_data(
+    def predict(
             self,
-            path_to_data,
-            pole_number=None
-    ):
+            path_to_data: str,
+            pole_number: int=None
+    ) -> dict:
         """
-
         :param path_to_data: Path to data from an API call
         :param pole_number: Number of the pole to which the data being processed belongs. Used to
         comply with the naming convention for saving the processed data
@@ -77,51 +75,56 @@ class MainDetector:
         # API call sends a link to data on the server to process. It can be an image, a video or
         # a folder with image(s) and video(s)
         if os.path.isfile(path_to_data):
+
             # Find out if this is a video or an image and preprocess it accordingly
             item_name = os.path.basename(path_to_data)
 
-            if any(item_name.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
-                # This is an image
-                if_processed, defects = self.process_image(path_to_image=path_to_data,
-                                                           pole_number=pole_number)
+            # TODO: We might not be able to process PNGs. Double check
 
-                if if_processed:
-                    return defects
-                else:
-                    return None
+            if any(item_name.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
+
+                defects = self.search_defects(path_to_image=path_to_data,
+                                              pole_number=pole_number)
+
+                return defects
 
             elif any(item_name.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
-                # This is a video
-                if_processed, defects = self.process_video(path_to_video=path_to_data,
-                                                           pole_number=pole_number)
 
-                if if_processed:
-                    return defects
-                else:
-                    return None
+                defects = self.search_defects(path_to_video=path_to_data,
+                                              pole_number=pole_number)
+
+                return defects
 
             else:
                 raise TypeError("ERROR: File's extension cannot be processed")
 
         elif os.path.isdir(path_to_data):
             # This is a folder.
-            # IT IS ASSUMED THERE CAN BE NO SUBFOLDERS. CLARIFY
 
             # How do we keep store multiple JSON files from each processed object? We need some sort
             # of container - a dictionary.
+            time_taken = []
+            N_of_files = len(os.listdir(path_to_data))
+
+
             processing_results = defaultdict(list)
 
             for item in os.listdir(path_to_data):
 
+                # TODO: We might not be able to process PNGs. Double check
+
                 if any(item.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
 
-                    print("Image:", item)
+                    print("\nImage:", item)
                     path_to_image = os.path.join(path_to_data, item)
-                    if_processed, defects = self.process_image(path_to_image=path_to_image,
-                                                               pole_number=pole_number)
+
+                    t = time.time()
+                    defects = self.search_defects(path_to_image=path_to_image,
+                                                  pole_number=pole_number)
+                    time_taken.append((item, time.time() - t))
 
                     # If successfully processed, store defects found
-                    if if_processed:
+                    if defects:
                         processing_results[item].append(defects)
                     else:
                         processing_results[item].append(dict())
@@ -130,11 +133,12 @@ class MainDetector:
 
                     print("Video:", item)
                     path_to_video = os.path.join(path_to_data, item)
-                    if_processed, defects = self.process_video(path_to_video=path_to_video,
-                                                               pole_number=pole_number)
+
+                    defects = self.search_defects(path_to_video=path_to_video,
+                                                  pole_number=pole_number)
 
                     # If successfully processed, store defects found
-                    if if_processed:
+                    if defects:
                         processing_results[item].append(defects)
                     else:
                         processing_results[item].append(dict())
@@ -149,228 +153,158 @@ class MainDetector:
         else:
             raise TypeError("ERROR: Wrong input. Neither folder nor file")
 
-    def process_image(
-            self,
-            path_to_image,
-            pole_number
-    ):
-        """
-
-        :param path_to_image: path to image to process
-        :param pole_number: number of the pole to which the image getting processed belongs
-        :return: flag (whether was processed successfully), defects if any found
-        """
-        # Get image's name without its extension and open the image
-        image_name = os.path.splitext(os.path.basename(path_to_image))[0]
-
-        try:
-            image = cv2.imread(path_to_image)
-        except:
-            print("Failed to open:", image_name)
-
-            return 0, None
-
-        if self.defects:
-            # Check if there is any metadata associated with an image (to check for camera orientation angles for
-            # pole inclination detection module). camera_inclination = (pitch_angle, roll_angle)
-            camera_inclination = self.meta_data_extractor.get_angles(path_to_image)
-        else:
-            camera_inclination = None
-
-        defects = self.search_defects(image=image,
-                                      image_name=image_name,
-                                      camera_orientation=camera_inclination,
-                                      pole_number=pole_number)
-
-        return 1, defects
-
-    def process_video(
-            self,
-            path_to_video,
-            pole_number
-    ):
-        """
-
-        :param path_to_video: path to video to process
-        :param pole_number: number of the pole to which the video getting processed belongs
-        :return: flag, defects
-        """
-        video_name = os.path.splitext(os.path.basename(path_to_video))[0]
-
-        # Create cap object containing all video's frames
-        try:
-            cap = cv2.VideoCapture(path_to_video)
-        except:
-            print("Failed to create a CAP object for:", video_name)
-
-            return 0, None
-
-        output_name = os.path.join(self.save_path, video_name + "_out.avi")
-
-        # Initialize video writer to reconstruct the video once each frame's been processed
-        video_writter = cv2.VideoWriter(
-                output_name,
-                cv2.VideoWriter_fourcc("M", "J", "P", "G"),
-                10,
-                (
-                    round(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                    round(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                )
-                                        )
-
-        defects = self.search_defects(cap=cap,
-                                      video_writer=video_writter,
-                                      pole_number=pole_number)
-
-        return 1, defects
+        total_time = sum(time for filename, time in time_taken)
+        time_taken.sort(key=lambda e:e[1], reverse=True)
+        #longest_processing = max(time_taken, key=lambda e: e[1])
+        print("\nAVG Time:", round(total_time/N_of_files, 3))
+        print("\nLongest to process:")
+        for e in time_taken:
+            print(e)
 
     def search_defects(
             self,
-            image=None,
-            camera_orientation=None,
-            cap=None,
-            video_writer=None,
-            image_name=None,
-            pole_number=None
-    ):
+            path_to_image: str=None,
+            path_to_video: str=None,
+            pole_number: int=None
+    ) -> dict:
         """
-        Function that performs processing of a video or an image. By default all arguments are set to
-        None because videos and images require completely different arguments to be sent to this method
-        :param image: numpy array (image read with cv2.imread())
-        :param camera_orientation: camera orientation angles when the photo was taken
-        :param cap: a class object containing all video's frames
-        :param video_writer: a class object for writing the video
-        :param image_name: image name without its extension
-        :return: JSON file with all defects found
+        :param path_to_image:
+        :param path_to_video:
+        :param pole_number:
+        :return:
         """
-        # Run object detection using networks once in N frames
-        frame_counter_object_detection = 0
+        # If image, just read it.
+        if path_to_image:
+            # try:
+            #     frame = cv2.imread(path_to_image)
+            # except:
+            #     print("Failed to open:", os.path.basename(path_to_image))
+            #     return {}
 
-        # Run object detection AND defect detection once in M frames
-        frame_counter_defect_detection = 0
+            # video_stream = FrameReader(path=path_to_image, Q=self.Q_to_block_1)
+            # video_stream.daemon = True
+            # video_stream.start()
+            # time.sleep(1)
 
-        # TO DO:
-        # - FRAME TO FRAME TRACKING FOR VIDEOS TO ENSURE SAME DEFECTS APPEAR ON MULTIPLE FRAMES
-        # - TRACK TIME FOR EACH STEP AND SEE WHAT TAKES MOST OF IT. OPTIMIZE
+            video_stream = GetFrame(path=path_to_image)
 
-        # Start a loop to process all video frames, for images just one run through
+            # Here we can potentially check image metadata -> tuple: (pitch_angle, roll_angle)
+            camera_orientation = self.meta_data_extractor.get_angles(path_to_image)
+            filename = os.path.basename(path_to_image)
+
+        else:
+            filename = os.path.basename(path_to_video)
+            camera_orientation = (0, 0)
+
+            #Launch a thread for reading video frames
+            # video_stream = FrameReader(path=path_to_video, Q=self.Q_to_block_1)
+            # video_stream.start()
+            # time.sleep(1)
+
+            video_stream = GetFrame(path=path_to_video)
+            video_stream.start()
+
+        video_writer = None
+
+        # Run inference once in N frames
+        frame_counter = 0
+        fps = FPS().start()
+
         while cv2.waitKey(1) < 0:
 
-            if cap and video_writer:
-                has_frame, image_to_process = cap.read()
-                # If all video frames have been processed, return
-                if not has_frame:
-                    return
-            else:
-                image_to_process = image
+            if video_stream.done:
+                video_stream.stop()
+                break
+
+            image_to_process = video_stream.frame
+            if path_to_image:
+                video_stream.done = True
+
+            #image_to_process = video_stream.get_frame()
+
+            if video_writer is None and path_to_video:
+                fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+                video_writer = cv2.VideoWriter(os.path.join(self.save_path, 'video_out.avi'), fourcc, 30,
+                                              (image_to_process.shape[1],
+                                               image_to_process.shape[0]), True)
 
             # To keep track of all objects detected by the neural networks
-            all_detected_objects = dict()
+            detected_objects = dict()
 
-            # TEMPORARY: Process 1 in N frames to increase performance speed
-            # TO CONSIDER: You can get total N of frames in advance. Might be useful
-            if frame_counter_object_detection % 7 != 0:
-                frame_counter_object_detection += 1
-                continue
+            # Process 1 in N frames to increase performance speed
+            # if frame_counter % 5 != 0:
+            #             #     frame_counter += 1
+            #             #     # TODO: Extrapolate BBs. Draw old coordinates. Call Results Handler
+            #             #     continue
 
             # OBJECT DETECTION: Detect and classify poles on the image_to_process
-            start = time.time()
             poles = self.pole_detector.predict(image_to_process)
-            poles_time = time.time() - start
 
             # Detect components on each pole detected (insulators, dumpers, concrete pillars)
-            start = time.time()
             components = self.component_detector.predict(image_to_process, poles)
-            components_time = time.time() - start
 
-            # DEFECT DETECTION
-            defect_time = None
+            #DEFECT DETECTION
+            defect_time = time.time()
             if self.defects and components:
                 start = time.time()
                 detected_defects = self.defect_detector.search_defects(detected_objects=components,
-                                                                        camera_orientation=camera_orientation,
-                                                                        pole_number=pole_number,
-                                                                        image_name=image_name)
+                                                                       camera_orientation=camera_orientation,
+                                                                       pole_number=pole_number,
+                                                                       image_name=filename)
                 defect_time = time.time() - start
 
             # STORE ALL DEFECTS FOUND IN ONE PLACE. JSON?
             # Photo name (ideally pole's number) -> all elements detected -> defect on those elements
             # Video name (ideally pole's number) -> same
 
-
             # Combine all objects detected into one dict for further processing
             for d in (poles, components):
-                all_detected_objects.update(d)
+                detected_objects.update(d)
 
             # TO DO: Send pole number for post processing
 
             # Process the objects detected
-            if self.crop_path:
-                self.handler.save_objects_detected(image=image_to_process,
-                                                   objects_detected=all_detected_objects,
-                                                   video_writer=video_writer,
-                                                   frame_counter=frame_counter_object_detection,
-                                                   image_name=image_name)
+            # if self.crop_path:
+            #     self.handler.save_objects_detected(image=image_to_process,
+            #                                        objects_detected=detected_objects,
+            #                                        video_writer=video_writer,
+            #                                        frame_counter=frame_counter,
+            #                                        image_name=filename)
 
-            self.handler.draw_bounding_boxes(objects_detected=all_detected_objects,
+            self.handler.draw_bounding_boxes(objects_detected=detected_objects,
                                              image=image_to_process)
 
-            # self.handler.save_frame(image=image_to_process,
-            #                         image_name=image_name,
-            #                         video_writer=video_writer)
+            self.handler.save_frame(image=image_to_process,
+                                    image_name=filename,
+                                    video_writer=video_writer)
 
-            cv2.imshow(self.window_name, image_to_process)
+            #cv2.imshow("Frame", image_to_process)
 
-            frame_counter_object_detection += 1
-            frame_counter_defect_detection += 1
+            frame_counter += 1
 
-            print(f"Time taken. Poles {round(poles_time, 3)}, C"
-                  f"omponents: {round(components_time, 3)}, "
-                  f"Defects: {defect_time}")
-            print()
+            print(f"Defects: {round(defect_time, 3)}")
 
-            # Break out of the while loop in case we are dealing with an image.
-            if image is not None:
-                return
+            fps.update()
 
+        fps.stop()
+        #print("Elapsed time: {:.2f}".format(fps.elapsed()))
+        #print("Approx FPS: {:.2f}".format(fps.fps()))
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    # Type of input data
-    parser.add_argument('--image', type=str,  help='Path to an image.')
-    parser.add_argument('--video', type=str, help='Path to a video.')
-    parser.add_argument('--folder', type=str, help='Path to a folder containing images or videos to process.')
-
-    # Managing results
-    parser.add_argument('--crop_path', type=str, default=None,
-                        help='Path to crop out and save objects detected')
-    parser.add_argument('--save_path', type=str, default=r'D:\Desktop\system_output',
-                        help="Path to save input after its been processed")
-    # Defects to detect
-    parser.add_argument('--concrete_pole_defects', type=int, default=0,
-                        help='Perform defect detection on any poles detected')
-    parser.add_argument('--dumper_defects', type=int, default=0,
-                        help='Perform defect detection on any dumpers detected')
-    parser.add_argument('--insulator_defects', type=int, default=0,
-                        help='Perform defect detection on any insulators detected')
-
-    arguments = parser.parse_args()
-
-    return arguments
-
+        video_stream.stop()
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
 
-    SAVE_PATH = r"D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\results"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\DJI_0110_800.JPG"
-    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\cracks\00027.jpg"
-    PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    #PATH_TO_DATA = r'D:\Desktop\Reserve_NNs\DEVELOPMENT\cracks_for_testing\cracks'
+    SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
+    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\02596.JPG"
+    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
+    PATH_TO_DATA = r'D:\Desktop\system_output\FINAL_TILT_TEST'
 
     pole_number = 123
 
     detector = MainDetector(save_path=SAVE_PATH)
 
-    defects = detector.process_data(path_to_data=PATH_TO_DATA,
-                                    pole_number=pole_number)
+    defects = detector.predict(path_to_data=PATH_TO_DATA,
+                               pole_number=pole_number)

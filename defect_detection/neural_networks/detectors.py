@@ -27,7 +27,8 @@ class PolesDetector:
     As input it accepts a plain image.
     Weights: Pole try 9.
     """
-    path_to_dependencies = r"D:\Desktop\Reserve_NNs\DEPENDENCIES"
+    #path_to_dependencies = r"D:\Desktop\Reserve_NNs\DEPENDENCIES"
+    path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies"
     dependencies = "poles"
 
     def __init__(
@@ -158,7 +159,8 @@ class ComponentsDetector:
     role of a dictionary key.
     Weights: Try 6 components
     """
-    path_to_dependencies = r"D:\Desktop\Reserve_NNs\DEPENDENCIES"
+    #path_to_dependencies = r"D:\Desktop\Reserve_NNs\DEPENDENCIES"
+    path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies"
     dependencies_comp = "components"
     dependencies_pil = "pillars"
 
@@ -318,7 +320,7 @@ class ComponentsDetector:
             pillar = self.pillar_predictor.predict(image)
 
             #assert pillar is None or len(pillar) == 1, "ERROR: More than 1 pillar detected"
-            if len(pillar) > 1:
+            if pillar and len(pillar) > 1:
                 print("ATTENTION: MORE THAN ONE PILLAR DETECTED!")
 
             # Change its class to 2 (separate net, will be changed after retraining)
@@ -360,11 +362,15 @@ class ComponentsDetector:
 
                     # Increase BB's height by moving upper BB border up and bottom down
                     # UP COULD BE FURTHER PULLED
-                    new_top = component.BB_top * 0.8
-                    new_bot = component.BB_bottom * 1.2 if component.BB_bottom * 1.2 <\
-                                                        image.shape[0] else image.shape[0] - 10
+                    # new_top = component.BB_top * 0.8
+                    # new_bot = component.BB_bottom * 1.2 if component.BB_bottom * 1.2 <\
+                    #                                     image.shape[0] else image.shape[0] - 10
+
+                    new_left = component.BB_left * 0.96
+                    new_right = component.BB_right * 1.04 if component.BB_right * 1.04 <\
+                                                        image.shape[1] else image.shape[1] - 10
 
                     # IMPORTANT. Here we overwrite actual object's coordinates that will be used for
                     # drawing a BB around it
-                    component.BB_top = int(new_top)
-                    component.BB_bottom = int(new_bot)
+                    component.update_object_coordinates(left=int(new_left),
+                                                        right=int(new_right))

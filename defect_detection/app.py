@@ -1,4 +1,4 @@
-from main import MainDetector
+from driver_old import MainDetector
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
@@ -19,12 +19,8 @@ def predict():
 
     return output
 
-@app.route('/predictitem', methods=["POST"])
-def predictitem():
-    pass
-
-
 if __name__ == "__main__":
+    # Some place on the server
     SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
 
     detector = MainDetector(save_path=SAVE_PATH)

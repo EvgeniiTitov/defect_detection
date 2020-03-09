@@ -85,6 +85,10 @@ class DefectDetector:
         pillar_subimage = np.array(detection_section.frame[pillar.top:pillar.bottom,
                                                            pillar.left:pillar.right])
 
+        cv2.imwrite(
+            os.path.join("D:\Desktop\system_output\RESULTS\cropped_to_test_separately", image_name + '.jpg'),
+            pillar_subimage)
+
         # Search for pole's edges
         pillar_edges = self.concrete_extractor.find_pole_edges(image=pillar_subimage)
 
@@ -92,7 +96,7 @@ class DefectDetector:
             return
 
         for edge in pillar_edges:
-            cv2.line(pillar_subimage, edge[0], edge[1], (255, 0, 0), 4)
+            cv2.line(pillar_subimage, edge[0], edge[1], (0, 0, 255), 4)
 
         cv2.imwrite(
             os.path.join("D:\Desktop\system_output\RESULTS\lines", image_name + '.jpg'), pillar_subimage)

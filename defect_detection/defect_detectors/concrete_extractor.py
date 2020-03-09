@@ -319,9 +319,9 @@ class ConcreteExtractor:
         #         image.shape[1] - int(image.shape[1] * 0.2),
         #         image.shape[0])
 
-        rect = (int(image.shape[1] * 0.1),
+        rect = (1,
                 0,
-                image.shape[1] - int(image.shape[1] * 0.2),
+                image.shape[1],
                 image.shape[0])
 
         cv2.grabCut(image,
@@ -329,7 +329,7 @@ class ConcreteExtractor:
                     rect,
                     bgd_model,
                     fgd_model,
-                    3,
+                    5,
                     cv2.GC_INIT_WITH_RECT)
 
         mask2 = np.where((mask == 2) | (mask == 0), 0, 1).astype("uint8")
