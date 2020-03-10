@@ -152,13 +152,13 @@ class MainDetector:
         else:
             raise TypeError("ERROR: Wrong input. Neither folder nor file")
 
-        # total_time = sum(time for filename, time in time_taken)
-        # time_taken.sort(key=lambda e:e[1], reverse=True)
-        # #longest_processing = max(time_taken, key=lambda e: e[1])
-        # print("\nAVG Time:", round(total_time/N_of_files, 3))
-        # print("\nLongest to process:")
-        # for e in time_taken:
-        #     print(e)
+        total_time = sum(time for filename, time in time_taken)
+        time_taken.sort(key=lambda e:e[1], reverse=True)
+        #longest_processing = max(time_taken, key=lambda e: e[1])
+        print("\nAVG Time:", round(total_time/N_of_files, 3))
+        print("\nLongest to process:")
+        for e in time_taken:
+            print(e)
 
         print("\nDETECTED DEFECTS:")
         for k, v in detected_defects.items():
@@ -301,18 +301,18 @@ class MainDetector:
 
         return defects
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 #
-#     SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
-#     #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
-#     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
-#     PATH_TO_DATA = r"D:\Desktop\system_output\FINAL_TILT_TEST\DJI_0109_1950.jpg"
-#     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-#     #PATH_TO_DATA = r'D:\Desktop\system_output\TEST_concrete_only'
-#
-#     pole_number = 123
-#
-#     detector = MainDetector(save_path=SAVE_PATH)
-#
-#     defects = detector.predict(path_to_data=PATH_TO_DATA,
-#                                pole_number=pole_number)
+    SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
+    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
+    #PATH_TO_DATA = r"D:\Desktop\system_output\FINAL_TILT_TEST\DJI_0109_1950.jpg"
+    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
+    PATH_TO_DATA = r'D:\Desktop\system_output\FINAL_TILT_TEST'
+
+    pole_number = 123
+
+    detector = MainDetector(save_path=SAVE_PATH)
+
+    defects = detector.predict(path_to_data=PATH_TO_DATA,
+                               pole_number=pole_number)

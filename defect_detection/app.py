@@ -1,7 +1,9 @@
 from model import MainDetector
 from flask import Flask, jsonify, request
 
+
 app = Flask(__name__)
+
 
 @app.route('/predict', methods=["POST"])
 def predict():
@@ -24,7 +26,8 @@ def predict():
 
 
 if __name__ == "__main__":
-    # Some place on the server
+
+    # Some place on the server where processed files will be stored
     SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
 
     detector = MainDetector(save_path=SAVE_PATH)
