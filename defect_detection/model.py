@@ -152,13 +152,13 @@ class MainDetector:
         else:
             raise TypeError("ERROR: Wrong input. Neither folder nor file")
 
-        total_time = sum(time for filename, time in time_taken)
-        time_taken.sort(key=lambda e:e[1], reverse=True)
-        #longest_processing = max(time_taken, key=lambda e: e[1])
-        print("\nAVG Time:", round(total_time/N_of_files, 3))
-        print("\nLongest to process:")
-        for e in time_taken:
-            print(e)
+        # total_time = sum(time for filename, time in time_taken)
+        # time_taken.sort(key=lambda e:e[1], reverse=True)
+        # #longest_processing = max(time_taken, key=lambda e: e[1])
+        # print("\nAVG Time:", round(total_time/N_of_files, 3))
+        # print("\nLongest to process:")
+        # for e in time_taken:
+        #     print(e)
 
         print("\nDETECTED DEFECTS:")
         for k, v in detected_defects.items():
