@@ -170,7 +170,7 @@ class MainDetector:
             self,
             path_to_image: str=None,
             path_to_video: str=None,
-            pole_number: int=None
+            pole_number=None
     ) -> dict:
         """
         :param path_to_image:
@@ -261,7 +261,7 @@ class MainDetector:
                 defect_time = time.time() - start
 
                 # Could potentially use pole number here
-                defects[frame_counter] = detected_defects
+                defects[pole_number] = detected_defects
 
             # Combine all objects detected into one dict for further processing
             for d in (poles, components):
@@ -301,18 +301,18 @@ class MainDetector:
 
         return defects
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
+# #
+#     SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
+#     #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
+#     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
+#     #PATH_TO_DATA = r"D:\Desktop\system_output\FINAL_TILT_TEST\DJI_0109_1950.jpg"
+#     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
+#     PATH_TO_DATA = r'D:\Desktop\system_output\FINAL_TILT_TEST'
 #
-    SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
-    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
-    #PATH_TO_DATA = r"D:\Desktop\system_output\FINAL_TILT_TEST\DJI_0109_1950.jpg"
-    #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-    PATH_TO_DATA = r'D:\Desktop\system_output\FINAL_TILT_TEST'
-
-    pole_number = 123
-
-    detector = MainDetector(save_path=SAVE_PATH)
-
-    defects = detector.predict(path_to_data=PATH_TO_DATA,
-                               pole_number=pole_number)
+#     pole_number = 123
+#
+#     detector = MainDetector(save_path=SAVE_PATH)
+#
+#     defects = detector.predict(path_to_data=PATH_TO_DATA,
+#                                pole_number=pole_number)
