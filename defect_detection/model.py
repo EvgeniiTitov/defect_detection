@@ -15,9 +15,7 @@ import time
 
 
 class MainDetector:
-    """
 
-    """
     def __init__(
             self,
             save_path: str,
@@ -74,8 +72,6 @@ class MainDetector:
         """
         detected_defects = {}
 
-        # API call sends a link to data on the server to process. It can be an image, a video or
-        # a folder with image(s) and video(s)
         if os.path.isfile(path_to_data):
 
             # Find out if this is a video or an image and preprocess it accordingly
@@ -101,10 +97,7 @@ class MainDetector:
                 raise TypeError("ERROR: File's extension cannot be processed")
 
         elif os.path.isdir(path_to_data):
-            # This is a folder.
 
-            # How do we keep store multiple JSON files from each processed object? We need some sort
-            # of container - a dictionary.
             time_taken = []
             N_of_files = len(os.listdir(path_to_data))
 
@@ -160,9 +153,9 @@ class MainDetector:
         # for e in time_taken:
         #     print(e)
 
-        print("\nDETECTED DEFECTS:")
-        for k, v in detected_defects.items():
-            print(k, v)
+        # print("\nDETECTED DEFECTS:")
+        # for k, v in detected_defects.items():
+        #     print(k, v)
 
         return detected_defects
 
@@ -235,14 +228,8 @@ class MainDetector:
                                               (image_to_process.shape[1],
                                                image_to_process.shape[0]), True)
 
-            # To keep track of all objects detected by the neural networks
-            detected_objects = dict()
-
             # Process 1 in N frames to increase performance speed
-            # if frame_counter % 5 != 0:
-            #             #     frame_counter += 1
-            #             #     # TODO: Extrapolate BBs. Draw old coordinates. Call Results Handler
-            #             #     continue
+            # TODO: Extrapolate BBs
 
             # OBJECT DETECTION: Detect and classify poles on the image_to_process
             poles = self.pole_detector.predict(image_to_process)
@@ -259,23 +246,10 @@ class MainDetector:
                                                                        pole_number=pole_number,
                                                                        image_name=filename)
                 defect_time = time.time() - start
-
-                # Could potentially use pole number here
                 defects[pole_number] = detected_defects
 
             # Combine all objects detected into one dict for further processing
-            for d in (poles, components):
-                detected_objects.update(d)
-
-            # TO DO: Send pole number for post processing
-
-            # Process the objects detected
-            # if self.crop_path:
-            #     self.handler.save_objects_detected(image=image_to_process,
-            #                                        objects_detected=detected_objects,
-            #                                        video_writer=video_writer,
-            #                                        frame_counter=frame_counter,
-            #                                        image_name=filename)
+            detected_objects = {**poles, **components}
 
             self.handler.draw_bounding_boxes(objects_detected=detected_objects,
                                              image=image_to_process)
@@ -288,7 +262,7 @@ class MainDetector:
 
             frame_counter += 1
 
-            print(f"Defects: {round(defect_time, 3)}")
+            print(f"Defects time: {round(defect_time, 3)}")
 
             fps.update()
 
@@ -300,19 +274,3 @@ class MainDetector:
         cv2.destroyAllWindows()
 
         return defects
-
-# if __name__ == "__main__":
-# #
-#     SAVE_PATH = r"D:\Desktop\system_output\RESULTS"
-#     #PATH_TO_DATA = r"D:\Desktop\system_output\TEST_IMAGES\IMG_3022.JPG"
-#     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\Utility Poles\more_tower_photos\anchor\002.PNG"
-#     #PATH_TO_DATA = r"D:\Desktop\system_output\FINAL_TILT_TEST\DJI_0109_1950.jpg"
-#     #PATH_TO_DATA = r"D:\Desktop\Reserve_NNs\Datasets\raw_data\videos_Oleg\Some_Videos\isolators\DJI_0306.MP4"
-#     PATH_TO_DATA = r'D:\Desktop\system_output\FINAL_TILT_TEST'
-#
-#     pole_number = 123
-#
-#     detector = MainDetector(save_path=SAVE_PATH)
-#
-#     defects = detector.predict(path_to_data=PATH_TO_DATA,
-#                                pole_number=pole_number)

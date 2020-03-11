@@ -4,7 +4,9 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
+# Location on the server where processed images will be saved
 SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
+
 detector = MainDetector(save_path=SAVE_PATH)
 
 @app.route('/predict', methods=["POST"])

@@ -7,7 +7,7 @@ import os
 class ObjectDetector(object):
     """
     An idea: One class within which we can detect all objects. Poles, then componenets without having to
-    return data back to the CPU twice.
+    return data back to the CPU twice -> Will be used inside one thread
 
     BLOCKERS:
     1. New weights for poles - 3 classes
@@ -59,7 +59,10 @@ class PolesDetector:
 
         print("Pole detecting network initialized")
 
-    def predict(self, image):
+    def predict(
+            self,
+            image: np.ndarray
+    ) -> dict:
         """
         :param image: Image on which to perform pole detection (the whole original image)
         :return: Dictionary containing all poles detected on the image
@@ -231,7 +234,11 @@ class ComponentsDetector:
                 else:
                     component.object_name = "pillar"
 
-    def predict(self, image, pole_predictions):
+    def predict(
+            self,
+            image: np.ndarray,
+            pole_predictions: dict
+    ) -> dict:
         """
         Predicts components. Saves them in the appropriate format
         :param image: original image in case no poles have been found
@@ -341,7 +348,6 @@ class ComponentsDetector:
                                                                bottom=int(component[4]))
                                                            )
 
-        # TO DO: Could be combined in one function to speed up a bit
 
         # TO DO: Is the step below even necessary with giving them names?
         if components_detected:
@@ -360,17 +366,9 @@ class ComponentsDetector:
             for component in components:
                 if component.class_id == 2:
 
-                    # Increase BB's height by moving upper BB border up and bottom down
-                    # UP COULD BE FURTHER PULLED
-                    # new_top = component.BB_top * 0.8
-                    # new_bot = component.BB_bottom * 1.2 if component.BB_bottom * 1.2 <\
-                    #                                     image.shape[0] else image.shape[0] - 10
-
                     new_left = component.BB_left * 0.96
                     new_right = component.BB_right * 1.04 if component.BB_right * 1.04 <\
                                                         image.shape[1] else image.shape[1] - 10
 
-                    # IMPORTANT. Here we overwrite actual object's coordinates that will be used for
-                    # drawing a BB around it
                     component.update_object_coordinates(left=int(new_left),
                                                         right=int(new_right))

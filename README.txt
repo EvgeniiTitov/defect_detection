@@ -1,12 +1,13 @@
 SHORT TERM:
-0. Line generating function needs to be timed out after N seconds
-1. APIs
-2. Combine 2 YOLOs into 1 (new weights required)
+1. Line generating function needs to be timed out after N seconds
+2. Replace 2 YOLOs in sequence with 1 trained for 3 classes (new weights required)
 3. Cracks module
 4. Dumpers module
 5. Add new class - wooden poles (new weights required)
-6. Put each block (1,2,3) including frame loader and results processor into separate threads connected with Queues in order to boost
+6. Put each block (1-2,3) including frame loader and results processor into separate threads connected with Queues in order to boost
 system's performance
+7. Subtract other object's boxes from the pillar BB (less noise for cracks detection)
+8. Tune YOLOs parameters (NMS, threshold etc)
 
 LONG TERM:
 7. Batch processing to further speed up the system
@@ -14,7 +15,7 @@ LONG TERM:
 9. New detections representation (single accomodating all detected objects alongside the frame)
 
 
-Known issues:
+KNOWN ISSUES:
 - BBs modification. Overlapping check.
 - Class names and accuracy once written look bad
 - 2 pillars can potentially get generated

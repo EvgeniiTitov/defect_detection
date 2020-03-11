@@ -109,11 +109,11 @@ class DefectDetector:
         if not pillar_edges:
             return
 
-        for edge in pillar_edges:
-            cv2.line(pillar_subimage, edge[0], edge[1], (0, 0, 255), 4)
-
-        cv2.imwrite(
-            os.path.join("D:\Desktop\system_output\RESULTS\lines", image_name + '.jpg'), pillar_subimage)
+        # for edge in pillar_edges:
+        #     cv2.line(pillar_subimage, edge[0], edge[1], (0, 0, 255), 4)
+        #
+        # cv2.imwrite(
+        #     os.path.join("D:\Desktop\system_output\RESULTS\lines", image_name + '.jpg'), pillar_subimage)
 
         # Run inclination calculation
         inclination = self.calculate_angle(the_lines=pillar_edges)
@@ -130,8 +130,8 @@ class DefectDetector:
         # TO DO: Send polygon for cracks detection
 
 
-        cv2.imwrite(
-           os.path.join("D:\Desktop\system_output\RESULTS\cropped", image_name + '.jpg'), concrete_polygon)
+        # cv2.imwrite(
+        #    os.path.join("D:\Desktop\system_output\RESULTS\cropped", image_name + '.jpg'), concrete_polygon)
 
         # cv2.imshow("cropped", concrete_polygon)
         # cv2.waitKey(0)
