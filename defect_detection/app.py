@@ -1,7 +1,6 @@
 from model import MainDetector
 from flask import Flask, jsonify, request
 
-
 app = Flask(__name__)
 
 # Location on the server where processed images will be saved

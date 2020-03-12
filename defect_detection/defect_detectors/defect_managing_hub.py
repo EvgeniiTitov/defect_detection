@@ -17,7 +17,6 @@ class DefectDetector:
             dumpers_defect_detector=None,
             insulators_defect_detector=None,
     ):
-
         # Auxiliary modules
         self.line_modifier = line_modifier
         self.concrete_extractor = concrete_extractor(line_modifier=self.line_modifier)
@@ -26,9 +25,6 @@ class DefectDetector:
         self.cracks_tester = cracks_detector
         self.dumper_tester = dumpers_defect_detector
         self.insulator_tester = insulators_defect_detector
-
-        # Memorize the edges once they have been generated
-        self.the_lines = None
 
         print("Defect detecting hub initialized\n")
 

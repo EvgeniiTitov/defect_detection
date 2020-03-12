@@ -62,9 +62,6 @@ class YOLOv3:
         :param image: numpy array
         :return:
         """
-
-        # TO CONFIRM: YOLO is invariant to the size of the input image.
-        # Do we really need it?
         img = self.preprocess_image(img=image,
                                     inp_dim=self.input_dimension)
 
