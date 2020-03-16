@@ -282,6 +282,7 @@ class ResultsHandler:
                                           element.BB_right + image_section.left]
 
                     file_name = image_name + "_" + element.object_name + "_" + str(index) + ".jpg"
+
                     cv2.imwrite(os.path.join(self.cropped_path, file_name), cropped_frame)
                 else:
                     # ! NEEDS TESTING Processing video
@@ -289,7 +290,9 @@ class ResultsHandler:
                                           element.BB_bottom + image_section.top,
                                           element.BB_left + image_section.left:
                                           element.BB_right + image_section.left]
+
                     frame_name = frame_counter + "_" + element.object_name + "_" + str(index) + ".jpg"
+
                     cv2.imwrite(os.path.join(self.cropped_path, frame_name), cropped_frame)
 
     def save_frame(

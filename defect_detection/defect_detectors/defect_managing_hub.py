@@ -1,9 +1,9 @@
-from threading import Thread, Event
+from threading import Thread
+import functools
 import numpy as np
 import os
 import cv2
 import time
-
 
 class DefectDetector:
     """
@@ -32,7 +32,6 @@ class DefectDetector:
             self,
             detected_objects: dict,
             camera_orientation: tuple,
-            pole_number: int,
             image_name: str
     ) -> dict:
         """
@@ -100,16 +99,24 @@ class DefectDetector:
         #     pillar_subimage)
 
         # Search for pole's edges
-        pillar_edges = self.concrete_extractor.find_pole_edges(image=pillar_subimage)
+
+        func_to_time = timeout(seconds=5)(self.concrete_extractor.find_pole_edges)
+        #pillar_edges = self.concrete_extractor.find_pole_edges(image=pillar_subimage)
+
+        try:
+            pillar_edges = func_to_time(image=pillar_subimage)
+        except:
+            print("Timeout error raised")
+            return
 
         if not pillar_edges:
             return
 
-        # for edge in pillar_edges:
-        #     cv2.line(pillar_subimage, edge[0], edge[1], (0, 0, 255), 4)
-        #
-        # cv2.imwrite(
-        #     os.path.join("D:\Desktop\system_output\RESULTS\lines", image_name + '.jpg'), pillar_subimage)
+        for edge in pillar_edges:
+            cv2.line(pillar_subimage, edge[0], edge[1], (0, 0, 255), 4)
+
+        cv2.imwrite(
+            os.path.join("D:\Desktop\system_output\API_RESULTS\lines", image_name + '.jpg'), pillar_subimage)
 
         # Run inclination calculation
         inclination = self.calculate_angle(the_lines=pillar_edges)
@@ -163,3 +170,36 @@ class DefectDetector:
             y2 = the_lines[0][1][1]
 
             return round(90 - np.rad2deg(np.arctan2(abs(y2 - y1), abs(x2 - x1))), 2)
+
+
+def timeout(seconds):
+    # https://stackoverflow.com/questions/21827874/timeout-a-function-windows
+    def deco(func):
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            res = [Exception(f"Function {func.__name__} timeout {seconds} exceeded")]
+
+            def new_func():
+                try:
+                    res[0] = func(*args, **kwargs)
+                except Exception as e:
+                    res[0] = e
+
+            t = Thread(target=new_func)
+            t.daemon = True
+
+            try:
+                t.start()
+                # Attempt joining the thread in N seconds
+                t.join(timeout=seconds)
+            except Exception as e:
+                raise e
+
+            ret = res[0]
+            if isinstance(ret, BaseException):
+                raise ret
+
+            return ret
+        return wrapper
+    return deco

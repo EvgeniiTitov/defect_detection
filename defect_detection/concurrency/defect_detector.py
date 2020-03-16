@@ -1,5 +1,16 @@
+from defect_detectors import ConcreteExtractor, LineModifier
 import threading
 import numpy as np
+
+
+"""
+Inside defect detector you can have N number of threads each tasked with
+finding defects on an object of particular class. Connected by Qs, return
+results to one place (join threads), which get put in Q_out and sent for postprocessing
+
+VS multiprocessing. Might be faster but data transfer overhead
+"""
+
 
 
 class DefectDetector(threading.Thread):
@@ -8,11 +19,6 @@ class DefectDetector(threading.Thread):
             self,
             queue_from_object_detector,
             queue_to_results_processor,
-            line_modifier,
-            concrete_extractor,
-            cracks_detector=None,
-            dumpers_defect_detector=None,
-            insulators_defect_detector=None,
             *args,
             **kwargs
     ):
@@ -22,12 +28,11 @@ class DefectDetector(threading.Thread):
         self.Q_in = queue_from_object_detector
         self.Q_out = queue_to_results_processor
 
-        self.line_modifier = line_modifier
-        self.concrete_extractor = concrete_extractor
+        self.concrete_extractor = ConcreteExtractor(line_modifier=LineModifier)
 
-        self.cracks_tester = cracks_detector
-        self.dumpers_tester = dumpers_defect_detector
-        self.insulators_tester = insulators_defect_detector
+        # self.cracks_tester = cracks_detector
+        # self.dumpers_tester = dumpers_defect_detector
+        # self.insulators_tester = insulators_defect_detector
 
         print("Defect detectors initialized")
 
@@ -42,11 +47,13 @@ class DefectDetector(threading.Thread):
             }
 
             # Get a dictionary of detected objects
-            detected_items = self.Q_in.get(block=True)
+            item = self.Q_in.get(block=True)
 
-            if detected_items == "END":
+            if item == "END":
                 self.Q_out.put("END")
                 break
+
+            image, detected_items = item
 
             for subimage, elements in detected_items.items():
                 for index, element in enumerate(elements):
@@ -55,6 +62,13 @@ class DefectDetector(threading.Thread):
                         # Doesn't return anything, changes object's state
                         self.find_defects_pillar(pillar=element,
                                                  subimage_section=subimage)
+
+                        pillar_status = {
+                            "inclination": element.inclination,
+                            "cracked": element.cracked
+                        }
+
+                        detected_defects["pillar"].append(pillar_status)
 
                     elif element.object_name.lower() == "dump":
                         continue
@@ -65,7 +79,7 @@ class DefectDetector(threading.Thread):
                     else:
                         continue
 
-            self.Q_out.put((detected_defects, detected_items))
+            self.Q_out.put((image, detected_defects, detected_items))
 
         return
 
@@ -74,7 +88,7 @@ class DefectDetector(threading.Thread):
             pillar,
             subimage_section
     ):
-        # Reconstruct pillar bounding box
+        # Reconstruct pillar bounding box image
         pillar_bb = np.array(subimage_section.frame[pillar.top:pillar.bottom,
                                                     pillar.left:pillar.right])
 
@@ -89,6 +103,9 @@ class DefectDetector(threading.Thread):
             pillar.inclination = inclination
         else:
             pillar.inclination = "NULL"
+
+        # TODO: Crack detection 1.Extract polygon and send for analysis
+        # TODO: change object's state to .cracked True or False
 
     def find_defects_dumpers(
             self,

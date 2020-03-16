@@ -8,6 +8,9 @@ SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
 
 detector = MainDetector(save_path=SAVE_PATH)
 
+
+# Time out is possible if takes too much time
+
 @app.route('/predict', methods=["POST"])
 def predict():
 

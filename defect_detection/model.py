@@ -2,16 +2,12 @@ from neural_networks import PolesDetector, ComponentsDetector
 from neural_networks import YOLOv3
 from defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
 from utils import ResultsHandler, MetaDataExtractor
-from utils import FrameReader, FrameWriter, FrameDisplayer, GetFrame
-from collections import defaultdict
+from utils import GetFrame
 from imutils.video import FPS
-from queue import Queue
-from threading import Thread
 import cv2
-import time
-import sys
 import os
 import time
+from collections import defaultdict
 
 
 class MainDetector:
@@ -57,49 +53,42 @@ class MainDetector:
         self.handler = ResultsHandler(save_path=self.save_path,
                                       cropped_path=self.crop_path)
 
-        #self.Q_to_block_1 = Queue(maxsize=12)
-
     def predict(
             self,
             path_to_data: str,
             pole_number: int=None
     ) -> dict:
         """
+        API endpoint.
+        Parses input, for each file(s) provided makes predictions and saves results in dict
         :param path_to_data: Path to data from an API call
         :param pole_number: Number of the pole to which the data being processed belongs. Used to
         comply with the naming convention for saving the processed data
         :return:
         """
-        detected_defects = {}
+        detected_defects = defaultdict(list)
 
         if os.path.isfile(path_to_data):
 
             # Find out if this is a video or an image and preprocess it accordingly
             item_name = os.path.basename(path_to_data)
 
-            # TODO: We might not be able to process PNGs. Double check
-
             if any(item_name.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
 
-                defects = self.search_defects(path_to_image=path_to_data,
-                                              pole_number=pole_number)
+                defects = self.search_defects(path_to_image=path_to_data)
 
-                detected_defects[item_name] = defects
+                detected_defects[pole_number].append(defects)
 
             elif any(item_name.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
 
-                defects = self.search_defects(path_to_video=path_to_data,
-                                              pole_number=pole_number)
+                defects = self.search_defects(path_to_video=path_to_data)
 
-                detected_defects[item_name] = defects
+                detected_defects[pole_number].append(defects)
 
             else:
                 raise TypeError("ERROR: File's extension cannot be processed")
 
         elif os.path.isdir(path_to_data):
-
-            time_taken = []
-            N_of_files = len(os.listdir(path_to_data))
 
             for item in os.listdir(path_to_data):
 
@@ -110,60 +99,37 @@ class MainDetector:
                     print("\nImage:", item)
                     path_to_image = os.path.join(path_to_data, item)
 
-                    t = time.time()
-                    defects = self.search_defects(path_to_image=path_to_image,
-                                                  pole_number=pole_number)
-                    time_taken.append((item, time.time() - t))
+                    defects = self.search_defects(path_to_image=path_to_image)
 
                     # If successfully processed, store defects found
                     if defects:
-                        detected_defects[item] = defects
+                        detected_defects[pole_number].append(defects)
                     else:
-                        detected_defects[item] = {}
+                        detected_defects[pole_number].append({})
 
                 elif any(item.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
 
                     print("Video:", item)
                     path_to_video = os.path.join(path_to_data, item)
 
-                    defects = self.search_defects(path_to_video=path_to_video,
-                                                  pole_number=pole_number)
+                    defects = self.search_defects(path_to_video=path_to_video)
 
                     # If successfully processed, store defects found
                     if defects:
-                        detected_defects[item] = defects
+                        detected_defects[pole_number].append(defects)
                     else:
-                        detected_defects[item] = {}
-
-                # TO CONFIRM: We could potentially add processing of sub-folder via recursion.
-                elif os.path.isdir(os.path.join(path_to_data, item)):
-                    continue
-
+                        detected_defects[pole_number].append({})
                 else:
                     continue
-
         else:
             raise TypeError("ERROR: Wrong input. Neither folder nor file")
-
-        # total_time = sum(time for filename, time in time_taken)
-        # time_taken.sort(key=lambda e:e[1], reverse=True)
-        # #longest_processing = max(time_taken, key=lambda e: e[1])
-        # print("\nAVG Time:", round(total_time/N_of_files, 3))
-        # print("\nLongest to process:")
-        # for e in time_taken:
-        #     print(e)
-
-        # print("\nDETECTED DEFECTS:")
-        # for k, v in detected_defects.items():
-        #     print(k, v)
 
         return detected_defects
 
     def search_defects(
             self,
             path_to_image: str=None,
-            path_to_video: str=None,
-            pole_number=None
+            path_to_video: str=None
     ) -> dict:
         """
         :param path_to_image:
@@ -187,7 +153,7 @@ class MainDetector:
 
             # Here we can potentially check image metadata -> tuple: (pitch_angle, roll_angle)
             camera_orientation = self.meta_data_extractor.get_angles(path_to_image)
-            filename = os.path.basename(path_to_image)
+            filename = os.path.splitext(os.path.basename(path_to_image))[0]
 
         else:
             filename = os.path.basename(path_to_video)
@@ -224,7 +190,7 @@ class MainDetector:
 
             if video_writer is None and path_to_video:
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-                video_writer = cv2.VideoWriter(os.path.join(self.save_path, 'video_out.avi'), fourcc, 30,
+                video_writer = cv2.VideoWriter(os.path.join(self.save_path, 'video_out.avi'), fourcc, 5,
                                               (image_to_process.shape[1],
                                                image_to_process.shape[0]), True)
 
@@ -243,10 +209,9 @@ class MainDetector:
                 start = time.time()
                 detected_defects = self.defect_detector.search_defects(detected_objects=components,
                                                                        camera_orientation=camera_orientation,
-                                                                       pole_number=pole_number,
                                                                        image_name=filename)
                 defect_time = time.time() - start
-                defects[pole_number] = detected_defects
+                defects[filename] = detected_defects
 
             # Combine all objects detected into one dict for further processing
             detected_objects = {**poles, **components}

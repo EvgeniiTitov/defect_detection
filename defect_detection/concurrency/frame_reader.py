@@ -3,6 +3,7 @@ import cv2
 import os
 import numpy as np
 
+# TODO: Double check about blocking .get() and .put()
 
 class FrameReader(threading.Thread):
 
@@ -37,6 +38,7 @@ class FrameReader(threading.Thread):
                     self.stop()
                     break
 
+                # TODO: Blocking by default, remove IF above
                 self.Q.put(frame)
 
         self.stream.release()

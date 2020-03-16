@@ -12,7 +12,8 @@ system's performance
 LONG TERM:
 7. Batch processing to further speed up the system
 8. Combine blocks 1-2 to decrease the number of expensive CPU-GPU data transfers (Apache Arrow to keep data on the local server)
-9. New detections representation (single accomodating all detected objects alongside the frame)
+9. New detections representation (single accomodating all detected objects alongside the frame). Now each subimage has the whole frame
+matrix as an attribute, which takes a lot of space. We need one reference for all detected objects that then can crop it
 
 
 KNOWN ISSUES:
