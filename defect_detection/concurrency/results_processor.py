@@ -33,6 +33,7 @@ class ResultsProcessorThread(threading.Thread):
         while not self.done:
 
             item = self.Q_in.get(block=True)
+            print("Get predicted objects - drawing BBs and saving")
 
             if item == "END":
                 break
@@ -48,6 +49,11 @@ class ResultsProcessorThread(threading.Thread):
             self.results_processor.draw_bounding_boxes(objects_detected=detected_objects,
                                                        image=image)
 
+            cv2.imshow("frame", image)
+            if cv2.waitKey(0):
+                cv2.destroyAllWindows()
+
             video_writer.write(image.astype(np.uint8))
 
+        print("ResultsProcessorThread killed")
         return

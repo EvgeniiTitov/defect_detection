@@ -35,6 +35,7 @@ class FrameReaderThread(threading.Thread):
 
             # Blocks the thread till there's a place in the Q to put an item
             self.Q.put(frame)
+            print("Put a frame in Q")
 
         self.stream.release()
         self.Q.put("END")

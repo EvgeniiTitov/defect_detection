@@ -167,9 +167,9 @@ class MainDetectorV2:
         detected_defects = defaultdict(list)
 
         frame_to_block1 = queue.Queue(maxsize=24)
-        block1_to_block2 = queue.Queue(maxsize=4)
+        block1_to_block2 = queue.Queue(maxsize=6)
         block2_to_writer = queue.Queue(maxsize=10)
-        filename = os.path.splitext(os.path.basename(path_to_video))
+        filename = os.path.splitext(os.path.basename(path_to_video))[0]
 
         frame_reader = FrameReaderThread(path_to_data=path_to_video,
                                          queue=frame_to_block1)

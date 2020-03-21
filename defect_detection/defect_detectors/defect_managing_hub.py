@@ -54,10 +54,10 @@ class DefectDetector:
                 if element.object_name.lower() == "pillar":
 
                     # Do not return anything. Change object's state - declare it defected or not
-                    self.pillars_defects_detector(pillar=element,
-                                                  detection_section=subimage,
-                                                  camera_angle=camera_orientation,
-                                                  image_name=image_name)
+                    self.search_defects_pillars(pillar=element,
+                                                detection_section=subimage,
+                                                camera_angle=camera_orientation,
+                                                image_name=image_name)
 
 
                     detected_defects["pillar"].append(("angle", element.inclination))
@@ -75,7 +75,7 @@ class DefectDetector:
 
         return detected_defects
 
-    def pillars_defects_detector(
+    def search_defects_pillars(
             self,
             pillar,
             detection_section,
@@ -88,7 +88,6 @@ class DefectDetector:
         :param detection_section:
         :return:
         """
-        # Generate lines
         # Reconstruct image of the pillar detected
         pillar_subimage = np.array(detection_section.frame[pillar.top:pillar.bottom,
                                                            pillar.left:pillar.right])
@@ -98,7 +97,6 @@ class DefectDetector:
         #     pillar_subimage)
 
         # Search for pole's edges
-
         func_to_time = timeout(seconds=10)(self.concrete_extractor.find_pole_edges)
         #pillar_edges = self.concrete_extractor.find_pole_edges(image=pillar_subimage)
 

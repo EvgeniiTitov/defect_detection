@@ -1,10 +1,10 @@
 import requests
 
 REST_API_URl = "http://127.0.0.1:5000/predict"
-
+qq
 payload = {
     "pole_number": 15,
-    "path_to_data": r"D:\Desktop\system_output\TEST_concrete_only"
+    "path_to_data": r"D:\Desktop\system_output\DJI_0565.MP4"
 }
 
 
