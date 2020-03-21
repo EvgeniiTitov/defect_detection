@@ -3,8 +3,8 @@ import requests
 REST_API_URl = "http://127.0.0.1:5000/predict"
 
 payload = {
-    "pole_number": 12,
-    "path_to_data": r"D:\Desktop\system_output\FINAL_TILT_TEST"
+    "pole_number": 15,
+    "path_to_data": r"D:\Desktop\system_output\TEST_concrete_only"
 }
 
 

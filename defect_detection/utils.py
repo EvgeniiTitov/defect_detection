@@ -7,63 +7,6 @@ import numpy as np
 import re
 
 
-class FrameReader(threading.Thread):
-    """
-    Thread tasked with reading frames and adding them to the Q
-    """
-    def __init__(
-            self,
-            path: str,
-            Q,
-            *args,
-            **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-        self.Q = Q
-        self.done = False
-
-        try:
-            self.stream = cv2.VideoCapture(path)
-        except:
-            print("Failed to open the cap")
-            self.Q.put("END")
-
-    def run(self) -> None:
-
-        while True:
-            if self.done:
-                break
-
-            if not self.Q.full():
-                has_frame, frame = self.stream.read()
-
-                if not has_frame:
-                    self.stop()
-                    break
-
-                self.Q.put(frame)
-
-        self.stream.release()
-        self.Q.put("END")
-
-    def get_frame(self):
-        """
-        Get a frame from the Q
-        :return:
-        """
-        return self.Q.get()
-
-    def has_frames(self):
-        """
-        Check if there're decoded frame in the Q ready to go
-        :return:
-        """
-        return self.Q.qsize() > 0
-
-    def stop(self):
-        self.done = True
-
-
 class GetFrame(object):
     """
     Decodes a single frame in advance
@@ -102,88 +45,15 @@ class GetFrame(object):
         Thread(target=self.decode_frame, args=()).start()
 
 
-class FrameWriter(object):
-    """
-    Thread tasked with:
-    1. Drawing BBs
-    2. Saving frames back on the disk
-    3. Constructing JSON file if processing photo / video's over
-    """
-    def __init__(self):
+"""
+Results handler needs:
+1. Image
+2. Objects
+3. Pole number to which they belong 
 
-        self.frame = None
-        self.done = False
-        # Extra attributes to use during processing the results
-        # 1. BBs coordinates to draw
-        # CAN WE CREATE INSTANCE OF RESULTS HANDLER HERE?
-
-    def process_results(self):
-        """
-
-        :return:
-        """
-
-        #TODO: Main logic here
-        pass
-
-    def stop(self):
-
-        self.done = True
-
-    def start(self):
-        """
-
-        :return:
-        """
-        thread = Thread(target=self.process_results, args=())
-        # Runs in the background
-        thread.daemon = True
-        thread.start()
-
-        return self
-
-
-class FrameDisplayer(object):
-    """
-
-    """
-    def __int__(
-            self,
-            frame: np.ndarray=None
-    ):
-
-        self.frame = frame
-        self.done = False
-
-
-    def show(self):
-        """
-
-        :return:
-        """
-        while not self.done:
-
-            cv2.imshow("Frame", self.frame)
-
-            if cv2.waitKey(1) == ord("q"):
-                self.stop()
-
-    def stop(self):
-
-        self.done = True
-
-    def start_thread(self):
-        """
-
-        :return:
-        """
-        thread = Thread(target=self.show, args=())
-        # Runs in the background
-        thread.daemon = True
-        thread.start()
-
-        return self
-
+It will check if a folder in self.save_path for this pole number already exists. If not 
+a new one will be created and results will be saved there. 
+"""
 
 class ResultsHandler:
     """
@@ -191,11 +61,35 @@ class ResultsHandler:
     """
     def __init__(
             self,
-            save_path,
-            cropped_path
+            save_path:str,
+            cropped_path:str=None
     ):
         self.save_path = save_path
         self.cropped_path = cropped_path
+
+    def draw_bb_save_image(
+            self,
+            image: np.ndarray,
+            detected_objects: dict,
+            pole_number: int,
+            image_name: str
+    ) -> None:
+        """
+        TBA
+        :param image:
+        :param detected_objects:
+        :param pole_number:
+        :return:
+        """
+        store_path = os.path.join(self.save_path, str(pole_number))
+        if not os.path.exists(store_path):
+            os.mkdir(store_path)
+
+        self.draw_bounding_boxes(objects_detected=detected_objects,
+                                 image=image)
+
+        new_name = image_name + "_out.jpg"
+        cv2.imwrite(os.path.join(store_path, new_name), image)
 
     def line_text_size(self, image):
         """

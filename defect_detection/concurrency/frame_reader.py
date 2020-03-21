@@ -3,9 +3,8 @@ import cv2
 import os
 import numpy as np
 
-# TODO: Double check about blocking .get() and .put()
 
-class FrameReader(threading.Thread):
+class FrameReaderThread(threading.Thread):
 
     def __init__(
             self,
@@ -25,33 +24,26 @@ class FrameReader(threading.Thread):
             self.Q.put("END")
 
     def run(self) -> None:
-
         while True:
-
             if self.done:
                 break
 
-            if not self.Q.full():
-                has_frame, frame = self.stream.read()
+            has_frame, frame = self.stream.read()
+            if not has_frame:
+                self.stop()
+                break
 
-                if not has_frame:
-                    self.stop()
-                    break
-
-                # TODO: Blocking by default, remove IF above
-                self.Q.put(frame)
+            # Blocks the thread till there's a place in the Q to put an item
+            self.Q.put(frame)
 
         self.stream.release()
         self.Q.put("END")
 
-    def get_frame(self) -> np.ndarray:
+        print("\nFrameReaderThread killed")
+        return
 
-        return self.Q.get()
+    def get_frame(self) -> np.ndarray: return self.Q.get()
 
-    def has_frame(self) -> bool:
+    def has_frame(self) -> bool: return self.Q.qsize() > 0
 
-        return self.Q.qsize() > 0
-
-    def stop(self) -> None:
-
-        self.done = True
+    def stop(self) -> None: self.done = True

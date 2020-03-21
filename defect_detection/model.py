@@ -74,25 +74,19 @@ class MainDetector:
             item_name = os.path.basename(path_to_data)
 
             if any(item_name.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
-
                 defects = self.search_defects(path_to_image=path_to_data)
-
                 detected_defects[pole_number].append(defects)
 
             elif any(item_name.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
-
                 defects = self.search_defects(path_to_video=path_to_data)
-
                 detected_defects[pole_number].append(defects)
 
             else:
-                raise TypeError("ERROR: File's extension cannot be processed")
+                print(f"ERROR: Ext {os.path.splitext(item_name)} cannot be processed")
+                return {}
 
         elif os.path.isdir(path_to_data):
-
             for item in os.listdir(path_to_data):
-
-                # TODO: We might not be able to process PNGs. Double check
 
                 if any(item.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
 

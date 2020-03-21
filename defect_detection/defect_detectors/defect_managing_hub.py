@@ -18,8 +18,7 @@ class DefectDetector:
             insulators_defect_detector=None,
     ):
         # Auxiliary modules
-        self.line_modifier = line_modifier
-        self.concrete_extractor = concrete_extractor(line_modifier=self.line_modifier)
+        self.concrete_extractor = concrete_extractor(line_modifier=line_modifier)
 
         # Defect detecting modules
         self.cracks_tester = cracks_detector
@@ -31,8 +30,8 @@ class DefectDetector:
     def search_defects(
             self,
             detected_objects: dict,
-            camera_orientation: tuple,
-            image_name: str
+            image_name: str = None,
+            camera_orientation: tuple=None
     ) -> dict:
         """
         Finds defects on objects provided
@@ -95,12 +94,12 @@ class DefectDetector:
                                                            pillar.left:pillar.right])
 
         # cv2.imwrite(
-        #     os.path.join("D:\Desktop\system_output\RESULTS\cropped_to_test_separately", image_name + '.jpg'),
+        #     os.path.join("D:\Desktop\system_output\API_RESULTS\cropped", image_name + '.jpg'),
         #     pillar_subimage)
 
         # Search for pole's edges
 
-        func_to_time = timeout(seconds=5)(self.concrete_extractor.find_pole_edges)
+        func_to_time = timeout(seconds=10)(self.concrete_extractor.find_pole_edges)
         #pillar_edges = self.concrete_extractor.find_pole_edges(image=pillar_subimage)
 
         try:
@@ -112,11 +111,11 @@ class DefectDetector:
         if not pillar_edges:
             return
 
-        for edge in pillar_edges:
-            cv2.line(pillar_subimage, edge[0], edge[1], (0, 0, 255), 4)
-
-        cv2.imwrite(
-            os.path.join("D:\Desktop\system_output\API_RESULTS\lines", image_name + '.jpg'), pillar_subimage)
+        # for edge in pillar_edges:
+        #     cv2.line(pillar_subimage, edge[0], edge[1], (0, 0, 255), 4)
+        #
+        # cv2.imwrite(
+        #     os.path.join("D:\Desktop\system_output\API_RESULTS\lines", image_name + '.jpg'), pillar_subimage)
 
         # Run inclination calculation
         inclination = self.calculate_angle(the_lines=pillar_edges)
@@ -127,8 +126,8 @@ class DefectDetector:
             pillar.inclination = "NULL"
 
         # Run cracks detection
-        concrete_polygon = self.concrete_extractor.retrieve_polygon_v2(the_edges=pillar_edges,
-                                                                       image=pillar_subimage)
+        # concrete_polygon = self.concrete_extractor.retrieve_polygon_v2(the_edges=pillar_edges,
+        #                                                                image=pillar_subimage)
 
         # TO DO: Send polygon for cracks detection
 

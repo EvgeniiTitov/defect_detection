@@ -1,5 +1,4 @@
 SHORT TERM:
-1. Line generating function needs to be timed out after N seconds
 2. Replace 2 YOLOs in sequence with 1 trained for 3 classes (new weights required)
 3. Cracks module
 4. Dumpers module
@@ -17,6 +16,10 @@ matrix as an attribute, which takes a lot of space. We need one reference for al
 
 
 KNOWN ISSUES:
+- Server crashes after 1 request, doesn't exit to the state when its ready to process
+another request
+
+
 - BBs modification. Overlapping check.
 - Class names and accuracy once written look bad
 - 2 pillars can potentially get generated

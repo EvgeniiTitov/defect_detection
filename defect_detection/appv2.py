@@ -1,12 +1,13 @@
-from model import MainDetector
+from model_v2 import MainDetectorV2
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
 # Location on the server where processed images will be saved
-SAVE_PATH = r"D:\Desktop\system_output\API_RESULTS"
+SAVE_PATH = r"D:\Desktop\system_output\OUTPUT"
 
-detector = MainDetector(save_path=SAVE_PATH)
+detector = MainDetectorV2(save_path=SAVE_PATH,
+                          search_defects=True)
 
 
 @app.route('/predict', methods=["POST"])
@@ -23,7 +24,7 @@ def predict():
         defects = detector.predict(path_to_data=path_to_data,
                                    pole_number=pole_number)
 
-        response["predictions"] = defects
+        response["results"] = defects
         response["success"] = True
 
     return jsonify(response)

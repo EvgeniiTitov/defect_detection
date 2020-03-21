@@ -1,2 +1,2 @@
-from .defect_detector import DefectDetector
-from .frame_reader import FrameReader
+from .defect_detector import DefectDetectorThread
+from .frame_reader import FrameReaderThread
