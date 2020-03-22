@@ -104,9 +104,9 @@ class ResultsHandler:
 
     def draw_bounding_boxes(
             self,
-            objects_detected,
-            image
-    ):
+            objects_detected: dict,
+            image: np.ndarray
+    ) -> None:
         """
         Method drawing BBs of the objects detected on the image
         :param objects_detected: iterable containing all objects detected
@@ -205,7 +205,12 @@ class ResultsHandler:
         else:
             video_writer.write(image.astype(np.uint8))
 
-    def draw_the_line(self, image, line, tilt_angle):
+    def draw_the_line(
+            self,
+            image,
+            line,
+            tilt_angle
+    ):
         """
         Draws a line which is used for a concrete pole tilt defect detection
         :param image:

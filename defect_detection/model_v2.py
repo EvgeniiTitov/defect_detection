@@ -1,7 +1,5 @@
-from concurrency.frame_reader import FrameReaderThread
-from concurrency.object_detector import ObjectDetectorThread
-from concurrency.defect_detector import DefectDetectorThread
-from concurrency.results_processor import ResultsProcessorThread
+from concurrency import FrameReaderThread, ObjectDetectorThread
+from concurrency import DefectDetectorThread, ResultsProcessorThread
 from neural_networks import PolesDetector, ComponentsDetector
 from neural_networks import YOLOv3
 from defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
@@ -13,10 +11,6 @@ import time
 import cv2
 
 
-"""
-Need to add try - except blocks, so that if anything fails, all other threads die as well
-"""
-
 class MainDetectorV2:
 
     def __init__(
@@ -24,6 +18,7 @@ class MainDetectorV2:
             save_path: str,
             search_defects: bool = True
     ):
+        # Path on the server where processed data gets stored
         self.save_path = save_path
         self.search_defects = search_defects
 
@@ -37,7 +32,7 @@ class MainDetectorV2:
         components_network = YOLOv3()
         pillars_network = YOLOv3()
 
-        self.pole_detector = PolesDetector(poles_network)
+        self.pole_detector = PolesDetector(detector=poles_network)
         self.component_detector = ComponentsDetector(components_predictor=components_network,
                                                      pillar_predictor=pillars_network)
 
@@ -102,7 +97,7 @@ class MainDetectorV2:
                     detected_defects[pole_number].append(defects)
 
                 else:
-                    print("Cannot process:", item)
+                    print("Cannot process the file:", item)
         else:
             print("Cannot process the file:", path_to_data)
             return {}
@@ -117,6 +112,7 @@ class MainDetectorV2:
         """
         TODO: Could check for metadata if required
         :param path_to_image:
+        :param pole_number:
         :return:
         """
         try:
@@ -159,16 +155,26 @@ class MainDetectorV2:
             pole_number: int
     ) -> list:
         """
-        TBA
         :param path_to_video:
+        :param pole_number:
         :return:
         """
         # Defects from each frame will be stored there
         detected_defects = defaultdict(list)
-
+        """
+        - Frame decoding is relatively quick, do we need a large Q? (takes quite a bit of memory?)
+        - Should I reinitialize the Qs for each video, or create some in initializator and empty them after
+        each video? 
+        - What is the best practice to get results from a thread? I use global dict that I give to a thread
+        - What if 2,3,4 thread fails, how to kill the first one? Can't send a message there
+        
+        
+        
+        """
         frame_to_block1 = queue.Queue(maxsize=24)
         block1_to_block2 = queue.Queue(maxsize=6)
         block2_to_writer = queue.Queue(maxsize=10)
+
         filename = os.path.splitext(os.path.basename(path_to_video))[0]
 
         frame_reader = FrameReaderThread(path_to_data=path_to_video,
@@ -196,7 +202,7 @@ class MainDetectorV2:
         for thread in (frame_reader, object_detector, defect_detector, result_processor):
             thread.join()
 
-        # Check if any defects have been found
+        # Check if any defects have been found by the defect detecting thread
         if "defects" in detected_defects.keys():
             return detected_defects["defects"]
         else:

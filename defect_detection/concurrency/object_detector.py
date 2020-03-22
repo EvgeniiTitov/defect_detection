@@ -22,11 +22,12 @@ class ObjectDetectorThread(threading.Thread):
         self.components_detector = components_detector
 
     def run(self) -> None:
+
         while not self.done:
 
             # Block the thread if the Q's empty
             frame = self.Q_in.get(block=True)
-            print("Got a frame from Q - predicting objects")
+            print("OBJ DETECTOR: Got a frame from Q - predicting objects")
 
             # Check if its time to kill the thread
             if frame == "END":
@@ -40,7 +41,7 @@ class ObjectDetectorThread(threading.Thread):
             components = self.components_detector.predict(image=frame,
                                                           pole_predictions=poles)
 
-            print("Put predicted objects in the Q")
+            print("OBJ DETECTOR: Put predicted objects in the Q")
             # Put results in one dict and send forward
             self.Q_out.put((frame, poles, components))
 

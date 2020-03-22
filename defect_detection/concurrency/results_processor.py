@@ -22,18 +22,25 @@ class ResultsProcessorThread(threading.Thread):
         self.Q_in = queue_from_defect_detector
         self.filename = filename
         self.results_processor = results_processor
-
-        self.store_path = os.path.join(save_path, str(pole_number))
-        if not os.path.exists(self.store_path):
-            os.mkdir(self.store_path)
+        self.save_path = save_path
+        self.pole_number = pole_number
 
     def run(self) -> None:
+
+        store_path = os.path.join(self.save_path, str(self.pole_number))
+        if not os.path.exists(store_path):
+            try:
+                os.mkdir(store_path)
+            except:
+                print(f"Failed to create a folder to store results for {self.pole_number} pole")
+                self.stop()
+                # TODO: How do I stop other threads from here?
 
         video_writer = None
         while not self.done:
 
             item = self.Q_in.get(block=True)
-            print("Get predicted objects - drawing BBs and saving")
+            print("POSTPROCESSOR: Get predicted objects - postprocessing")
 
             if item == "END":
                 break
@@ -42,7 +49,7 @@ class ResultsProcessorThread(threading.Thread):
 
             if video_writer is None:
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-                video_writer = cv2.VideoWriter(os.path.join(self.store_path, self.filename + '_out.avi'),
+                video_writer = cv2.VideoWriter(os.path.join(store_path, self.filename + '_out.avi'),
                                                fourcc, 30,(image.shape[1], image.shape[0]), True)
 
             # Draw BBs
@@ -57,3 +64,5 @@ class ResultsProcessorThread(threading.Thread):
 
         print("ResultsProcessorThread killed")
         return
+
+    def stop(self) -> None: self.done = True

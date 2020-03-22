@@ -6,8 +6,9 @@ import numpy as np
 Inside defect detector you can have N number of threads each tasked with
 finding defects on an object of particular class. Connected by Qs, return
 results to one place (join threads), which get put in Q_out and sent for postprocessing
+FOR loop across all elements found putting them in appropriate Qs
 
-VS multiprocessing. Might be faster but data transfer overhead
+VS multiprocessing. Might be faster but data transfer overhead - apache arrow 
 """
 
 
@@ -37,7 +38,7 @@ class DefectDetectorThread(threading.Thread):
 
             # Get a dictionary of detected objects
             item = self.Q_in.get(block=True)
-            print("Got predicted objects from Q - searching defects")
+            print("DEFECT DETECTOR: Got predicted objects - searching defects")
 
             if item == "END":
                 self.Q_out.put("END")
@@ -48,11 +49,12 @@ class DefectDetectorThread(threading.Thread):
             if components:
                 detected_defects = self.defect_detector.search_defects(components)
 
-                # Add only if any defects have been found
+                # Add only if any defects have been found - do not add info about frames
+                # where no defects have been detected
                 if any(detected_defects[key] for key in detected_defects.keys()):
                     self.defects["defects"].append(detected_defects)
 
-            print("Send objects for postprocessing")
+            print("DEFECT DETECTOR: Send objects for postprocessing")
             self.Q_out.put((image, {**poles, **components}))
 
         print("DefectDetectorThread killed")

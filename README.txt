@@ -19,9 +19,18 @@ KNOWN ISSUES:
 - Server crashes after 1 request, doesn't exit to the state when its ready to process
 another request
 
-
 - BBs modification. Overlapping check.
 - Class names and accuracy once written look bad
 - 2 pillars can potentially get generated
 
 There are requirements about how images need to be taken in order for the inclination detecting algorithm to process them.
+
+------------------------------------------------
+1. Test everything for images.
+    1.1 Create N number of requests
+    1.2 Nets initialize twice
+    1.3 Server doesn't entirely exit after 1 request (some process's holding it)
+    1.4 Test memory consumption
+
+2. Fix threads
+3. Add requirements

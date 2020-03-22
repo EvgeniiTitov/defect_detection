@@ -24,6 +24,10 @@ class FrameReaderThread(threading.Thread):
             self.Q.put("END")
 
     def run(self) -> None:
+
+        if not self.stream.isOpened():
+            self.stop()
+
         while True:
             if self.done:
                 break
@@ -35,7 +39,7 @@ class FrameReaderThread(threading.Thread):
 
             # Blocks the thread till there's a place in the Q to put an item
             self.Q.put(frame)
-            print("Put a frame in Q")
+            print("FRAME READER: Put a frame in Q")
 
         self.stream.release()
         self.Q.put("END")

@@ -83,7 +83,7 @@ class DefectDetector:
             image_name
     ):
         """
-        Pipeline for detecting pillars inclination and cracks
+        Method for detecting pillars inclination and cracks
         :param pillar:
         :param detection_section:
         :return:
@@ -111,14 +111,13 @@ class DefectDetector:
 
         # for edge in pillar_edges:
         #     cv2.line(pillar_subimage, edge[0], edge[1], (0, 0, 255), 4)
-        #
         # cv2.imwrite(
         #     os.path.join("D:\Desktop\system_output\API_RESULTS\lines", image_name + '.jpg'), pillar_subimage)
 
         # Run inclination calculation
         inclination = self.calculate_angle(the_lines=pillar_edges)
 
-        if inclination and 0 <= inclination <= 90:
+        if inclination:
             pillar.inclination = inclination
         else:
             pillar.inclination = "NULL"
@@ -127,7 +126,7 @@ class DefectDetector:
         # concrete_polygon = self.concrete_extractor.retrieve_polygon_v2(the_edges=pillar_edges,
         #                                                                image=pillar_subimage)
 
-        # TO DO: Send polygon for cracks detection
+        # TODO: Send polygon for cracks detection
 
 
         # cv2.imwrite(
@@ -148,17 +147,18 @@ class DefectDetector:
             y1_1 = the_lines[0][0][1]
             x2_1 = the_lines[0][1][0]
             y2_1 = the_lines[0][1][1]
-
             angle_1 = round(90 - np.rad2deg(np.arctan2(abs(y2_1 - y1_1), abs(x2_1 - x1_1))), 2)
 
             x1_2 = the_lines[1][0][0]
             y1_2 = the_lines[1][0][1]
             x2_2 = the_lines[1][1][0]
             y2_2 = the_lines[1][1][1]
-
             angle_2 = round(90 - np.rad2deg(np.arctan2(abs(y2_2 - y1_2), abs(x2_2 - x1_2))), 2)
 
-            return round((angle_1 + angle_2) / 2, 2)
+            the_angle = round((angle_1 + angle_2) / 2, 2)
+            assert 0 <= the_angle <= 90, "ERROR: Wrong angle value calculated"
+
+            return the_angle
 
         else:
             x1 = the_lines[0][0][0]
@@ -166,7 +166,10 @@ class DefectDetector:
             x2 = the_lines[0][1][0]
             y2 = the_lines[0][1][1]
 
-            return round(90 - np.rad2deg(np.arctan2(abs(y2 - y1), abs(x2 - x1))), 2)
+            the_angle = round(90 - np.rad2deg(np.arctan2(abs(y2 - y1), abs(x2 - x1))), 2)
+            assert 0 <= the_angle <= 90, "ERROR: Wrong angle value calculated"
+
+            return the_angle
 
 
 def timeout(seconds):
