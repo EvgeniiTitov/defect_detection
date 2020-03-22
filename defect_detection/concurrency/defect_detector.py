@@ -19,7 +19,6 @@ class DefectDetectorThread(threading.Thread):
             queue_from_object_detector,
             queue_to_results_processor,
             defect_detector,
-            defects,
             *args,
             **kwargs
     ):
@@ -30,21 +29,25 @@ class DefectDetectorThread(threading.Thread):
         self.Q_out = queue_to_results_processor
 
         self.defect_detector = defect_detector
-        self.defects = defects
 
     def run(self) -> None:
 
-        while not self.done:
+        while True:
 
             # Get a dictionary of detected objects
             item = self.Q_in.get(block=True)
-            print("DEFECT DETECTOR: Got predicted objects - searching defects")
 
             if item == "END":
-                self.Q_out.put("END")
+                self.Q_out.put(item)
+                continue
+
+            if item == "STOP":
+                self.Q_out.put(item)
                 break
 
-            image, poles, components = item
+            image, poles, components, id = item
+
+            defects = []
 
             if components:
                 detected_defects = self.defect_detector.search_defects(components)
@@ -52,10 +55,9 @@ class DefectDetectorThread(threading.Thread):
                 # Add only if any defects have been found - do not add info about frames
                 # where no defects have been detected
                 if any(detected_defects[key] for key in detected_defects.keys()):
-                    self.defects["defects"].append(detected_defects)
+                    defects.append(detected_defects)
 
-            print("DEFECT DETECTOR: Send objects for postprocessing")
-            self.Q_out.put((image, {**poles, **components}))
+            self.Q_out.put((image, id, {'defects': defects, **poles, **components}))
 
         print("DefectDetectorThread killed")
         return

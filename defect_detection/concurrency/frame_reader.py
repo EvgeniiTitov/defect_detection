@@ -8,47 +8,56 @@ class FrameReaderThread(threading.Thread):
 
     def __init__(
             self,
-            path_to_data,
-            queue,
+            in_queue,
+            out_queue,
+            progress,
             *args,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.Q = queue
-        self.done = False
-
-        try:
-            self.stream = cv2.VideoCapture(path_to_data)
-        except:
-            print("Failed to open the file", os.path.basename(path_to_data))
-            self.Q.put("END")
+        self.in_q = in_queue
+        self.out_q = out_queue
+        self.progress = progress
 
     def run(self) -> None:
 
-        if not self.stream.isOpened():
-            self.stop()
-
         while True:
-            if self.done:
+            input = self.in_q.get()
+
+            if input == 'STOP':
                 break
 
-            has_frame, frame = self.stream.read()
-            if not has_frame:
-                self.stop()
-                break
+            (path_to_data, pole_id, id) = input
 
-            # Blocks the thread till there's a place in the Q to put an item
-            self.Q.put(frame)
-            print("FRAME READER: Put a frame in Q")
+            try:
+                stream = cv2.VideoCapture(path_to_data)
+            except:
+                print("Failed to open the file", os.path.basename(path_to_data))
+                self.out_q.put('END')
+                continue
 
-        self.stream.release()
-        self.Q.put("END")
+            if not stream.isOpened():
+                self.out_q.put('END')
+                continue
 
+            # TODO: Remaining frames count (set 'remaining')
+
+            while True:
+                has_frame, frame = stream.read()
+                if not has_frame:
+                    self.out_q.put('END')
+                    break
+
+                # Blocks the thread till there's a place in the Q to put an item
+                self.progress[id]['processing'] += 1  # We only need approximate progress, non-atomic ops are ok
+                self.out_q.put((frame, id))
+
+            stream.release()
+            self.out_q.put('END')
+
+        self.out_q.put('STOP')
         print("\nFrameReaderThread killed")
-        return
 
     def get_frame(self) -> np.ndarray: return self.Q.get()
 
     def has_frame(self) -> bool: return self.Q.qsize() > 0
-
-    def stop(self) -> None: self.done = True

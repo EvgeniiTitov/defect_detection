@@ -1,3 +1,5 @@
+import uuid
+
 from concurrency import FrameReaderThread, ObjectDetectorThread
 from concurrency import DefectDetectorThread, ResultsProcessorThread
 from neural_networks import PolesDetector, ComponentsDetector
@@ -28,6 +30,8 @@ class MainDetector:
         else:
             self.check_defects = False
 
+        self.progress = dict()
+
         poles_network = YOLOv3()
         components_network = YOLOv3()
         pillars_network = YOLOv3()
@@ -43,6 +47,37 @@ class MainDetector:
                                               insulators_defect_detector=None)
 
         self.results_processor = ResultsHandler(save_path=save_path)
+
+        self.path_queue = queue.Queue()
+        self.frame_to_block1 = queue.Queue(maxsize=24)
+        self.block1_to_block2 = queue.Queue(maxsize=6)
+        self.block2_to_writer = queue.Queue(maxsize=10)
+
+        self.frame_reader = FrameReaderThread(
+            in_queue=self.path_queue,
+            out_queue=self.frame_to_block1,
+            progress=self.progress
+        )
+
+        self.object_detector = ObjectDetectorThread(
+            queue_from_frame_reader=self.frame_to_block1,
+            queue_to_defect_detector=self.block1_to_block2,
+            poles_detector=self.pole_detector,
+            components_detector=self.component_detector
+        )
+
+        self.defect_detector = DefectDetectorThread(
+            queue_from_object_detector=self.block1_to_block2,
+            queue_to_results_processor=self.block2_to_writer,
+            defect_detector=self.defect_detector
+        )
+
+        self.result_processor = ResultsProcessorThread(
+            save_path=self.save_path,
+            queue_from_defect_detector=self.block2_to_writer,
+            results_processor=self.results_processor,
+            progress=self.progress
+        )
 
     def predict(
             self,
@@ -167,43 +202,42 @@ class MainDetector:
         each video? 
         - What is the best practice to get results from a thread? I use global dict that I give to a thread
         - What if 2,3,4 thread fails, how to kill the first one? Can't send a message there
-        
-        
-        
         """
-        frame_to_block1 = queue.Queue(maxsize=24)
-        block1_to_block2 = queue.Queue(maxsize=6)
-        block2_to_writer = queue.Queue(maxsize=10)
 
         filename = os.path.splitext(os.path.basename(path_to_video))[0]
 
-        frame_reader = FrameReaderThread(path_to_data=path_to_video,
-                                         queue=frame_to_block1)
+        id = str(uuid.uuid4())
 
-        object_detector = ObjectDetectorThread(queue_from_frame_reader=frame_to_block1,
-                                               queue_to_defect_detector=block1_to_block2,
-                                               poles_detector=self.pole_detector,
-                                               components_detector=self.component_detector)
+        self.progress[id] = {
+            'processing': 0,
+            'processed': 0,
+            'remaining': None,
+            'pole_id': pole_number,
+            'filename': filename
+        }
 
-        defect_detector = DefectDetectorThread(queue_from_object_detector=block1_to_block2,
-                                               queue_to_results_processor=block2_to_writer,
-                                               defect_detector=self.defect_detector,
-                                               defects=detected_defects)
-
-        result_processor = ResultsProcessorThread(save_path=self.save_path,
-                                                  queue_from_defect_detector=block2_to_writer,
-                                                  filename=filename,
-                                                  pole_number=pole_number,
-                                                  results_processor=self.results_processor)
-
-        for thread in (frame_reader, object_detector, defect_detector, result_processor):
-            thread.start()
-
-        for thread in (frame_reader, object_detector, defect_detector, result_processor):
-            thread.join()
+        self.path_queue.put((path_to_video, pole_number, id))
 
         # Check if any defects have been found by the defect detecting thread
         if "defects" in detected_defects.keys():
             return detected_defects["defects"]
         else:
             return []
+
+    def start(self):
+        for thread in (
+            self.frame_reader,
+            self.object_detector,
+            self.defect_detector,
+            self.result_processor
+        ):
+            thread.start()
+
+    def stop(self):
+        for thread in (
+            self.frame_reader,
+            self.object_detector,
+            self.defect_detector,
+            self.result_processor
+        ):
+            thread.join()

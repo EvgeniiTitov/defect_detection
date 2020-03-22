@@ -10,47 +10,58 @@ class ResultsProcessorThread(threading.Thread):
             self,
             save_path,
             queue_from_defect_detector,
-            filename,
-            pole_number,
             results_processor,
+            progress,
             *args,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.done = False
+        self.progress = progress
 
         self.Q_in = queue_from_defect_detector
-        self.filename = filename
         self.results_processor = results_processor
         self.save_path = save_path
-        self.pole_number = pole_number
+        self.previous_id = None
+        self.video_writer = None
 
     def run(self) -> None:
 
-        store_path = os.path.join(self.save_path, str(self.pole_number))
-        if not os.path.exists(store_path):
-            try:
-                os.mkdir(store_path)
-            except:
-                print(f"\nFailed to create a folder to store results for {self.pole_number} pole")
-                self.stop()
-                # TODO: How do I stop other threads from here?
+        while True:
+            input = self.Q_in.get()
 
-        video_writer = None
-        while not self.done:
+            if input == "END":
+                if self.previous_id:
+                    self.save_video()
 
-            item = self.Q_in.get(block=True)
-            print("POSTPROCESSOR: Get predicted objects - postprocessing")
+                continue
 
-            if item == "END":
+            elif input == "STOP":
+                if self.previous_id:
+                    self.save_video()
+
                 break
 
-            image, detected_objects = item
+            image, id, detected_objects = input
+            pole_number = self.progress[id]['pole_id']
+            filename = self.progress[id]['filename']
 
-            if video_writer is None:
+            store_path = os.path.join(self.save_path, str(pole_number))
+
+            if id != self.previous_id:
+                self.previous_id = id
+
+                if not os.path.exists(store_path):
+                    try:
+                        os.mkdir(store_path)
+                    except:
+                        pass
+
+            self.video_writer = None
+
+            if self.video_writer is None:
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-                video_writer = cv2.VideoWriter(os.path.join(store_path, self.filename + '_out.avi'),
-                                               fourcc, 30,(image.shape[1], image.shape[0]), True)
+                video_writer = cv2.VideoWriter(os.path.join(store_path, filename + '_out.avi'),
+                                               fourcc, 30, (image.shape[1], image.shape[0]), True)
 
             # Draw BBs
             self.results_processor.draw_bounding_boxes(objects_detected=detected_objects,
@@ -60,9 +71,12 @@ class ResultsProcessorThread(threading.Thread):
             # if cv2.waitKey(0):
             #     cv2.destroyAllWindows()
 
-            video_writer.write(image.astype(np.uint8))
+            self.video_writer.write(image.astype(np.uint8))
 
         print("ResultsProcessorThread killed")
         return
 
     def stop(self) -> None: self.done = True
+
+    def save_video(self):
+        self.video_writer = None

@@ -1,5 +1,5 @@
 from model import MainDetector
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 
 app = Flask(__name__)
 
@@ -29,6 +29,15 @@ def predict():
         response["success"] = True
 
     return jsonify(response)
+
+
+@app.route('/status/{id}', methods=["GET"])
+def status(id):
+    if id in detector.progress:
+        return jsonify(detector.progress[id])
+
+    return abort(404)
+
 
 
 if __name__ == "__main__":
