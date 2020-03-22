@@ -32,7 +32,7 @@ class ResultsProcessorThread(threading.Thread):
             try:
                 os.mkdir(store_path)
             except:
-                print(f"Failed to create a folder to store results for {self.pole_number} pole")
+                print(f"\nFailed to create a folder to store results for {self.pole_number} pole")
                 self.stop()
                 # TODO: How do I stop other threads from here?
 
@@ -56,9 +56,9 @@ class ResultsProcessorThread(threading.Thread):
             self.results_processor.draw_bounding_boxes(objects_detected=detected_objects,
                                                        image=image)
 
-            cv2.imshow("frame", image)
-            if cv2.waitKey(0):
-                cv2.destroyAllWindows()
+            # cv2.imshow("frame", image)
+            # if cv2.waitKey(0):
+            #     cv2.destroyAllWindows()
 
             video_writer.write(image.astype(np.uint8))
 

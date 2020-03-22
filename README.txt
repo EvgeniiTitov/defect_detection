@@ -1,12 +1,10 @@
 SHORT TERM:
-2. Replace 2 YOLOs in sequence with 1 trained for 3 classes (new weights required)
+1. Retrain poles net to work with 3 class (add wood)
+2. Replace 2 YOLOs in sequence with 1 trained for 3 components classes (new weights required)
 3. Cracks module
 4. Dumpers module
-5. Add new class - wooden poles (new weights required)
-6. Put each block (1-2,3) including frame loader and results processor into separate threads connected with Queues in order to boost
-system's performance
-7. Subtract other object's boxes from the pillar BB (less noise for cracks detection)
-8. Tune YOLOs parameters (NMS, threshold etc)
+5. Subtract other object's boxes from the pillar BB (less noise for cracks detection)
+6. Tune YOLOs parameters (NMS, threshold etc)
 
 LONG TERM:
 7. Batch processing to further speed up the system
@@ -16,21 +14,20 @@ matrix as an attribute, which takes a lot of space. We need one reference for al
 
 
 KNOWN ISSUES:
-- Server crashes after 1 request, doesn't exit to the state when its ready to process
-another request
-
 - BBs modification. Overlapping check.
 - Class names and accuracy once written look bad
 - 2 pillars can potentially get generated
+- Not well optimized line filtering algorithm
 
-There are requirements about how images need to be taken in order for the inclination detecting algorithm to process them.
 
 ------------------------------------------------
 1. Test everything for images.
-    1.1 Create N number of requests
     1.2 Nets initialize twice
-    1.3 Server doesn't entirely exit after 1 request (some process's holding it)
+    1.3 Sometimes server doesn't entirely exit after 1 request (some process's holding it)
     1.4 Test memory consumption
+    1.5 How to kill first threads if threads after crash?
 
 2. Fix threads
+    2.1 Test video
+
 3. Add requirements

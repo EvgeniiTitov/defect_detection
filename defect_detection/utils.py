@@ -1,59 +1,8 @@
-from queue import Queue
-import threading
-from threading import Thread
 import cv2
 import os
 import numpy as np
 import re
 
-
-class GetFrame(object):
-    """
-    Decodes a single frame in advance
-    """
-    def __init__(
-            self,
-            path: str
-    ):
-        self.stream = cv2.VideoCapture(path)
-
-        if not self.stream.isOpened():
-            print("\nERROR: Failed to open the cap")
-            return
-
-        # Read the first frame
-        self.frame_ready, self.frame = self.stream.read()
-
-        self.done = False
-
-    def decode_frame(self):
-        """
-        :return:
-        """
-        while not self.done:
-
-            if not self.frame_ready:
-                self.stop()
-
-            else:
-                self.frame_ready, self.frame = self.stream.read()
-
-    def stop(self):
-        self.done = True
-
-    def start(self):
-        Thread(target=self.decode_frame, args=()).start()
-
-
-"""
-Results handler needs:
-1. Image
-2. Objects
-3. Pole number to which they belong 
-
-It will check if a folder in self.save_path for this pole number already exists. If not 
-a new one will be created and results will be saved there. 
-"""
 
 class ResultsHandler:
     """
@@ -91,7 +40,7 @@ class ResultsHandler:
         new_name = image_name + "_out.jpg"
         cv2.imwrite(os.path.join(store_path, new_name), image)
 
-    def line_text_size(self, image):
+    def line_text_size(self, image: np.ndarray) -> tuple:
         """
         Method determining BB line thickness and text size based on the original image's size
         :return:
