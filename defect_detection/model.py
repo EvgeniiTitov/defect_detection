@@ -1,13 +1,14 @@
+from concurrency import FrameReaderThread, ObjectDetectorThread
+from concurrency import DefectDetectorThread, ResultsProcessorThread
 from neural_networks import PolesDetector, ComponentsDetector
 from neural_networks import YOLOv3
 from defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
-from utils import ResultsHandler, MetaDataExtractor
-from utils import GetFrame
-from imutils.video import FPS
-import cv2
+from utils import ResultsHandler
+from collections import defaultdict
+import queue
 import os
 import time
-from collections import defaultdict
+import cv2
 
 
 class MainDetector:
@@ -15,30 +16,22 @@ class MainDetector:
     def __init__(
             self,
             save_path: str,
-            crop_path: str=None,
-            search_defects: bool=True
+            search_defects: bool = True
     ):
-
+        # Path on the server where processed data gets stored
         self.save_path = save_path
-        self.crop_path = crop_path
+        self.search_defects = search_defects
 
         if search_defects:
-            self.defects = True
-            # Implement metadata check here in the main class because otherwise we
-            # will need to open the same image multiple times (not efficient). Check
-            # happens right before sending image along the pipeline
-            self.meta_data_extractor = MetaDataExtractor()
+            self.check_defects = True
+            # Metadata extractor can be initialized here
         else:
-            self.defects = False
+            self.check_defects = False
 
-        # Initialize predicting neural nets
-        # self.poles_neuralnet = NetPoles()
         poles_network = YOLOv3()
         components_network = YOLOv3()
         pillars_network = YOLOv3()
 
-        # Initialize detectors using the nets above to predict and postprocess the predictions
-        # such as represent objects detected in the way we need, modify BBs etc.
         self.pole_detector = PolesDetector(detector=poles_network)
         self.component_detector = ComponentsDetector(components_predictor=components_network,
                                                      pillar_predictor=pillars_network)
@@ -49,187 +42,168 @@ class MainDetector:
                                               dumpers_defect_detector=None,
                                               insulators_defect_detector=None)
 
-        # Initialize results handler that shows/saves/transforms into JSON detection results
-        self.handler = ResultsHandler(save_path=self.save_path,
-                                      cropped_path=self.crop_path)
+        self.results_processor = ResultsHandler(save_path=save_path)
 
     def predict(
             self,
             path_to_data: str,
-            pole_number: int=None
+            pole_number: int
     ) -> dict:
         """
-        API endpoint.
-        Parses input, for each file(s) provided makes predictions and saves results in dict
-        :param path_to_data: Path to data from an API call
-        :param pole_number: Number of the pole to which the data being processed belongs. Used to
-        comply with the naming convention for saving the processed data
-        :return:
+        API endpoint method.
+        :param path_to_data: Path to data to process - image, video, folder with images, video
+        :return: dictionary {filename : defects, }
         """
         detected_defects = defaultdict(list)
 
         if os.path.isfile(path_to_data):
+            filename = os.path.basename(path_to_data)
 
-            # Find out if this is a video or an image and preprocess it accordingly
-            item_name = os.path.basename(path_to_data)
+            if any(filename.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
+                print("\nProcessing image:", filename)
+                defects = self.process_image(path_to_image=path_to_data,
+                                             pole_number=pole_number)
 
-            if any(item_name.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
-                defects = self.search_defects(path_to_image=path_to_data)
                 detected_defects[pole_number].append(defects)
 
-            elif any(item_name.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
-                defects = self.search_defects(path_to_video=path_to_data)
+            elif any(filename.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
+                print("\nProcessing video:", filename)
+                defects = self.process_video(path_to_video=path_to_data,
+                                             pole_number=pole_number)
+
                 detected_defects[pole_number].append(defects)
 
             else:
-                print(f"ERROR: Ext {os.path.splitext(item_name)} cannot be processed")
+                print(f"ERROR: Ext {os.path.splitext(filename)[-1]} cannot be processed")
                 return {}
 
         elif os.path.isdir(path_to_data):
             for item in os.listdir(path_to_data):
 
                 if any(item.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
-
-                    print("\nImage:", item)
+                    print("\nProcessing image:", item)
                     path_to_image = os.path.join(path_to_data, item)
+                    defects = self.process_image(path_to_image=path_to_image,
+                                                 pole_number=pole_number)
 
-                    defects = self.search_defects(path_to_image=path_to_image)
-
-                    # If successfully processed, store defects found
-                    if defects:
-                        detected_defects[pole_number].append(defects)
-                    else:
-                        detected_defects[pole_number].append({})
+                    detected_defects[pole_number].append(defects)
 
                 elif any(item.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
-
-                    print("Video:", item)
+                    print("\nProcessing video:", item)
                     path_to_video = os.path.join(path_to_data, item)
+                    defects = self.process_video(path_to_video=path_to_video,
+                                                 pole_number=pole_number)
 
-                    defects = self.search_defects(path_to_video=path_to_video)
+                    detected_defects[pole_number].append(defects)
 
-                    # If successfully processed, store defects found
-                    if defects:
-                        detected_defects[pole_number].append(defects)
-                    else:
-                        detected_defects[pole_number].append({})
                 else:
-                    continue
+                    print("Cannot process the file:", item)
         else:
-            raise TypeError("ERROR: Wrong input. Neither folder nor file")
+            print("Cannot process the file:", path_to_data)
+            return {}
 
         return detected_defects
 
-    def search_defects(
+    def process_image(
             self,
-            path_to_image: str=None,
-            path_to_video: str=None
+            path_to_image: str,
+            pole_number: int
     ) -> dict:
         """
+        TODO: Could check for metadata if required
         :param path_to_image:
+        :param pole_number:
+        :return:
+        """
+        try:
+            image = cv2.imread(filename=path_to_image)
+        except:
+            print("Failed to open:", os.path.basename(path_to_image))
+            return {}
+
+        # Discard ext, get just image's name
+        image_name = os.path.splitext(os.path.basename(path_to_image))[0]
+
+        t1 = time.time()
+        poles = self.pole_detector.predict(image=image)
+        components = self.component_detector.predict(image=image,
+                                                     pole_predictions=poles)
+        obj_detection = time.time() - t1
+
+
+        defect_detection = 0
+        detected_defects = {image_name : {}}
+        if components and self.check_defects:
+            t2 = time.time()
+            detected_defects[image_name] = self.defect_detector.search_defects(detected_objects=components)
+            defect_detection = time.time() - t2
+
+        self.results_processor.draw_bb_save_image(image=image,
+                                                  detected_objects={**poles, **components},
+                                                  pole_number=pole_number,
+                                                  image_name=image_name)
+
+        print("Time taken: "
+              f"Object detection {round(obj_detection, 3)} "
+              f"Defect detection {round(defect_detection, 3)}")
+
+        return detected_defects
+
+    def process_video(
+            self,
+            path_to_video: str,
+            pole_number: int
+    ) -> list:
+        """
         :param path_to_video:
         :param pole_number:
         :return:
         """
-        # If image, just read it.
-        if path_to_image:
-            # try:
-            #     frame = cv2.imread(path_to_image)
-            # except:
-            #     print("Failed to open:", os.path.basename(path_to_image))
-            #     return {}
+        # Defects from each frame will be stored there
+        detected_defects = defaultdict(list)
+        """
+        - Frame decoding is relatively quick, do we need a large Q? (takes quite a bit of memory?)
+        - Should I reinitialize the Qs for each video, or create some in initializator and empty them after
+        each video? 
+        - What is the best practice to get results from a thread? I use global dict that I give to a thread
+        - What if 2,3,4 thread fails, how to kill the first one? Can't send a message there
+        
+        
+        
+        """
+        frame_to_block1 = queue.Queue(maxsize=24)
+        block1_to_block2 = queue.Queue(maxsize=6)
+        block2_to_writer = queue.Queue(maxsize=10)
 
-            # video_stream = FrameReader(path=path_to_image, Q=self.Q_to_block_1)
-            # video_stream.daemon = True
-            # video_stream.start()
-            # time.sleep(1)
-            video_stream = GetFrame(path=path_to_image)
+        filename = os.path.splitext(os.path.basename(path_to_video))[0]
 
-            # Here we can potentially check image metadata -> tuple: (pitch_angle, roll_angle)
-            camera_orientation = self.meta_data_extractor.get_angles(path_to_image)
-            filename = os.path.splitext(os.path.basename(path_to_image))[0]
+        frame_reader = FrameReaderThread(path_to_data=path_to_video,
+                                         queue=frame_to_block1)
 
+        object_detector = ObjectDetectorThread(queue_from_frame_reader=frame_to_block1,
+                                               queue_to_defect_detector=block1_to_block2,
+                                               poles_detector=self.pole_detector,
+                                               components_detector=self.component_detector)
+
+        defect_detector = DefectDetectorThread(queue_from_object_detector=block1_to_block2,
+                                               queue_to_results_processor=block2_to_writer,
+                                               defect_detector=self.defect_detector,
+                                               defects=detected_defects)
+
+        result_processor = ResultsProcessorThread(save_path=self.save_path,
+                                                  queue_from_defect_detector=block2_to_writer,
+                                                  filename=filename,
+                                                  pole_number=pole_number,
+                                                  results_processor=self.results_processor)
+
+        for thread in (frame_reader, object_detector, defect_detector, result_processor):
+            thread.start()
+
+        for thread in (frame_reader, object_detector, defect_detector, result_processor):
+            thread.join()
+
+        # Check if any defects have been found by the defect detecting thread
+        if "defects" in detected_defects.keys():
+            return detected_defects["defects"]
         else:
-            filename = os.path.basename(path_to_video)
-            camera_orientation = (0, 0)
-
-            #Launch a thread for reading video frames
-            # video_stream = FrameReader(path=path_to_video, Q=self.Q_to_block_1)
-            # video_stream.start()
-            # time.sleep(1)
-
-            video_stream = GetFrame(path=path_to_video)
-            video_stream.start()
-
-        video_writer = None
-
-        # Keep track of detected defects (keys - video frames, values - dict of defects)
-        defects = {}
-
-        # Run inference once in N frames
-        frame_counter = 0
-        fps = FPS().start()
-
-        while cv2.waitKey(1) < 0:
-
-            if video_stream.done:
-                video_stream.stop()
-                break
-
-            image_to_process = video_stream.frame
-            if path_to_image:
-                video_stream.done = True
-
-            #image_to_process = video_stream.get_frame()
-
-            if video_writer is None and path_to_video:
-                fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-                video_writer = cv2.VideoWriter(os.path.join(self.save_path, 'video_out.avi'), fourcc, 5,
-                                              (image_to_process.shape[1],
-                                               image_to_process.shape[0]), True)
-
-            # Process 1 in N frames to increase performance speed
-            # TODO: Extrapolate BBs
-
-            # OBJECT DETECTION: Detect and classify poles on the image_to_process
-            poles = self.pole_detector.predict(image_to_process)
-
-            # Detect components on each pole detected (insulators, dumpers, concrete pillars)
-            components = self.component_detector.predict(image_to_process, poles)
-
-            #DEFECT DETECTION
-            defect_time = time.time()
-            if self.defects and components:
-                start = time.time()
-                detected_defects = self.defect_detector.search_defects(detected_objects=components,
-                                                                       camera_orientation=camera_orientation,
-                                                                       image_name=filename)
-                defect_time = time.time() - start
-                defects[filename] = detected_defects
-
-            # Combine all objects detected into one dict for further processing
-            detected_objects = {**poles, **components}
-
-            self.handler.draw_bounding_boxes(objects_detected=detected_objects,
-                                             image=image_to_process)
-
-            self.handler.save_frame(image=image_to_process,
-                                    image_name=filename,
-                                    video_writer=video_writer)
-
-            #cv2.imshow("Frame", image_to_process)
-
-            frame_counter += 1
-
-            print(f"Defects time: {round(defect_time, 3)}")
-
-            fps.update()
-
-        fps.stop()
-        #print("Elapsed time: {:.2f}".format(fps.elapsed()))
-        #print("Approx FPS: {:.2f}".format(fps.fps()))
-
-        video_stream.stop()
-        cv2.destroyAllWindows()
-
-        return defects
+            return []

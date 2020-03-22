@@ -41,4 +41,4 @@ if __name__ == "__main__":
                           json=payload)
 
         print(json.dumps(r.json(), indent=4))
-        print()
+        print("\n"*3)
