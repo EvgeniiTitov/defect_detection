@@ -1,54 +1,63 @@
 import threading
 import cv2
 import os
-import numpy as np
 
 
 class FrameReaderThread(threading.Thread):
 
     def __init__(
             self,
-            path_to_data,
-            queue,
+            in_queue,
+            out_queue,
+            progress,
             *args,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.Q = queue
-        self.done = False
-
-        try:
-            self.stream = cv2.VideoCapture(path_to_data)
-        except:
-            print("Failed to open the file", os.path.basename(path_to_data))
-            self.Q.put("END")
+        self.Q_in = in_queue
+        self.Q_out = out_queue
+        self.progress = progress
 
     def run(self) -> None:
 
-        if not self.stream.isOpened():
-            self.stop()
-
         while True:
-            if self.done:
+            # Check if there's a video to process
+            input_ = self.Q_in.get()
+
+            # If input is STOP -> kill the thread
+            if input_ == "STOP":
                 break
 
-            has_frame, frame = self.stream.read()
-            if not has_frame:
-                self.stop()
-                break
+            (path_to_video, pole_number, video_id) = input_
 
-            # Blocks the thread till there's a place in the Q to put an item
-            self.Q.put(frame)
-            print("FRAME READER: Put a frame in Q")
+            # If failed to open a video, signal to other threads the current video is over
+            # by sending END
+            try:
+                stream = cv2.VideoCapture(path_to_video)
+            except:
+                print("\nERROR: Failed to open video:", os.path.basename(path_to_video))
+                self.Q_out.put("END")
+                continue
 
-        self.stream.release()
-        self.Q.put("END")
+            if not stream.isOpened():
+                self.Q_out.put("END")
+                continue
 
-        print("\nFrameReaderThread killed")
-        return
+            # Save total number of frames to process
+            total_frames = int(stream.get(cv2.CAP_PROP_FRAME_COUNT))
+            self.progress[video_id]["remaining"] = total_frames
 
-    def get_frame(self) -> np.ndarray: return self.Q.get()
+            while True:
+                has_frame, frame = stream.read()
 
-    def has_frame(self) -> bool: return self.Q.qsize() > 0
+                if not has_frame:
+                    break
 
-    def stop(self) -> None: self.done = True
+                self.progress[video_id]["processing"] += 1
+                self.Q_out.put((frame, video_id))
+
+            stream.release()
+            self.Q_out.put("END")
+
+        self.Q_out.put("STOP")
+        print("FrameReaderThread killed")

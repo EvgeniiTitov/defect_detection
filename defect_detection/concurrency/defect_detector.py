@@ -16,46 +16,44 @@ class DefectDetectorThread(threading.Thread):
 
     def __init__(
             self,
-            queue_from_object_detector,
-            queue_to_results_processor,
+            in_queue,
+            out_queue,
             defect_detector,
-            defects,
+            check_defects=True,
             *args,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.done = False
-
-        self.Q_in = queue_from_object_detector
-        self.Q_out = queue_to_results_processor
-
+        self.Q_in = in_queue
+        self.Q_out = out_queue
         self.defect_detector = defect_detector
-        self.defects = defects
+        self.check_defects = check_defects
 
     def run(self) -> None:
 
-        while not self.done:
+        while True:
 
-            # Get a dictionary of detected objects
-            item = self.Q_in.get(block=True)
-            print("DEFECT DETECTOR: Got predicted objects - searching defects")
+            input_ = self.Q_in.get(block=True)
 
-            if item == "END":
-                self.Q_out.put("END")
+            if input_ == "STOP":
+                self.Q_out.put("STOP")
                 break
 
-            image, poles, components = item
+            if input_ == "END":
+                self.Q_out.put("END")
+                continue
 
-            if components:
+            frame, poles, components, video_id = input_
+
+            defects = list()
+            if components and self.check_defects:
                 detected_defects = self.defect_detector.search_defects(components)
 
                 # Add only if any defects have been found - do not add info about frames
                 # where no defects have been detected
                 if any(detected_defects[key] for key in detected_defects.keys()):
-                    self.defects["defects"].append(detected_defects)
+                    defects.append(detected_defects)
 
-            print("DEFECT DETECTOR: Send objects for postprocessing")
-            self.Q_out.put((image, {**poles, **components}))
+            self.Q_out.put((frame, video_id, defects, {**poles, **components}))
 
         print("DefectDetectorThread killed")
-        return

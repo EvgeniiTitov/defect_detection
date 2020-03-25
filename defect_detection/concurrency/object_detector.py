@@ -5,47 +5,46 @@ class ObjectDetectorThread(threading.Thread):
 
     def __init__(
             self,
-            queue_from_frame_reader,
-            queue_to_defect_detector,
+            in_queue,
+            out_queue,
             poles_detector,
             components_detector,
             *args,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.done = False
-
-        self.Q_in = queue_from_frame_reader
-        self.Q_out = queue_to_defect_detector
-
+        self.Q_in = in_queue
+        self.Q_out = out_queue
         self.poles_detector = poles_detector
         self.components_detector = components_detector
 
     def run(self) -> None:
 
-        while not self.done:
+        while True:
 
-            # Block the thread if the Q's empty
-            frame = self.Q_in.get(block=True)
-            print("OBJ DETECTOR: Got a frame from Q - predicting objects")
+            # Blocks the thread if the Q's empty
+            input_ = self.Q_in.get(block=True)
 
             # Check if its time to kill the thread
-            if frame == "END":
-                self.Q_out.put("END")
+            if input_ == "STOP":
+                self.Q_out.put("STOP")
                 break
 
-            # Predict poles, returns dict with (whole frame: predicted poles)
-            poles = self.poles_detector.predict(image=frame)
+            # Check if the video is over
+            if input_ == "END":
+                self.Q_out.put("END")
+                continue
 
-            # Predict components, returns dict (pole_subimage: components found)
+            (frame, video_id) = input_
+
+            # Predict poles, returns dict with (image: predicted poles)
+            poles = self.poles_detector.predict(image=frame)
+            # Predict components, returns dict (pole_bb: components found)
             components = self.components_detector.predict(image=frame,
                                                           pole_predictions=poles)
 
-            print("OBJ DETECTOR: Put predicted objects in the Q")
             # Put results in one dict and send forward
-            self.Q_out.put((frame, poles, components))
+            self.Q_out.put((frame, poles, components, video_id))
 
         print("ObjectDetectorThread killed")
         return
-
-    def stop(self) -> None: self.done = True

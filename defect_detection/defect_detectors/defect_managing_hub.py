@@ -25,7 +25,7 @@ class DefectDetector:
         self.dumper_tester = dumpers_defect_detector
         self.insulator_tester = insulators_defect_detector
 
-        print("Defect detecting hub initialized\n")
+        print("Defect detector initialized\n")
 
     def search_defects(
             self,

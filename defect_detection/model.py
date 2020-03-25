@@ -1,7 +1,6 @@
 from concurrency import FrameReaderThread, ObjectDetectorThread
 from concurrency import DefectDetectorThread, ResultsProcessorThread
 from neural_networks import PolesDetector, ComponentsDetector
-from neural_networks import YOLOv3
 from defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
 from utils import ResultsHandler
 from collections import defaultdict
@@ -9,6 +8,11 @@ import queue
 import os
 import time
 import cv2
+import uuid
+
+
+# TODO: Method to stop the system where you join threads
+# TODO: How to return results to the user? Asyncio vs ?
 
 
 class MainDetector:
@@ -22,27 +26,63 @@ class MainDetector:
         self.save_path = save_path
         self.search_defects = search_defects
 
+        # To keep track of video processing (how many frames processed)
+        # TODO: When to clean it? If server doesn't get restarted in a while
+        self.progress = dict()
+
         if search_defects:
             self.check_defects = True
-            # Metadata extractor can be initialized here
+            # Metadata extractor could be initialized here if required
         else:
             self.check_defects = False
 
-        poles_network = YOLOv3()
-        components_network = YOLOv3()
-        pillars_network = YOLOv3()
-
-        self.pole_detector = PolesDetector(detector=poles_network)
-        self.component_detector = ComponentsDetector(components_predictor=components_network,
-                                                     pillar_predictor=pillars_network)
-
-        self.defect_detector = DefectDetector(line_modifier=LineModifier,
-                                              concrete_extractor=ConcreteExtractor,
-                                              cracks_detector=None,
-                                              dumpers_defect_detector=None,
-                                              insulators_defect_detector=None)
-
         self.results_processor = ResultsHandler(save_path=save_path)
+
+        # Initialize detectors
+        self.pole_detector = PolesDetector()
+        self.component_detector = ComponentsDetector()
+        self.defect_detector = DefectDetector(
+            line_modifier=LineModifier,
+            concrete_extractor=ConcreteExtractor,
+            cracks_detector=None,
+            dumpers_defect_detector=None,
+            insulators_defect_detector=None
+        )
+
+        # Initialize Qs and workers
+        self.files_to_process_Q = queue.Queue()
+        self.frame_to_block1 = queue.Queue(maxsize=24)
+        self.block1_to_block2 = queue.Queue(maxsize=6)
+        self.block2_to_writer = queue.Queue(maxsize=10)
+
+        self.frame_reader_thread = FrameReaderThread(
+            in_queue=self.files_to_process_Q,
+            out_queue=self.frame_to_block1,
+            progress=self.progress
+        )
+
+        self.object_detector_thread = ObjectDetectorThread(
+            in_queue=self.frame_to_block1,
+            out_queue=self.block1_to_block2,
+            poles_detector=self.pole_detector,
+            components_detector=self.component_detector
+        )
+
+        self.defect_detector_thread = DefectDetectorThread(
+            in_queue=self.block1_to_block2,
+            out_queue=self.block2_to_writer,
+            defect_detector=self.defect_detector,
+            check_defects=search_defects
+        )
+
+        self.results_processor_thread = ResultsProcessorThread(
+            in_queue=self.block2_to_writer,
+            save_path=save_path,
+            results_processor=self.results_processor,
+            progress=self.progress
+        )
+
+        #self.start()
 
     def predict(
             self,
@@ -57,52 +97,49 @@ class MainDetector:
         detected_defects = defaultdict(list)
 
         if os.path.isfile(path_to_data):
-            filename = os.path.basename(path_to_data)
+            defects = self.process_file(path_to_file=path_to_data,
+                                        pole_number=pole_number)
 
-            if any(filename.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
-                print("\nProcessing image:", filename)
-                defects = self.process_image(path_to_image=path_to_data,
-                                             pole_number=pole_number)
-
+            if defects is not None:
                 detected_defects[pole_number].append(defects)
-
-            elif any(filename.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
-                print("\nProcessing video:", filename)
-                defects = self.process_video(path_to_video=path_to_data,
-                                             pole_number=pole_number)
-
-                detected_defects[pole_number].append(defects)
-
-            else:
-                print(f"ERROR: Ext {os.path.splitext(filename)[-1]} cannot be processed")
-                return {}
 
         elif os.path.isdir(path_to_data):
+
             for item in os.listdir(path_to_data):
+                path_to_file = os.path.join(path_to_data, item)
+                defects = self.process_file(path_to_file=path_to_file,
+                                            pole_number=pole_number)
 
-                if any(item.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
-                    print("\nProcessing image:", item)
-                    path_to_image = os.path.join(path_to_data, item)
-                    defects = self.process_image(path_to_image=path_to_image,
-                                                 pole_number=pole_number)
-
+                if defects is not None:
                     detected_defects[pole_number].append(defects)
-
-                elif any(item.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
-                    print("\nProcessing video:", item)
-                    path_to_video = os.path.join(path_to_data, item)
-                    defects = self.process_video(path_to_video=path_to_video,
-                                                 pole_number=pole_number)
-
-                    detected_defects[pole_number].append(defects)
-
-                else:
-                    print("Cannot process the file:", item)
         else:
-            print("Cannot process the file:", path_to_data)
-            return {}
+            print("ERROR: Cannot process the file:", path_to_data)
 
         return detected_defects
+
+    def process_file(
+            self,
+            path_to_file: str,
+            pole_number: int
+    ):
+        """
+        Checks file's extension, calls appropriate method
+        :return:
+        """
+        filename = os.path.basename(path_to_file)
+
+        if any(filename.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
+            print("\nProcessing image:", filename)
+            return self.process_image(path_to_image=path_to_file,
+                                      pole_number=pole_number)
+
+        elif any(filename.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
+            print("\nProcessing video:", filename)
+            return self.process_video(path_to_video=path_to_file,
+                                      pole_number=pole_number)
+        else:
+            print(f"\nERROR: Ext {os.path.splitext(filename)[-1]} cannot be processed")
+            return None
 
     def process_image(
             self,
@@ -153,7 +190,7 @@ class MainDetector:
             self,
             path_to_video: str,
             pole_number: int
-    ) -> list:
+    ):
         """
         :param path_to_video:
         :param pole_number:
@@ -161,49 +198,35 @@ class MainDetector:
         """
         # Defects from each frame will be stored there
         detected_defects = defaultdict(list)
-        """
-        - Frame decoding is relatively quick, do we need a large Q? (takes quite a bit of memory?)
-        - Should I reinitialize the Qs for each video, or create some in initializator and empty them after
-        each video? 
-        - What is the best practice to get results from a thread? I use global dict that I give to a thread
-        - What if 2,3,4 thread fails, how to kill the first one? Can't send a message there
-        
-        
-        
-        """
-        frame_to_block1 = queue.Queue(maxsize=24)
-        block1_to_block2 = queue.Queue(maxsize=6)
-        block2_to_writer = queue.Queue(maxsize=10)
 
-        filename = os.path.splitext(os.path.basename(path_to_video))[0]
+        # Each video to process gets a unique ID number to track its progress
+        video_id = str(uuid.uuid4())
 
-        frame_reader = FrameReaderThread(path_to_data=path_to_video,
-                                         queue=frame_to_block1)
+        # Keep track of processing progress
+        self.progress[video_id] = {
+            "pole_number": pole_number,
+            "path_to_video": path_to_video,
+            "processing": 0,
+            "processed": 0,
+            "remaining": None
+        }
 
-        object_detector = ObjectDetectorThread(queue_from_frame_reader=frame_to_block1,
-                                               queue_to_defect_detector=block1_to_block2,
-                                               poles_detector=self.pole_detector,
-                                               components_detector=self.component_detector)
+        self.files_to_process_Q.put((path_to_video, pole_number, video_id))
 
-        defect_detector = DefectDetectorThread(queue_from_object_detector=block1_to_block2,
-                                               queue_to_results_processor=block2_to_writer,
-                                               defect_detector=self.defect_detector,
-                                               defects=detected_defects)
-
-        result_processor = ResultsProcessorThread(save_path=self.save_path,
-                                                  queue_from_defect_detector=block2_to_writer,
-                                                  filename=filename,
-                                                  pole_number=pole_number,
-                                                  results_processor=self.results_processor)
-
-        for thread in (frame_reader, object_detector, defect_detector, result_processor):
+    def start(self):
+        for thread in (
+            self.frame_reader_thread,
+            self.object_detector_thread,
+            self.defect_detector_thread,
+            self.results_processor_thread
+        ):
             thread.start()
 
-        for thread in (frame_reader, object_detector, defect_detector, result_processor):
+    def stop(self):
+        for thread in (
+            self.frame_reader_thread,
+            self.object_detector_thread,
+            self.defect_detector_thread,
+            self.results_processor_thread
+        ):
             thread.join()
-
-        # Check if any defects have been found by the defect detecting thread
-        if "defects" in detected_defects.keys():
-            return detected_defects["defects"]
-        else:
-            return []

@@ -1,5 +1,7 @@
 from model import MainDetector
 from flask import Flask, jsonify, request
+import numpy as np
+import cv2
 
 app = Flask(__name__)
 
@@ -15,21 +17,34 @@ def predict():
 
     response = {"success": False}
 
-    if request.method == "POST":
-        data = request.get_json()
+    data = request.get_json()
 
-        path_to_data = data["path_to_data"]
-        pole_number = data["pole_number"]
+    path_to_data = data["path_to_data"]
+    pole_number = data["pole_number"]
 
-        # TODO: Do we need try except here?
+    try:
         defects = detector.predict(path_to_data=path_to_data,
                                    pole_number=pole_number)
+    except:
+        print("\nAttempt to process the files provided failed")
+        return jsonify(response)
 
-        response["results"] = defects
-        response["success"] = True
+    response["results"] = defects
+    response["success"] = True
 
     return jsonify(response)
 
 
+@app.route('/process_image', methods=["POST"])
+def process_image():
+
+    file = request.files["image"].read()
+    np_image = np.fromstring(file, np.uint8)
+    image = cv2.imdecode(np_image, cv2.IMREAD_COLOR)
+
+    # TODO: run inference - create new endpoint to process a single image
+    # TODO: return results
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

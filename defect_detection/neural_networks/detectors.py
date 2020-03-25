@@ -1,5 +1,6 @@
 from collections import defaultdict
 from .detections import DetectedObject, SubImage
+from .models import YOLOv3
 import numpy as np
 import os
 
@@ -19,24 +20,17 @@ class ObjectDetector(object):
 
 class PolesDetector:
     """
-    Class performing utility poles prediction using the YOLOv3 neural net and
-    saving objects detected as class objects in a dictionary for subsequent
-    usage.
-    Image section on which poles have been detected serves the dictionary's key
-    role. In this case we consider the whole image.
-    As input it accepts a plain image.
+    Class performing utility poles prediction using the YOLOv3 neural net. Represents objects detected
+    as class objects and saves them in a dictionary for subsequent processing.
+
     Weights: Pole try 9.
     """
-    #path_to_dependencies = r"D:\Desktop\Reserve_NNs\DEPENDENCIES"
     path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies"
     dependencies = "poles"
 
-    def __init__(
-            self,
-            detector
-    ):
+    def __init__(self):
         # Initialize predictor - neural network
-        self.poles_predictor = detector
+        self.poles_predictor = YOLOv3()
 
         # Detector's dependencies
         config_path = os.path.join(self.path_to_dependencies, self.dependencies + ".cfg")
@@ -44,20 +38,22 @@ class PolesDetector:
         classes_path = os.path.join(self.path_to_dependencies, self.dependencies + ".txt")
 
         # Detector's parameters
-        # TO DO: Move it to txt file, so that a user doesn't need to open the code to change it.
+        # TODO: Move it to txt file, so that there's no need to open the code to tune it.
         confidence = 0.2
         NMS_thresh = 0.2
         net_res = 416
 
         # Initialize neural network and prepare it for predictions
-        self.poles_predictor.initialize_model(config=config_path,
-                                              weights=weights_path,
-                                              classes=classes_path,
-                                              confidence=confidence,
-                                              NMS_threshold=NMS_thresh,
-                                              network_resolution=net_res)
+        self.poles_predictor.initialize_model(
+            config=config_path,
+            weights=weights_path,
+            classes=classes_path,
+            confidence=confidence,
+            NMS_threshold=NMS_thresh,
+            network_resolution=net_res
+        )
 
-        print("Pole detecting network initialized")
+        print("Poles detector initialized")
 
     def predict(
             self,
@@ -107,7 +103,11 @@ class PolesDetector:
 
         return poles_detected
 
-    def modify_box_coordinates(self, image, poles_detected):
+    def modify_box_coordinates(
+            self,
+            image: np.ndarray,
+            poles_detected: dict
+    ) -> None:
         """
         Modifies pole's BB. 50% both sides if only one pole detected (likely to be closeup), 10% if more
         :param image: image on which detection of poles took place (original image)
@@ -128,16 +128,19 @@ class PolesDetector:
                 new_bot_boundary = int(poles[0].BB_bottom * 1.1) if int(poles[0].BB_bottom * 1.1) <\
                                                                     image.shape[0] else (image.shape[0] - 2)
 
-                poles[0].update_object_coordinates(left=new_left_boundary,
-                                                   top=new_top_boundary,
-                                                   right=new_right_boundary,
-                                                   bottom=new_bot_boundary)
+                poles[0].update_object_coordinates(
+                    left=new_left_boundary,
+                    top=new_top_boundary,
+                    right=new_right_boundary,
+                    bottom=new_bot_boundary
+                )
+
             else:
                 for pole in poles:
                     # If we've got 1+ poles on one frame or image, hence the shot was likely taken from
                     # further distance.
 
-                    # TO DO: Overlapping check here. If BBs overlap and a component happens to be in between,
+                    # TODO: Overlapping check here. If BBs overlap and a component happens to be in between,
                     # it will be detected twice
 
                     new_left_boundary = int(pole.BB_left * 0.9)
@@ -147,36 +150,32 @@ class PolesDetector:
                     new_bot_boundary = int(pole.BB_bottom * 1.1) if int(pole.BB_bottom * 1.1) < \
                                                                 image.shape[0] else (image.shape[0] - 2)
 
-                    pole.update_object_coordinates(left=new_left_boundary,
-                                                   top=new_top_boundary,
-                                                   right=new_right_boundary,
-                                                   bottom=new_bot_boundary)
+                    pole.update_object_coordinates(
+                        left=new_left_boundary,
+                        top=new_top_boundary,
+                        right=new_right_boundary,
+                        bottom=new_bot_boundary
+                    )
 
 
 class ComponentsDetector:
     """
-    Class performing predictions of utility pole components on image / image
-    sections provided.
+    Class performing predictions of utility pole components on image / image sections provided.
     All components detected get represented as class objects and are saved in a dictionary
     as values, whereas the image section on which the detection was performed serves the
     role of a dictionary key.
     Weights: Try 6 components
     """
-    #path_to_dependencies = r"D:\Desktop\Reserve_NNs\DEPENDENCIES"
     path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\dependencies"
     dependencies_comp = "components"
     dependencies_pil = "pillars"
 
-    def __init__(
-            self,
-            components_predictor,
-            pillar_predictor=None
-    ):
+    def __init__(self):
 
         # Initialize components predictor
-        self.components_predictor = components_predictor
+        self.components_predictor = YOLOv3()
         # TEMPORARY. Will be replaced with 3 class predictor for concrete poles
-        self.pillar_predictor = pillar_predictor
+        self.pillar_predictor = YOLOv3()
 
         # Detector's parameters
         # TO DO: Move it to txt file, so that a user doesn't need to open the code to change it.
@@ -190,14 +189,16 @@ class ComponentsDetector:
         classes_path_comp = os.path.join(self.path_to_dependencies, self.dependencies_comp + ".txt")
 
         # Initialize neural network and prepare it for predictions
-        self.components_predictor.initialize_model(config=config_path_comp,
-                                                   weights=weights_path_comp,
-                                                   classes=classes_path_comp,
-                                                   confidence=confidence,
-                                                   NMS_threshold=NMS_thresh,
-                                                   network_resolution=net_res)
+        self.components_predictor.initialize_model(
+            config=config_path_comp,
+            weights=weights_path_comp,
+            classes=classes_path_comp,
+            confidence=confidence,
+            NMS_threshold=NMS_thresh,
+            network_resolution=net_res
+        )
 
-        print("Components detecting network initialized")
+        print("Components detector initialized")
 
         # Pillar detector's dependencies
         config_path_pil = os.path.join(self.path_to_dependencies, self.dependencies_pil + ".cfg")
@@ -205,16 +206,18 @@ class ComponentsDetector:
         classes_path_pil = os.path.join(self.path_to_dependencies, self.dependencies_pil + ".txt")
 
         # Initialize neural network and prepare it for predictions
-        self.pillar_predictor.initialize_model(config=config_path_pil,
-                                               weights=weights_path_pil,
-                                               classes=classes_path_pil,
-                                               confidence=confidence,
-                                               NMS_threshold=NMS_thresh,
-                                               network_resolution=416)
+        self.pillar_predictor.initialize_model(
+            config=config_path_pil,
+            weights=weights_path_pil,
+            classes=classes_path_pil,
+            confidence=confidence,
+            NMS_threshold=NMS_thresh,
+            network_resolution=416
+        )
 
-        print("Pillar detecting network initialized")
+        print("Pillar detector initialized")
 
-    def determine_object_class(self, components_detected):
+    def determine_object_class(self, components_detected: dict) -> None:
         """
         Checks object's class and names it. Since we've got multiple nets predicting objects
         like 0,1,2 classes, we want to make sure it doesn't get confusing during saving data and
@@ -224,7 +227,6 @@ class ComponentsDetector:
         for subimage, components in components_detected.items():
 
             for component in components:
-
                 if component.class_id == 0:
                     component.object_name = "insl"  # Insulator
 
@@ -359,7 +361,11 @@ class ComponentsDetector:
         return components_detected
 
 
-    def modify_pillars_BBs(self, image, componenets_detected):
+    def modify_pillars_BBs(
+            self,
+            image: np.ndarray,
+            componenets_detected: dict
+    ) -> None:
 
         for window, components in componenets_detected.items():
 
