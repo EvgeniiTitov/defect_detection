@@ -46,6 +46,7 @@ class ResultsProcessorThread(threading.Thread):
             filename = os.path.basename(self.progress[video_id]["path_to_video"])
             store_path = os.path.join(self.save_path, pole_number)
 
+            # New video arrived
             if self.previous_id != video_id:
                 self.previous_id = video_id
 

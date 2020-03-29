@@ -28,6 +28,8 @@ class FrameReaderThread(threading.Thread):
             if input_ == "STOP":
                 break
 
+            #TODO: Clarify - when method run ends, the thread exits?
+
             (path_to_video, pole_number, video_id) = input_
 
             # If failed to open a video, signal to other threads the current video is over

@@ -1,5 +1,5 @@
 from model import MainDetector
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 import numpy as np
 import cv2
 
@@ -14,7 +14,6 @@ detector = MainDetector(save_path=SAVE_PATH,
 
 @app.route('/predict', methods=["POST"])
 def predict():
-
     response = {"success": False}
 
     data = request.get_json()
@@ -35,16 +34,23 @@ def predict():
     return jsonify(response)
 
 
+@app.route('/status/{id}', method=["GET"])
+def status(id):
+    if id in detector.progress:
+        return jsonify(detector.progress[id])
+
+    return abort(404)
+
+
 @app.route('/process_image', methods=["POST"])
 def process_image():
-
     file = request.files["image"].read()
     np_image = np.fromstring(file, np.uint8)
     image = cv2.imdecode(np_image, cv2.IMREAD_COLOR)
-
     # TODO: run inference - create new endpoint to process a single image
     # TODO: return results
 
 
 if __name__ == "__main__":
+    # TODO: Can we change timeout?
     app.run(debug=False)

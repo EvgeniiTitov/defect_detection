@@ -11,8 +11,11 @@ import cv2
 import uuid
 
 
-# TODO: Method to stop the system where you join threads
+# TODO: Method to stop the system where you join threads - почему плохо ожидать прямо в методе?
+
 # TODO: How to return results to the user? Asyncio vs ?
+
+# TODO: Separate endpoint for angle calculations?
 
 
 class MainDetector:
@@ -196,9 +199,6 @@ class MainDetector:
         :param pole_number:
         :return:
         """
-        # Defects from each frame will be stored there
-        detected_defects = defaultdict(list)
-
         # Each video to process gets a unique ID number to track its progress
         video_id = str(uuid.uuid4())
 
@@ -223,6 +223,10 @@ class MainDetector:
             thread.start()
 
     def stop(self):
+
+        # TODO: Add STOP to all quess
+        self.files_to_process_Q.put("STOP")
+
         for thread in (
             self.frame_reader_thread,
             self.object_detector_thread,
