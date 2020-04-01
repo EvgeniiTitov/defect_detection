@@ -37,7 +37,7 @@ def predict():
     return jsonify(response)
 
 
-@app.route('/status/{id}', methods=["GET"])
+@app.route('/status/<id>', methods=["GET"])
 def status(id):
     if id in detector.progress:
         return jsonify(detector.progress[id])

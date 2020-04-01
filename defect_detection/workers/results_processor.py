@@ -78,6 +78,8 @@ class ResultsProcessorThread(threading.Thread):
                 with open(os.path.join(store_path, filename + ".json"), "w") as f:
                     json.dump(self.progress[file_id]["defects"], f)
                 self.progress[file_id]["status"] = "Processed"
+                print(f"Processing of {filename} completed")
+
 
         print("ResultsProcessorThread killed")
 

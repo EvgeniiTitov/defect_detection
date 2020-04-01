@@ -117,13 +117,13 @@ class MainDetector:
         filename = os.path.basename(path_to_file)
 
         if any(filename.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
-            print(f"\nAdded image {filename} to the processing queue")
+            print(f"Added image {filename} to the processing queue")
             return self.process_file(path_to_file=path_to_file,
                                      pole_number=pole_number,
                                      file_type="image")
 
         elif any(filename.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
-            print(f"\nAdded video {filename} to the processing queue")
+            print(f"Added video {filename} to the processing queue")
             return self.process_file(path_to_file=path_to_file,
                                      pole_number=pole_number,
                                      file_type="video")

@@ -31,31 +31,8 @@ KNOWN ISSUES:
 
 
 -------------------CURRENT THINGS TO DO-----------------------------
-1. Rewrite threads in accordance with Garlic's advices
-
-    1.1 Endpoint predict needs to return video ID.
-
-    1.2 Combine photo and video pipelines, for both respond with ID
-
-    1.3 Cleaning progress dictionary - add status field success. If true -> delete from dict
-        Or when results saved - delete object from the dictionary
-
-    1.4 Separate pipeline for inclination calculations.
-        Create a separate worker - similar to object detector. You will just
-        have a bit of logic what worker to choose! Each can work with various
-        models (for some case all 3 classes, for some just 1)
-
-2. Test memory consumption to tune Qs
-3. Add method to join threads, shut down the whole server
-    3.1 Where does it called from? - Separate endpoint?
-
-
-ASK OLEG:
-1. Can we do polling to display progress?  or websockets or one request at once?
-Server can timeout if it takes too long to process a video
-We could try to extend timeout time though
-2. Polling or sockets can be useful to display processing progress OR websocket that can
-once in a while report back the progress and then results
-
-Endpoint predict - puts item(s) in the Q and returns ID(s) (maybe save path)
-Endpoint status - allows to track progress
+1. Can't track object's progress, can't create the correct request
+2. Videos work very very slowly! Manage Q memory, look into it
+3. Shutting down server
+4. Cleaning of progress dictionary
+5. Separate pipeline to predict angles only
