@@ -30,21 +30,24 @@ class ObjectDetectorThread(threading.Thread):
                 self.Q_out.put("STOP")
                 break
 
-            # Check if the video is over
+            # Check if the video is over or an image (1 frame) was processed
             if input_ == "END":
                 self.Q_out.put("END")
                 continue
 
-            (frame, video_id) = input_
+            (frame, file_id) = input_
 
             # Predict poles, returns dict with (image: predicted poles)
             poles = self.poles_detector.predict(image=frame)
-            # Predict components, returns dict (pole_bb: components found)
+
+            # TODO: Check what to do to the file: inclination or defects
+            #       predict all components OR just concrete poles. You could
+            #       check object's information to see what needs to be done to it
+
+            # Predict components, returns dict (pole_bb_subimage: components found within)
             components = self.components_detector.predict(image=frame,
                                                           pole_predictions=poles)
 
-            # Put results in one dict and send forward
-            self.Q_out.put((frame, poles, components, video_id))
+            self.Q_out.put((frame, poles, components, file_id))
 
         print("ObjectDetectorThread killed")
-        return

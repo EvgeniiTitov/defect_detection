@@ -5,6 +5,9 @@ import cv2
 
 app = Flask(__name__)
 
+# TODO: Might need a separate endpoint to cause inclination detection
+#       and one method for defect detection
+
 # Location on the server where processed images will be saved
 SAVE_PATH = r"D:\Desktop\system_output\OUTPUT"
 
@@ -34,7 +37,7 @@ def predict():
     return jsonify(response)
 
 
-@app.route('/status/{id}', method=["GET"])
+@app.route('/status/{id}', methods=["GET"])
 def status(id):
     if id in detector.progress:
         return jsonify(detector.progress[id])

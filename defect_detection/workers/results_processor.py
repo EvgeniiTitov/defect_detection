@@ -2,6 +2,7 @@ import threading
 import cv2
 import os
 import numpy as np
+import json
 
 
 class ResultsProcessorThread(threading.Thread):
@@ -31,43 +32,54 @@ class ResultsProcessorThread(threading.Thread):
             input_ = self.Q_in.get()
 
             if input_ == "STOP":
-                if self.previous_id:
-                    self.save_video()
                 break
 
             if input_ == "END":
                 if self.previous_id:
-                    self.save_video()
+                    self.clean_video_writer()
                 continue
 
-            (frame, video_id, defects, detected_objects) = input_
+            (frame, file_id, detected_objects) = input_
 
-            pole_number = self.progress[video_id]["pole_number"]
-            filename = os.path.basename(self.progress[video_id]["path_to_video"])
-            store_path = os.path.join(self.save_path, pole_number)
+            file_type = self.progress[file_id]["file_type"]
+            pole_number = self.progress[file_id]["pole_number"]
+            filename = os.path.basename(self.progress[file_id]["path_to_file"])
+            store_path = os.path.join(self.save_path, str(pole_number))
 
-            # New video arrived
-            if self.previous_id != video_id:
-                self.previous_id = video_id
+            # New file arrived
+            if file_id != self.previous_id:
+                self.previous_id = file_id
 
             if not os.path.exists(store_path):
                 try:
                     os.mkdir(store_path)
                 except:
-                    print("ERROR: Failed to create a folder to save:", filename)
+                    print("ERROR: Failed to create a folder to save processed images:", filename)
                     pass
 
-            if self.video_writer is None:
+            if self.video_writer is None and file_type == "video":
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                 self.video_writer = cv2.VideoWriter(os.path.join(store_path, filename + "_out.avi"),
                                                     fourcc, 30, (frame.shape[1], frame.shape[0]), True)
 
             self.results_processor.draw_bounding_boxes(objects_detected=detected_objects,
                                                        image=frame)
+            if file_type == "video":
+                self.video_writer.write(frame.astype(np.uint8))
+            else:
+                cv2.imwrite(
+                    filename=os.path.join(store_path, filename + "_out.jpg"),
+                    img=frame
+                )
 
-            self.video_writer.write(frame.astype(np.uint8))
+            self.progress[file_id]["processed"] += 1
+
+            if self.progress[file_id]["processed"] == self.progress[file_id]["total_frames"]:
+                with open(os.path.join(store_path, filename + ".json"), "w") as f:
+                    json.dump(self.progress[file_id]["defects"], f)
+                self.progress[file_id]["status"] = "Processed"
 
         print("ResultsProcessorThread killed")
 
-    def save_video(self):
+    def clean_video_writer(self):
         self.video_writer = None

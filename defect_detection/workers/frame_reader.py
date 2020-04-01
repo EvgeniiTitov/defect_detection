@@ -21,44 +21,44 @@ class FrameReaderThread(threading.Thread):
     def run(self) -> None:
 
         while True:
-            # Check if there's a video to process
+
             input_ = self.Q_in.get()
 
             # If input is STOP -> kill the thread
             if input_ == "STOP":
                 break
 
-            #TODO: Clarify - when method run ends, the thread exits?
+            file_id = input_
+            path_to_file = self.progress[file_id]["path_to_file"]
 
-            (path_to_video, pole_number, video_id) = input_
-
-            # If failed to open a video, signal to other threads the current video is over
-            # by sending END
+            # If failed to open a file, signal to other threads the current video is over
             try:
-                stream = cv2.VideoCapture(path_to_video)
+                cap = cv2.VideoCapture(path_to_file)
             except:
-                print("\nERROR: Failed to open video:", os.path.basename(path_to_video))
+                print("\nERROR: Failed to open file:", os.path.basename(path_to_file))
                 self.Q_out.put("END")
                 continue
 
-            if not stream.isOpened():
+            if not cap.isOpened():
                 self.Q_out.put("END")
                 continue
 
             # Save total number of frames to process
-            total_frames = int(stream.get(cv2.CAP_PROP_FRAME_COUNT))
-            self.progress[video_id]["remaining"] = total_frames
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            self.progress[file_id]["total_frames"] = total_frames
+            self.progress[file_id]["status"] = "Being processed"
 
             while True:
-                has_frame, frame = stream.read()
+                # For an image reads it ones and breaks out
+                has_frame, frame = cap.read()
 
                 if not has_frame:
                     break
 
-                self.progress[video_id]["processing"] += 1
-                self.Q_out.put((frame, video_id))
+                self.progress[file_id]["now_processing"] += 1
+                self.Q_out.put((frame, file_id))
 
-            stream.release()
+            cap.release()
             self.Q_out.put("END")
 
         self.Q_out.put("STOP")
