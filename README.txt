@@ -14,7 +14,6 @@ SHORT TERM TASKS:
 9. Separate API endpoint to process a video and return its angle
 
 
-
 LONG TERM TASKS:
 1. Batch processing to further speed up the system
 2. Combine blocks 1-2 to decrease the number of expensive CPU-GPU data transfers (Apache Arrow to keep data on the local server)
@@ -31,6 +30,7 @@ KNOWN ISSUES:
 
 
 -------------------CURRENT THINGS TO DO-----------------------------
-2. Videos work very very slowly! Manage Q memory, look into it
-5. Separate pipeline to predict angles only (clarify the whole system design, file structure)
-6. Run inference 1 in N frames
+1. Videos work very very slowly! Manage Q memory, look into it
+2. Separate pipeline to predict angles only
+3. Run inference 1 in N frames
+- some problem (only defect from 1 frame gets saved)

@@ -18,6 +18,8 @@ def predict():
 
     :return:
     """
+    # TODO: Check if threads and NN are ready
+
     response = {"success": False}
     data = request.get_json()
     try:
@@ -49,7 +51,9 @@ def status():
     id = data["id"]
 
     if id in detector.progress:
-        progress = {key: detector.progress[id].get(key) for key in ["total_frames", "processed"]}
+        progress = {key: detector.progress[id].get(key) for key in ["status",
+                                                                    "total_frames",
+                                                                    "processed"]}
         return jsonify(progress)
 
     return abort(404)
@@ -57,6 +61,9 @@ def status():
 
 @app.route('/shutdown')
 def shut_down_server():
+    #TODO: Anyone can kill it
+    #Kill threads and NN, not actual server
+
     detector.stop()
 
     return jsonify({"msg": "Server successfully shut down"})
