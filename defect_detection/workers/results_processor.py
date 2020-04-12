@@ -36,14 +36,14 @@ class ResultsProcessorThread(threading.Thread):
 
             if input_ == "END":
                 if self.previous_id:
-                    self.clean_video_writer()
+                    self.clean_video_writer()  # Video's over. Delete current video writer
                 continue
 
             (frame, file_id, detected_objects) = input_
 
             file_type = self.progress[file_id]["file_type"]
             pole_number = self.progress[file_id]["pole_number"]
-            filename = os.path.basename(self.progress[file_id]["path_to_file"])
+            filename = os.path.splitext(os.path.basename(self.progress[file_id]["path_to_file"]))[0]
             store_path = os.path.join(self.save_path, str(pole_number))
 
             # New file arrived
@@ -53,8 +53,8 @@ class ResultsProcessorThread(threading.Thread):
             if not os.path.exists(store_path):
                 try:
                     os.mkdir(store_path)
-                except:
-                    print("ERROR: Failed to create a folder to save processed images:", filename)
+                except Exception as e:
+                    print(f"Failed to create a folder to save processed images. Error: {e}")
                     pass
 
             if self.video_writer is None and file_type == "video":
@@ -62,8 +62,10 @@ class ResultsProcessorThread(threading.Thread):
                 self.video_writer = cv2.VideoWriter(os.path.join(store_path, filename + "_out.avi"),
                                                     fourcc, 30, (frame.shape[1], frame.shape[0]), True)
 
-            self.results_processor.draw_bounding_boxes(objects_detected=detected_objects,
-                                                       image=frame)
+            self.results_processor.draw_bounding_boxes(
+                objects_detected=detected_objects,
+                image=frame
+            )
             if file_type == "video":
                 self.video_writer.write(frame.astype(np.uint8))
             else:
@@ -75,11 +77,17 @@ class ResultsProcessorThread(threading.Thread):
             self.progress[file_id]["processed"] += 1
 
             if self.progress[file_id]["processed"] == self.progress[file_id]["total_frames"]:
+
+                # TODO: Dump results to Postgres
+
                 with open(os.path.join(store_path, filename + ".json"), "w") as f:
                     json.dump(self.progress[file_id]["defects"], f)
                 self.progress[file_id]["status"] = "Processed"
-                print(f"Processing of {filename} completed")
 
+                # TODO: Once dumped, clean the progress tracking dictionary
+                #del self.progress[file_id]
+
+                print(f"Processing of {filename} completed")
 
         print("ResultsProcessorThread killed")
 

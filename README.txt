@@ -7,7 +7,7 @@ SHORT TERM TASKS:
 6. Tune YOLOs parameters (NMS, threshold etc)
 7. Tune line filtering algorithm
 8. Complete threads for video processing (
-                                - actual code
+                                + actual code
                                 - memory consumption to tune Qs,
                                 - Method to shut down the server to .join() threads)
 
@@ -31,8 +31,6 @@ KNOWN ISSUES:
 
 
 -------------------CURRENT THINGS TO DO-----------------------------
-1. Can't track object's progress, can't create the correct request
 2. Videos work very very slowly! Manage Q memory, look into it
-3. Shutting down server
-4. Cleaning of progress dictionary
-5. Separate pipeline to predict angles only
+5. Separate pipeline to predict angles only (clarify the whole system design, file structure)
+6. Run inference 1 in N frames

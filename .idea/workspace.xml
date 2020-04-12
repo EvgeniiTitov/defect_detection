@@ -3,9 +3,15 @@
   <component name="ChangeListManager">
     <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/../aim_assistant/.idea/aim_assistant.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web_dev/udemy_flask_API/RESTAPI_SQLite/item.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../web_dev/udemy_flask_website/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.txt" beforeDir="false" afterPath="$PROJECT_DIR$/README.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/defect_detection/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/defect_detection/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/request.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/workers/frame_reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/workers/frame_reader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/defect_detection/workers/object_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/workers/object_detector.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/defect_detection/workers/results_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/defect_detection/workers/results_processor.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -15,14 +21,14 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.5224586">
+    <splitter split-orientation="horizontal" split-proportion="0.4237569">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/defect_detection/app.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="858">
-                  <caret line="39" column="21" selection-start-line="39" selection-start-column="21" selection-end-line="39" selection-end-column="21" />
+                <state relative-caret-position="1054">
+                  <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
                   <folding>
                     <element signature="e#0#30#0" expanded="true" />
                   </folding>
@@ -31,22 +37,34 @@
             </entry>
           </file>
           <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/README.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="616">
+                  <caret line="35" column="30" lean-forward="true" selection-start-line="35" selection-start-column="30" selection-end-line="35" selection-end-column="30" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/defect_detection/model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1051">
-                  <caret line="146" lean-forward="true" selection-start-line="146" selection-end-line="146" />
+                <state relative-caret-position="557">
+                  <caret line="187" selection-start-line="187" selection-end-line="187" />
                   <folding>
-                    <element signature="e#0#63#0" expanded="true" />
+                    <element signature="e#0#59#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/README.txt">
+            <entry file="file://$PROJECT_DIR$/defect_detection/workers/frame_reader.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="438">
-                  <caret line="49" column="55" selection-start-line="49" selection-start-column="55" selection-end-line="49" selection-end-column="55" />
+                <state relative-caret-position="1109">
+                  <caret line="56" selection-start-line="56" selection-end-line="56" />
+                  <folding>
+                    <element signature="e#0#16#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -56,22 +74,10 @@
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/defect_detection/workers/frame_reader.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="544">
-                  <caret line="57" column="50" lean-forward="true" selection-start-line="57" selection-start-column="50" selection-end-line="57" selection-end-column="50" />
-                  <folding>
-                    <element signature="e#0#16#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/defect_detection/workers/object_detector.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="572">
-                  <caret line="44" column="81" selection-start-line="44" selection-start-column="81" selection-end-line="44" selection-end-column="81" />
+                <state relative-caret-position="418">
+                  <caret line="61" lean-forward="true" selection-start-line="61" selection-end-line="61" />
                 </state>
               </provider>
             </entry>
@@ -79,8 +85,8 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/defect_detection/workers/defect_detector.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="550">
-                  <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
+                <state relative-caret-position="448">
+                  <caret line="56" selection-start-line="56" selection-end-line="56" />
                 </state>
               </provider>
             </entry>
@@ -88,8 +94,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/defect_detection/workers/results_processor.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="800">
-                  <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
+                <state relative-caret-position="513">
+                  <caret line="86" column="75" selection-start-line="86" selection-start-column="75" selection-end-line="86" selection-end-column="75" />
                   <folding>
                     <element signature="e#0#16#0" expanded="true" />
                   </folding>
@@ -174,20 +180,19 @@
         <option value="$PROJECT_DIR$/defect_detection/concurrency/frame_reader.py" />
         <option value="$PROJECT_DIR$/defect_detection/concurrency/object_detector.py" />
         <option value="$PROJECT_DIR$/defect_detection/workers/defect_detector.py" />
-        <option value="$PROJECT_DIR$/README.txt" />
         <option value="$PROJECT_DIR$/defect_detection/workers/frame_reader.py" />
         <option value="$PROJECT_DIR$/defect_detection/workers/object_detector.py" />
+        <option value="$PROJECT_DIR$/defect_detection/model.py" />
         <option value="$PROJECT_DIR$/defect_detection/app.py" />
         <option value="$PROJECT_DIR$/defect_detection/workers/results_processor.py" />
-        <option value="$PROJECT_DIR$/defect_detection/model.py" />
+        <option value="$PROJECT_DIR$/README.txt" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-1917" />
-    <option name="y" value="184" />
-    <option name="width" value="1238" />
-    <option name="height" value="670" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="-2567" />
+    <option name="width" value="1848" />
+    <option name="height" value="1047" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -195,6 +200,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -207,17 +213,10 @@
               <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
               <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
-              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
-              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
-              <item name="workers" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -395,19 +394,19 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-2568" y="-8" width="2576" height="1056" extended-state="6" />
+    <frame x="-2567" y="0" width="1848" height="1047" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
-      <window_info content_ui="combo" id="Project" order="1" weight="0.142632" />
+      <window_info content_ui="combo" id="Project" order="1" weight="0.031126872" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="0" visible="true" weight="0.033333335" />
+      <window_info anchor="bottom" id="Terminal" order="0" weight="0.033333335" />
       <window_info anchor="bottom" id="Event Log" order="1" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="2" />
       <window_info anchor="bottom" id="Message" order="3" />
       <window_info anchor="bottom" id="Find" order="4" weight="0.17888889" />
       <window_info anchor="bottom" id="Version Control" order="5" weight="0.032502707" />
-      <window_info anchor="bottom" id="Run" order="6" weight="0.033333335" />
+      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.09203143" />
       <window_info anchor="bottom" id="Debug" order="7" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="8" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="9" weight="0.4" />
@@ -561,16 +560,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/request.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="968">
-          <caret line="44" selection-start-line="44" selection-end-line="44" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/requirements.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="176">
@@ -632,63 +621,73 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.txt">
+    <entry file="file://$PROJECT_DIR$/defect_detection/request.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="438">
-          <caret line="49" column="55" selection-start-line="49" selection-start-column="55" selection-end-line="49" selection-end-column="55" />
+        <state relative-caret-position="968">
+          <caret line="44" selection-start-line="44" selection-end-line="44" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/defect_detection/workers/frame_reader.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="57" column="50" lean-forward="true" selection-start-line="57" selection-start-column="50" selection-end-line="57" selection-end-column="50" />
+        <state relative-caret-position="1109">
+          <caret line="56" selection-start-line="56" selection-end-line="56" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/workers/object_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="572">
-          <caret line="44" column="81" selection-start-line="44" selection-start-column="81" selection-end-line="44" selection-end-column="81" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/workers/defect_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="550">
-          <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/workers/results_processor.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="800">
-          <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/defect_detection/app.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="858">
-          <caret line="39" column="21" selection-start-line="39" selection-start-column="21" selection-end-line="39" selection-end-column="21" />
-          <folding>
-            <element signature="e#0#30#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/defect_detection/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1051">
-          <caret line="146" lean-forward="true" selection-start-line="146" selection-end-line="146" />
+        <state relative-caret-position="557">
+          <caret line="187" selection-start-line="187" selection-end-line="187" />
           <folding>
-            <element signature="e#0#63#0" expanded="true" />
+            <element signature="e#0#59#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/app.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1054">
+          <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
+          <folding>
+            <element signature="e#0#30#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/workers/object_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="418">
+          <caret line="61" lean-forward="true" selection-start-line="61" selection-end-line="61" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="616">
+          <caret line="35" column="30" lean-forward="true" selection-start-line="35" selection-start-column="30" selection-end-line="35" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/workers/defect_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="448">
+          <caret line="56" selection-start-line="56" selection-end-line="56" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/defect_detection/workers/results_processor.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="513">
+          <caret line="86" column="75" selection-start-line="86" selection-start-column="75" selection-end-line="86" selection-end-column="75" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
           </folding>
         </state>
       </provider>

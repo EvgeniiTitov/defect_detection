@@ -6,6 +6,7 @@ from utils import ResultsHandler
 import queue
 import os
 import uuid
+from pynvml import *
 
 
 class MainDetector:
@@ -57,7 +58,8 @@ class MainDetector:
             in_queue=self.frame_to_block1,
             out_queue=self.block1_to_block2,
             poles_detector=self.pole_detector,
-            components_detector=self.component_detector
+            components_detector=self.component_detector,
+            progress=self.progress
         )
 
         self.defect_detector_thread = DefectDetectorThread(
@@ -99,7 +101,7 @@ class MainDetector:
             for item in os.listdir(path_to_data):
                 path_to_file = os.path.join(path_to_data, item)
                 file_id = self.check_type_and_process(path_to_file=path_to_file, pole_number=pole_number)
-                file_IDS[path_to_data] = file_id
+                file_IDS[path_to_file] = file_id
         else:
             print(f"ERROR: Cannot process the file {path_to_data}, neither a folder nor a file")
 

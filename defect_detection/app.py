@@ -5,9 +5,6 @@ import cv2
 
 app = Flask(__name__)
 
-# TODO: Might need a separate endpoint to cause inclination detection
-#       and one method for defect detection
-
 # Location on the server where processed images will be saved
 SAVE_PATH = r"D:\Desktop\system_output\OUTPUT"
 
@@ -17,16 +14,25 @@ detector = MainDetector(save_path=SAVE_PATH,
 
 @app.route('/predict', methods=["POST"])
 def predict():
+    """
+
+    :return:
+    """
     response = {"success": False}
-
     data = request.get_json()
-
-    path_to_data = data["path_to_data"]
-    pole_number = data["pole_number"]
+    try:
+        path_to_data = data["path_to_data"]
+        pole_number = data["pole_number"]
+    except Exception as e:
+        print(f"Exception raised while reading items sent. Error: {e}")
+        response["msg"] = "Wrong input. Ensure both path to data and pole number provided"
+        return jsonify(response)
 
     try:
-        defects = detector.predict(path_to_data=path_to_data,
-                                   pole_number=pole_number)
+        defects = detector.predict(
+            path_to_data=path_to_data,
+            pole_number=pole_number
+        )
     except:
         print("\nAttempt to process the files provided failed")
         return jsonify(response)
@@ -37,23 +43,24 @@ def predict():
     return jsonify(response)
 
 
-@app.route('/status/<id>', methods=["GET"])
-def status(id):
+@app.route('/status', methods=["GET"])
+def status():
+    data = request.get_json()
+    id = data["id"]
+
     if id in detector.progress:
-        return jsonify(detector.progress[id])
+        progress = {key: detector.progress[id].get(key) for key in ["total_frames", "processed"]}
+        return jsonify(progress)
 
     return abort(404)
 
 
-@app.route('/process_image', methods=["POST"])
-def process_image():
-    file = request.files["image"].read()
-    np_image = np.fromstring(file, np.uint8)
-    image = cv2.imdecode(np_image, cv2.IMREAD_COLOR)
-    # TODO: run inference - create new endpoint to process a single image
-    # TODO: return results
+@app.route('/shutdown')
+def shut_down_server():
+    detector.stop()
+
+    return jsonify({"msg": "Server successfully shut down"})
 
 
 if __name__ == "__main__":
-    # TODO: Can we change timeout?
     app.run(debug=False)

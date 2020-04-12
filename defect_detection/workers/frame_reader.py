@@ -34,8 +34,8 @@ class FrameReaderThread(threading.Thread):
             # If failed to open a file, signal to other threads the current video is over
             try:
                 cap = cv2.VideoCapture(path_to_file)
-            except:
-                print("\nERROR: Failed to open file:", os.path.basename(path_to_file))
+            except Exception as e:
+                print("\nERROR: Failed to open file:", os.path.basename(path_to_file), "Error: ", e)
                 self.Q_out.put("END")
                 continue
 
@@ -55,7 +55,6 @@ class FrameReaderThread(threading.Thread):
                 if not has_frame:
                     break
 
-                self.progress[file_id]["now_processing"] += 1
                 self.Q_out.put((frame, file_id))
 
             cap.release()

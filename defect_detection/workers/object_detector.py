@@ -1,5 +1,5 @@
 import threading
-
+#from pynvml import *
 
 class ObjectDetectorThread(threading.Thread):
 
@@ -9,6 +9,7 @@ class ObjectDetectorThread(threading.Thread):
             out_queue,
             poles_detector,
             components_detector,
+            progress,
             *args,
             **kwargs
     ):
@@ -17,6 +18,13 @@ class ObjectDetectorThread(threading.Thread):
         self.Q_out = out_queue
         self.poles_detector = poles_detector
         self.components_detector = components_detector
+        self.progress = progress
+
+        # try:
+        #     nvmlInit()
+        # except Exception as e:
+        #     print("Exception during pynvml initialization:", e)
+        # self.device = nvmlDeviceGetHandleByIndex(0)
 
     def run(self) -> None:
 
@@ -36,6 +44,14 @@ class ObjectDetectorThread(threading.Thread):
                 continue
 
             (frame, file_id) = input_
+            self.progress[file_id]["now_processing"] += 1
+
+            # usage = nvmlDeviceGetMemoryInfo(self.device)
+            # usage_rate = nvmlDeviceGetUtilizationRates(self.device)
+            # print(f"\nGPU: {usage_rate.gpu}, GPU-memory: {usage_rate.memory}%")
+            # print("Total memory:", usage.total)
+            # print("Free memory:", usage.free)
+            # print("Used memory:", usage.used)
 
             # Predict poles, returns dict with (image: predicted poles)
             poles = self.poles_detector.predict(image=frame)
