@@ -1,17 +1,17 @@
 SHORT TERM TASKS:
-1. Retrain poles net to work with 3 class (add wood)
-2. Retrain components net to replace 2 YOLOs in sequence with 1 trained for 3 components classes
-3. Cracks module
-4. Dumpers module
-5. Subtract other object's boxes from the pillar BB (less noise for cracks detection)
-6. Tune YOLOs parameters (NMS, threshold etc)
-7. Tune line filtering algorithm
-8. Complete threads for video processing (
-                                + actual code
-                                - memory consumption to tune Qs,
-                                - Method to shut down the server to .join() threads)
+1. Retrain poles net to work with 3 class (Make sure classes are balanced)
+2. Retrain components net to replace 2 YOLOs in sequence with 1 trained for 3 components classes (Balance dataset)
+3. Dumpers module (Wait for Leonid to augment data, try teaching)
+4. Wooden pole defects (Dasha)
+5. Tuning:
+    - Tune YOLOs parameters (NMS, threshold etc)
+    - Tune line filtering algorithm
+    - Tune Q sizes (measure memory consumptions etc)
 
-9. Separate API endpoint to process a video and return its angle
+
+6. Add and connect SQL to save defects properly
+! 7. Fix the issue (remove frame from all representation objects, you have access to it anyway in the workers)
+! 8. Inference 1 in N frames - fix your issue when for videos only 1 frame results are saved
 
 
 LONG TERM TASKS:
@@ -19,6 +19,8 @@ LONG TERM TASKS:
 2. Combine blocks 1-2 to decrease the number of expensive CPU-GPU data transfers (Apache Arrow to keep data on the local server)
 3. New detections representation (single accomodating all detected objects alongside the frame). Now each subimage has the whole frame
 matrix as an attribute, which takes a lot of space. We need one reference for all detected objects that then can crop it
+- FROZEN. Cracks module
+- FROZEN. Subtract other object's boxes from the pillar BB (less noise for cracks detection)
 
 
 KNOWN ISSUES:
@@ -29,8 +31,8 @@ KNOWN ISSUES:
 - Not well optimized line filtering algorithm
 
 
--------------------CURRENT THINGS TO DO-----------------------------
-1. Videos work very very slowly! Manage Q memory, look into it
-2. Separate pipeline to predict angles only
-3. Run inference 1 in N frames
-- some problem (only defect from 1 frame gets saved)
+14.04
+! 7
+! 8
+Relisten talk to Igor
+Review and complete your webdev course

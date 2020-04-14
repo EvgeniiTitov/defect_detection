@@ -4,6 +4,7 @@ import numpy as np
 import os
 import cv2
 import time
+import random
 
 class DefectDetector:
     """
@@ -66,6 +67,12 @@ class DefectDetector:
                         pass
 
                 elif element.object_name.lower() == "dump":
+
+                    # dumper_subimage = np.array(subimage.frame[element.BB_top:element.BB_bottom,
+                    #                                           element.BB_left:element.BB_right])
+                    # cv2.imwrite(os.path.join("D:\Desktop\system_output\OUTPUT\dumpers", str(random.randint(0,10**5)) + ".jpg"),
+                    #             img=dumper_subimage)
+
                     # Search for defects on vibration dumpers
                     continue
 

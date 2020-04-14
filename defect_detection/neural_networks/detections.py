@@ -22,7 +22,6 @@ class DetectedObject:
         self.BB_bottom = bottom
 
         self.deficiency_status = None
-
         self.inclination = None
         self.cracked = None
 
