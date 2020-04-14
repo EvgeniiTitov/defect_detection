@@ -50,10 +50,12 @@ class DefectDetectorThread(threading.Thread):
             frame, poles, components, file_id = input_
 
             if components and self.check_defects and self.currently_processing % 10 == 0:
-                detected_defects = self.defect_detector.search_defects(components)
+                detected_defects = self.defect_detector.search_defects(
+                    detected_objects=components,
+                    image=frame
+                )
 
-                # Add only if any defects have been found - do not add info about frames
-                # where no defects have been detected
+                # Add only if any defects have been detected
                 if any(detected_defects[key] for key in detected_defects.keys()):
                     self.progress[file_id]["defects"].append(detected_defects)
 

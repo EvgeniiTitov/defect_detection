@@ -8,10 +8,8 @@ SHORT TERM TASKS:
     - Tune line filtering algorithm
     - Tune Q sizes (measure memory consumptions etc)
 
-
 6. Add and connect SQL to save defects properly
 ! 7. Fix the issue (remove frame from all representation objects, you have access to it anyway in the workers)
-! 8. Inference 1 in N frames - fix your issue when for videos only 1 frame results are saved
 9. BBs interpolation?
 10. Object tracking (bb overlapping check suggested by Igor)
 
@@ -35,6 +33,5 @@ KNOWN ISSUES:
 
 14.04
 ! 7
-! 8
 Relisten talk to Igor
-Review and complete your webdev course
+Review and complete your webdev course + HTML

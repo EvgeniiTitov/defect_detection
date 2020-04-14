@@ -72,13 +72,8 @@ class SubImage:
     whole full size image. Block 2 neural net does detection on the objects found
     by the block1 nets. We need this referencing for proper result handling at the end
     """
-    def __init__(
-            self,
-            frame,
-            name
-    ):
+    def __init__(self, name):
 
-        self.frame = frame
         self.name = name
         self.top = 0
         self.left = 0
@@ -101,6 +96,3 @@ class SubImage:
         self.left = left
         self.right = right
         self.bottom = bottom
-        
-    def __str__(self):
-        return f"Image section for searching: {self.name}, its size: {self.frame.shape}"

@@ -67,7 +67,7 @@ class PolesDetector:
         poles_detected = defaultdict(list)
 
         # Specify image section on which predictions take place
-        detecting_image_section = SubImage(image, "poles")
+        detecting_image_section = SubImage(name="poles")
 
         # Call neural net to get predictions. poles - list of lists, each object is represented as
         # a list of 8 items: image index in the batch (0),4BBs coordinates, objectness score,
@@ -251,45 +251,38 @@ class ComponentsDetector:
         # Dictionary to keep components detected
         components_detected = defaultdict(list)
 
-        # If poles detecting neural net detected any poles. Find all components on them
+        # If any pole have been detected
         if pole_predictions:
             # FOR loop below just to play it safe. There should be only one item in the dictionary
             # original image (class object) : poles detected on it (list of lists)
-            for window, poles in pole_predictions.items():
-
+            for subimage, poles in pole_predictions.items():
                 # Consider all poles detected on the original image
                 for pole in poles:
                     # For each pole create a separate list for its components to temporary store them
                     components = list()
-
                     # Crop out the pole detected to send for components detection (modified coordinates)
-                    pole_subimage = np.array(window.frame[pole.top:pole.bottom,
-                                                          pole.left:pole.right])
+                    pole_subimage = np.array(image[pole.top:pole.bottom, pole.left:pole.right])
                     # Keep track of new subimage cropped out of the original one for components detection
-                    pole_image_section = SubImage(frame=pole_subimage,
-                                                  name="components")
-
+                    pole_image_section = SubImage(name="components")
                     # Save coordinates of this subimage relatively to the original image for
-                    # BB drawing and saving objects detected to disk (Relative coordinates)
-                    pole_image_section.save_relative_coordinates(top=pole.top,
-                                                                 left=pole.left,
-                                                                 right=pole.right,
-                                                                 bottom=pole.bottom)
-
+                    # BB drawing and saving objects detected on disk (Relative coordinates)
+                    pole_image_section.save_relative_coordinates(
+                        top=pole.top,
+                        left=pole.left,
+                        right=pole.right,
+                        bottom=pole.bottom
+                    )
                     # ! Depending on the pole's class we want to detect different number of objects
                     if pole.class_id == 0:  # metal
                         predictions = self.components_predictor.predict(pole_subimage)
-
                         if predictions:
                             components += predictions
 
                     elif pole.class_id == 1:  # concrete
                         # TEMPORARY: Will be replaced with ONE 3 class predictor
                         predictions = self.components_predictor.predict(pole_subimage)
-
                         if predictions:
                             components += predictions
-
 
                         pillar = self.pillar_predictor.predict(pole_subimage)
 
@@ -308,13 +301,15 @@ class ComponentsDetector:
                         # were detected
                         for component in components:
                             components_detected[pole_image_section].append(
-                                                                DetectedObject(class_id=component[7],
-                                                                               confidence=component[5],
-                                                                               left=int(component[1]),
-                                                                               top=int(component[2]),
-                                                                               right=int(component[3]),
-                                                                               bottom=int(component[4]))
-                                                                          )
+                                                                DetectedObject(
+                                                                    class_id=component[7],
+                                                                    confidence=component[5],
+                                                                    left=int(component[1]),
+                                                                    top=int(component[2]),
+                                                                    right=int(component[3]),
+                                                                    bottom=int(component[4])
+                                                                )
+                            )
 
         else:
             # In case no poles have been detected, send the whole image for components detection
@@ -338,20 +333,20 @@ class ComponentsDetector:
                 components.append(pillar[0])
 
             if components:
-                whole_image = SubImage(image, "components")
+                whole_image = SubImage("components")
 
                 for component in components:
                     components_detected[whole_image].append(
-                                                DetectedObject(class_id=component[7],
-                                                               confidence=component[5],
-                                                               left=int(component[1]),
-                                                               top=int(component[2]),
-                                                               right=int(component[3]),
-                                                               bottom=int(component[4]))
-                                                           )
+                                                DetectedObject(
+                                                    class_id=component[7],
+                                                    confidence=component[5],
+                                                    left=int(component[1]),
+                                                    top=int(component[2]),
+                                                    right=int(component[3]),
+                                                    bottom=int(component[4])
+                                                )
+                    )
 
-
-        # TO DO: Is the step below even necessary with giving them names?
         if components_detected:
             # Name objects detected by unique names instead of default 0,1,2 etc.
             self.determine_object_class(components_detected)
@@ -360,21 +355,21 @@ class ComponentsDetector:
 
         return components_detected
 
-
     def modify_pillars_BBs(
             self,
             image: np.ndarray,
             componenets_detected: dict
     ) -> None:
-
+        """
+        Slightly widens pillar's bb in order to ensure both edges are within the box
+        :param image:
+        :param componenets_detected:
+        :return:
+        """
         for window, components in componenets_detected.items():
-
             for component in components:
                 if component.class_id == 2:
-
                     new_left = component.BB_left * 0.96
                     new_right = component.BB_right * 1.04 if component.BB_right * 1.04 <\
                                                         image.shape[1] else image.shape[1] - 10
-
-                    component.update_object_coordinates(left=int(new_left),
-                                                        right=int(new_right))
+                    component.update_object_coordinates(left=int(new_left), right=int(new_right))

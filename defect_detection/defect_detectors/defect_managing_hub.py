@@ -31,6 +31,7 @@ class DefectDetector:
     def search_defects(
             self,
             detected_objects: dict,
+            image: np.ndarray,
             image_name: str = None,
             camera_orientation: tuple=None
     ) -> dict:
@@ -55,7 +56,8 @@ class DefectDetector:
                     # Does not return anything. Change object's state - declare it defected or not
                     self.search_defects_pillars(
                         pillar=element,
-                        detection_section=subimage,
+                        frame=image,
+                        subimage=subimage,
                         camera_angle=camera_orientation,
                         image_name=image_name
                     )
@@ -86,7 +88,8 @@ class DefectDetector:
     def search_defects_pillars(
             self,
             pillar,
-            detection_section,
+            frame,
+            subimage,
             camera_angle,
             image_name
     ):
@@ -97,8 +100,8 @@ class DefectDetector:
         :return:
         """
         # Reconstruct image of the pillar detected
-        pillar_subimage = np.array(detection_section.frame[pillar.top:pillar.bottom,
-                                                           pillar.left:pillar.right])
+        pillar_subimage = np.array(frame[pillar.top + subimage.top:pillar.bottom + subimage.top,
+                                         pillar.left + subimage.left:pillar.right + subimage.left])
 
         # cv2.imwrite(
         #     os.path.join("D:\Desktop\system_output\API_RESULTS\cropped", image_name + '.jpg'),
