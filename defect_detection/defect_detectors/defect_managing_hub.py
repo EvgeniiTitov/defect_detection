@@ -49,19 +49,20 @@ class DefectDetector:
         # Subimage is either a subimage of a pole if any have been detected or the whole original
         # image ib case no pole have been found. Elements are objects detected within this subimage
         for subimage, elements in detected_objects.items():
-
             for index, element in enumerate(elements):
-
                 if element.object_name.lower() == "pillar":
 
-                    # Do not return anything. Change object's state - declare it defected or not
-                    self.search_defects_pillars(pillar=element,
-                                                detection_section=subimage,
-                                                camera_angle=camera_orientation,
-                                                image_name=image_name)
+                    # Does not return anything. Change object's state - declare it defected or not
+                    self.search_defects_pillars(
+                        pillar=element,
+                        detection_section=subimage,
+                        camera_angle=camera_orientation,
+                        image_name=image_name
+                    )
 
-
-                    detected_defects["pillar"].append(("angle", element.inclination))
+                    # If inclination was successfully calculated
+                    if element.inclination is not None:
+                        detected_defects["pillar"].append(("angle", element.inclination))
 
                     if element.cracked:
                         pass
@@ -105,8 +106,6 @@ class DefectDetector:
 
         # Search for pole's edges
         func_to_time = timeout(seconds=10)(self.concrete_extractor.find_pole_edges)
-        #pillar_edges = self.concrete_extractor.find_pole_edges(image=pillar_subimage)
-
         try:
             pillar_edges = func_to_time(image=pillar_subimage)
         except:
@@ -123,11 +122,7 @@ class DefectDetector:
 
         # Run inclination calculation
         inclination = self.calculate_angle(the_lines=pillar_edges)
-
-        if inclination:
-            pillar.inclination = inclination
-        else:
-            pillar.inclination = "NULL"
+        pillar.inclination = inclination
 
         # Run cracks detection
         # concrete_polygon = self.concrete_extractor.retrieve_polygon_v2(the_edges=pillar_edges,

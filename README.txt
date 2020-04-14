@@ -12,6 +12,8 @@ SHORT TERM TASKS:
 6. Add and connect SQL to save defects properly
 ! 7. Fix the issue (remove frame from all representation objects, you have access to it anyway in the workers)
 ! 8. Inference 1 in N frames - fix your issue when for videos only 1 frame results are saved
+9. BBs interpolation?
+10. Object tracking (bb overlapping check suggested by Igor)
 
 
 LONG TERM TASKS:

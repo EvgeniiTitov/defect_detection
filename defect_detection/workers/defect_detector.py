@@ -49,18 +49,15 @@ class DefectDetectorThread(threading.Thread):
 
             frame, poles, components, file_id = input_
 
-            if components and self.check_defects and self.currently_processing % 5 == 0:
+            if components and self.check_defects and self.currently_processing % 10 == 0:
                 detected_defects = self.defect_detector.search_defects(components)
-                self.currently_processing += 1
-
-                #TODO: Any found defects -> save to the progress file under file's ID
-                #      for video it might mean adding defects for each frame ->
 
                 # Add only if any defects have been found - do not add info about frames
                 # where no defects have been detected
                 if any(detected_defects[key] for key in detected_defects.keys()):
                     self.progress[file_id]["defects"].append(detected_defects)
 
+            self.currently_processing += 1
             self.Q_out.put((frame, file_id, {**poles, **components}))
 
         print("DefectDetectorThread killed")

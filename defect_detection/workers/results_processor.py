@@ -79,7 +79,6 @@ class ResultsProcessorThread(threading.Thread):
             if self.progress[file_id]["processed"] == self.progress[file_id]["total_frames"]:
 
                 # TODO: Dump results to Postgres
-
                 with open(os.path.join(store_path, filename + ".json"), "w") as f:
                     json.dump(self.progress[file_id]["defects"], f)
                 self.progress[file_id]["status"] = "Processed"
