@@ -6,16 +6,24 @@ SHORT TERM TASKS:
 5. Tuning:
     - Tune YOLOs parameters (NMS, threshold etc)
     - Tune line filtering algorithm
-    - Tune Q sizes (measure memory consumptions etc)
+    - Tune Q sizes (measure memory consumptions etc) - nvidia-smi in console, look it up
+    Если память не забивается достаточно, надо попробовать забить посильнее чем вечно с ХОСТА на
+    ДЕВАЙС (cpu-gpu?) двигать.
 
-6. Add and connect SQL to save defects properly
-! 7. Fix the issue (remove frame from all representation objects, you have access to it anyway in the workers)
-9. BBs interpolation?
-10. Object tracking (bb overlapping check suggested by Igor)
+6. Add and connect MongoDB to save defects properly
+    - Request ID will be provided, use it as well to save results
+
+7. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then
+update them)
+8. Object tracking (bb overlapping check suggested by Igor) - could be done right in the writer or another
+worker before it.
+
+9. Before serving the first request, we need to make sure NNs, threads are up and running. + DB connection
+10. Ability to restart NNs and threads. Kill them, not actual server and then restart before first request
 
 
 LONG TERM TASKS:
-1. Batch processing to further speed up the system
+1. Batch processing to further speed up the system (currently only 40% of GPU is used)
 2. Combine blocks 1-2 to decrease the number of expensive CPU-GPU data transfers (Apache Arrow to keep data on the local server)
 3. New detections representation (single accomodating all detected objects alongside the frame). Now each subimage has the whole frame
 matrix as an attribute, which takes a lot of space. We need one reference for all detected objects that then can crop it
@@ -31,7 +39,10 @@ KNOWN ISSUES:
 - Not well optimized line filtering algorithm
 
 
-14.04
-! 7
-Relisten talk to Igor
+15.04
 Review and complete your webdev course + HTML
+Merging issue
+
+SERVER:
+One endpoint - sorter. N number of parallel pipelines that all have access to the database.
+Neural networks folder should become subfolder of whatever uses them. Things need to be independent

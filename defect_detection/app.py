@@ -1,7 +1,5 @@
 from model import MainDetector
 from flask import Flask, jsonify, request, abort
-import numpy as np
-import cv2
 
 app = Flask(__name__)
 
@@ -25,21 +23,23 @@ def predict():
     try:
         path_to_data = data["path_to_data"]
         pole_number = data["pole_number"]
+        request_id = data["request_id"]
     except Exception as e:
-        print(f"Exception raised while reading items sent. Error: {e}")
-        response["msg"] = "Wrong input. Ensure both path to data and pole number provided"
+        print(f"Exception raised while reading items sent in request. Error: {e}")
+        response["msg"] = "Wrong input. Ensure path to data, pole number and request ID provided"
         return jsonify(response)
 
     try:
-        defects = detector.predict(
+        ids = detector.predict(
             path_to_data=path_to_data,
-            pole_number=pole_number
+            pole_number=pole_number,
+            request_id=request_id
         )
     except:
         print("\nAttempt to process the files provided failed")
         return jsonify(response)
 
-    response["results"] = defects
+    response["ids"] = ids
     response["success"] = True
 
     return jsonify(response)

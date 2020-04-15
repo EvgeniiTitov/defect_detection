@@ -1,3 +1,6 @@
+from db import PredictionResults
+from mongoengine import connect
+from datetime import datetime
 import threading
 import cv2
 import os
@@ -24,6 +27,11 @@ class ResultsProcessorThread(threading.Thread):
 
         self.video_writer = None
         self.previous_id = None
+
+        try:
+            connect(db='futurelab')
+        except Exception as e:
+            print(f"Failed to connect to the database. Error: {e}")
 
     def run(self) -> None:
 
@@ -55,7 +63,6 @@ class ResultsProcessorThread(threading.Thread):
                     os.mkdir(store_path)
                 except Exception as e:
                     print(f"Failed to create a folder to save processed images. Error: {e}")
-                    pass
 
             if self.video_writer is None and file_type == "video":
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
@@ -77,18 +84,36 @@ class ResultsProcessorThread(threading.Thread):
             self.progress[file_id]["processed"] += 1
 
             if self.progress[file_id]["processed"] == self.progress[file_id]["total_frames"]:
-
-                # TODO: Dump results to Postgres
-                with open(os.path.join(store_path, filename + ".json"), "w") as f:
-                    json.dump(self.progress[file_id]["defects"], f)
+                self.save_results_to_db(file_id, filename, store_path)
                 self.progress[file_id]["status"] = "Processed"
 
                 # TODO: Once dumped, clean the progress tracking dictionary
-                #del self.progress[file_id]
-
+                #       What if status request comes for this file?
+                # del self.progress[file_id]
                 print(f"Processing of {filename} completed")
 
         print("ResultsProcessorThread killed")
 
     def clean_video_writer(self):
         self.video_writer = None
+
+    def save_results_to_db(self, file_id, filename, store_path):
+        """
+        Dumps processing results into the database
+        :param file_id:
+        :param filename:
+        :param store_path:
+        :return:
+        """
+        results = PredictionResults(
+            request_id=self.progress[file_id]["request_id"],
+            file_id=file_id,
+            file_name=filename,
+            saved_to=store_path,
+            datetime=datetime.utcnow(),
+            defects=self.progress[file_id]["defects"]
+        )
+        try:
+            results.save()
+        except Exception as e:
+            print(f"Error while saving to the database. Error: {e}")

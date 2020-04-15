@@ -6,7 +6,6 @@ from utils import ResultsHandler
 import queue
 import os
 import uuid
-from pynvml import *
 
 
 class MainDetector:
@@ -82,6 +81,7 @@ class MainDetector:
 
     def predict(
             self,
+            request_id: str,
             path_to_data: str,
             pole_number: int
     ) -> dict:
@@ -93,14 +93,22 @@ class MainDetector:
         file_IDS = {}
 
         if os.path.isfile(path_to_data):
-            file_id = self.check_type_and_process(path_to_file=path_to_data, pole_number=pole_number)
+            file_id = self.check_type_and_process(
+                path_to_file=path_to_data,
+                pole_number=pole_number,
+                request_id=request_id
+            )
             file_IDS[path_to_data] = file_id
             return file_IDS
 
         elif os.path.isdir(path_to_data):
             for item in os.listdir(path_to_data):
                 path_to_file = os.path.join(path_to_data, item)
-                file_id = self.check_type_and_process(path_to_file=path_to_file, pole_number=pole_number)
+                file_id = self.check_type_and_process(
+                    path_to_file=path_to_file,
+                    pole_number=pole_number,
+                    request_id=request_id
+                )
                 file_IDS[path_to_file] = file_id
         else:
             print(f"ERROR: Cannot process the file {path_to_data}, neither a folder nor a file")
@@ -110,7 +118,8 @@ class MainDetector:
     def check_type_and_process(
             self,
             path_to_file: str,
-            pole_number: int
+            pole_number: int,
+            request_id: str
     ) -> str:
         """
         Checks whether a file can be processed
@@ -120,15 +129,21 @@ class MainDetector:
 
         if any(filename.endswith(ext) for ext in ["jpg", "JPG", "jpeg", "JPEG", "png", "PNG"]):
             print(f"Added image {filename} to the processing queue")
-            return self.process_file(path_to_file=path_to_file,
-                                     pole_number=pole_number,
-                                     file_type="image")
+            return self.process_file(
+                path_to_file=path_to_file,
+                pole_number=pole_number,
+                file_type="image",
+                request_id=request_id
+            )
 
         elif any(filename.endswith(ext) for ext in ["avi", "AVI", "MP4", "mp4"]):
             print(f"Added video {filename} to the processing queue")
-            return self.process_file(path_to_file=path_to_file,
-                                     pole_number=pole_number,
-                                     file_type="video")
+            return self.process_file(
+                path_to_file=path_to_file,
+                pole_number=pole_number,
+                file_type="video",
+                request_id=request_id
+            )
         else:
             print(f"\nERROR: file {filename} cannot be processed, wrong extension")
             return "None"
@@ -137,7 +152,8 @@ class MainDetector:
             self,
             path_to_file: str,
             pole_number: int,
-            file_type: str
+            file_type: str,
+            request_id: str
     ) -> str:
         """
         :param path_to_file:
@@ -151,6 +167,7 @@ class MainDetector:
         # Keep track of processing progress
         self.progress[file_id] = {
             "status": "Awaiting processing",
+            "request_id": request_id,
             "file_type": file_type,
             "pole_number": pole_number,
             "path_to_file": path_to_file,

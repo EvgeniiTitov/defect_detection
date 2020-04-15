@@ -37,6 +37,12 @@ class ObjectDetectorThread(threading.Thread):
                 continue
 
             (frame, file_id) = input_
+
+            # TODO: Collect N number of frames belonging to the same video, combine them
+            #       in one batch of size N and perform batch processing. You can use your
+            #       self.progress to check if working with photo/video, how many frames i
+            #       can expect etc.
+
             self.progress[file_id]["now_processing"] += 1
 
             # Predict poles, returns dict with (image: predicted poles)
