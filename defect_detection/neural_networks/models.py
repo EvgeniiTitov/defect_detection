@@ -62,8 +62,7 @@ class YOLOv3:
         :param image: numpy array
         :return:
         """
-        img = self.preprocess_image(img=image,
-                                    inp_dim=self.input_dimension)
+        img = self.preprocess_image(img=image, inp_dim=self.input_dimension)
 
         im_dim = image.shape[1], image.shape[0]
         im_dim = torch.FloatTensor(im_dim).repeat(1, 2)

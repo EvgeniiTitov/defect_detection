@@ -5,7 +5,6 @@ import threading
 import cv2
 import os
 import numpy as np
-import json
 
 
 class ResultsProcessorThread(threading.Thread):

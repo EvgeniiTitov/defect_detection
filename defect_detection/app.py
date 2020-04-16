@@ -61,12 +61,13 @@ def status():
 
 @app.route('/shutdown')
 def shut_down_server():
-    #TODO: Anyone can kill it
-    #Kill threads and NN, not actual server
-
+    """
+    TODO: Some sort of key or something to be able to stop the threads
+    :return:
+    """
     detector.stop()
 
-    return jsonify({"msg": "Server successfully shut down"})
+    return jsonify({"msg": "Workers successfully killed"})
 
 
 if __name__ == "__main__":

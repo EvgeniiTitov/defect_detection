@@ -10,12 +10,9 @@ SHORT TERM TASKS:
     Если память не забивается достаточно, надо попробовать забить посильнее чем вечно с ХОСТА на
     ДЕВАЙС (cpu-gpu?) двигать.
 
-6. Add and connect MongoDB to save defects properly
-    - Request ID will be provided, use it as well to save results
-
-7. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then
+6. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then
 update them)
-8. Object tracking (bb overlapping check suggested by Igor) - could be done right in the writer or another
+7. Object tracking (bb overlapping check suggested by Igor) - could be done right in the writer or another
 worker before it.
 
 9. Before serving the first request, we need to make sure NNs, threads are up and running. + DB connection
@@ -38,10 +35,6 @@ KNOWN ISSUES:
 - 2 pillars can potentially get generated
 - Not well optimized line filtering algorithm
 
-
-15.04
-Review and complete your webdev course + HTML
-Merging issue
 
 SERVER:
 One endpoint - sorter. N number of parallel pipelines that all have access to the database.
