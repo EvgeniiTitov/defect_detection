@@ -53,16 +53,13 @@ class YOLOv3:
         # testing
         self.model.eval()
 
-    def predict(
-            self,
-            image
-    ):
+    def predict(self, image):
         """
         Detects objects on the image provided
-        :param image: numpy array
+        :param image: list of np.ndarrays
         :return:
         """
-        img = self.preprocess_image(img=image, inp_dim=self.input_dimension)
+        img = self.preprocess_image(img=image)
 
         im_dim = image.shape[1], image.shape[0]
         im_dim = torch.FloatTensor(im_dim).repeat(1, 2)
@@ -70,7 +67,7 @@ class YOLOv3:
         if self.CUDA:
             img = img.cuda()
             im_dim = im_dim.cuda()
-            #print("Moved to CUDA")
+            # print("Moved to CUDA")
 
         with torch.no_grad():
             # Row bounding boxes are predicted. Note predictions from from
@@ -268,17 +265,14 @@ class YOLOv3:
 
             return names
 
-    def preprocess_image(self, img, inp_dim):
+    def preprocess_image(self, img):
         """
         Prepare image for inputting to the neural network.
-        Transforms numpy object to PyTorch's input format
-
+        Transforms numpy object to PyTorch's input format (changes the order to PuyTorch's
+        one: BatchSize x Channels x Height x Width
         """
-        # OpenCV loads an image as np array, with RGB channels. PyTorch image input
-        # format requires: (Batches x Channels x H x W), RGB channeling.
-
         # Resize image to match the network resolution
-        img = (self.letterbox_image(img, (inp_dim, inp_dim)))
+        img = (self.letterbox_image(img, (self.input_dimension, self.input_dimension)))
         # RGB -> Something
         img = img[:, :, ::-1].transpose((2, 0, 1)).copy()
         # Create torch object, normalize all pixels, add extra dimension?

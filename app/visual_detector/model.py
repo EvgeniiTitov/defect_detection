@@ -1,8 +1,8 @@
-from workers import FrameReaderThread, ObjectDetectorThread
-from workers import DefectDetectorThread, ResultsProcessorThread
-from neural_networks import PolesDetector, ComponentsDetector
-from defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
-from utils import ResultsHandler
+from app.visual_detector.workers import FrameReaderThread, ObjectDetectorThread
+from app.visual_detector.workers import DefectDetectorThread, ResultsProcessorThread
+from app.visual_detector.neural_networks import PolesDetector, ComponentsDetector
+from app.visual_detector.defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
+from app.visual_detector.utils import ResultsHandler
 import queue
 import os
 import uuid
@@ -13,6 +13,7 @@ class MainDetector:
     def __init__(
             self,
             save_path: str,
+            db,
             search_defects: bool = True
     ):
         # Path on the server where processed data gets stored
@@ -58,7 +59,8 @@ class MainDetector:
             out_queue=self.block1_to_block2,
             poles_detector=self.pole_detector,
             components_detector=self.component_detector,
-            progress=self.progress
+            progress=self.progress,
+            batch_size=3
         )
 
         self.defect_detector_thread = DefectDetectorThread(
@@ -73,7 +75,8 @@ class MainDetector:
             in_queue=self.block2_to_writer,
             save_path=save_path,
             results_processor=self.results_processor,
-            progress=self.progress
+            progress=self.progress,
+            database=db
         )
 
         # Launch threads and wait for a request

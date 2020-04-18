@@ -9,6 +9,7 @@ class ObjectDetectorThread(threading.Thread):
             poles_detector,
             components_detector,
             progress,
+            batch_size,
             *args,
             **kwargs
     ):
@@ -18,6 +19,11 @@ class ObjectDetectorThread(threading.Thread):
         self.poles_detector = poles_detector
         self.components_detector = components_detector
         self.progress = progress
+
+        assert batch_size >= 1, "ERROR: Wrong batch size"
+        self.batch_size = batch_size
+        self.video_id = None
+        self.frames = list()
 
     def run(self) -> None:
 
@@ -42,6 +48,9 @@ class ObjectDetectorThread(threading.Thread):
             #       in one batch of size N and perform batch processing. You can use your
             #       self.progress to check if working with photo/video, how many frames i
             #       can expect etc.
+            # if self.progress[file_id]["file_type"] == "video" and len(self.frames) < self.batch_size:
+            #     self.frames.append(frame)
+            #     continue
 
             self.progress[file_id]["now_processing"] += 1
 
@@ -57,3 +66,6 @@ class ObjectDetectorThread(threading.Thread):
             self.Q_out.put((frame, poles, components, file_id))
 
         print("ObjectDetectorThread killed")
+
+    def empty_frame_container(self):
+        self.frames = list()

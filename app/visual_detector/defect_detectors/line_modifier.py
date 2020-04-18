@@ -10,7 +10,6 @@ class LineModifier:
     extract the area confined by these lines later
     """
     def __init__(self):
-
         self._angle_thresh = 70
         self._min_distance_to_merge = 30
         self._min_angle_to_merge = 30

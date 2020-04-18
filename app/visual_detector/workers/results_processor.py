@@ -1,4 +1,3 @@
-from db import PredictionResults
 from mongoengine import connect
 from datetime import datetime
 import threading
@@ -15,6 +14,7 @@ class ResultsProcessorThread(threading.Thread):
             in_queue,
             results_processor,
             progress,
+            database,
             *args,
             **kwargs
     ):
@@ -23,6 +23,7 @@ class ResultsProcessorThread(threading.Thread):
         self.results_processor = results_processor
         self.save_path = save_path
         self.progress = progress
+        self.database = database
 
         self.video_writer = None
         self.previous_id = None
@@ -104,15 +105,18 @@ class ResultsProcessorThread(threading.Thread):
         :param store_path:
         :return:
         """
-        results = PredictionResults(
-            request_id=self.progress[file_id]["request_id"],
-            file_id=file_id,
-            file_name=filename,
-            saved_to=store_path,
-            datetime=datetime.utcnow(),
-            defects=self.progress[file_id]["defects"]
-        )
         try:
-            results.save()
+            # Creates a collection on the fly or finds the existing one
+            prediction_results = self.database.db.predictions
+            prediction_results.insert(
+                {
+                    "request_id": self.progress[file_id]["request_id"],
+                    "file_id": file_id,
+                    "file_name": filename,
+                    "saved_to": store_path,
+                    "datetime": datetime.utcnow(),
+                    "defects": self.progress[file_id]["defects"]
+                }
+            )
         except Exception as e:
-            print(f"Error while saving to the database. Error: {e}")
+            print(f"Error while inserting into db: {e}")

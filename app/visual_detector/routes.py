@@ -1,25 +1,14 @@
-from model import MainDetector
-from flask import Flask, jsonify, request, abort
+from flask import jsonify, request, abort
+from app.visual_detector import visual, detector
+#TODO: Routes need detector instance, where to instantiate it?
 
-app = Flask(__name__)
-
-# Location on the server where processed images will be saved
-SAVE_PATH = r"D:\Desktop\system_output\OUTPUT"
-
-detector = MainDetector(save_path=SAVE_PATH,
-                        search_defects=True)
-
-
-@app.route('/predict', methods=["POST"])
+@visual.route('/predict', methods=["POST"])
 def predict():
-    """
-
-    :return:
-    """
-    # TODO: Check if threads and NN are ready
+    # TODO: Check if threads and NN are ready (running)
 
     response = {"success": False}
     data = request.get_json()
+
     try:
         path_to_data = data["path_to_data"]
         pole_number = data["pole_number"]
@@ -45,7 +34,7 @@ def predict():
     return jsonify(response)
 
 
-@app.route('/status', methods=["GET"])
+@visual.route('/status', methods=["GET"])
 def status():
     data = request.get_json()
     id = data["id"]
@@ -59,7 +48,7 @@ def status():
     return abort(404)
 
 
-@app.route('/shutdown')
+@visual.route('/shutdown')
 def shut_down_server():
     """
     TODO: Some sort of key or something to be able to stop the threads
@@ -68,7 +57,3 @@ def shut_down_server():
     detector.stop()
 
     return jsonify({"msg": "Workers successfully killed"})
-
-
-if __name__ == "__main__":
-    app.run(debug=False)
