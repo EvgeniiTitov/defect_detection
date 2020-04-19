@@ -6,30 +6,40 @@ SHORT TERM TASKS:
 5. Tuning:
     - Tune YOLOs parameters (NMS, threshold etc)
     - Tune line filtering algorithm
-6. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then
-update them)
+
+6. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then update them)
+Technically, we want to run NNs only on the frames when we're running defect detection. On the frames between defect detection,
+we should be doing BB interpolation: run NN once in M frames remembering objects location within the frame.
+
 7. Object tracking (bb overlapping check suggested by Igor) - could be done right in the writer or another
 worker before it.
-9. Before serving the first request, we need to make sure NNs, threads are up and running. + DB connection
-10. Ability to restart NNs and threads. Kill them, not actual server and then restart before first request
+Kinda contradicts to the point 6. We want to run NNs on each frame in order to be able to match objects detected on the
+current frame with the objects from previous frames.
+
+9. We might want to remove NNs and workers from memory in order to get more memory for other tasks. Implement:
+    - Killing workers and NNs
+    - Before serving next request check if they are initialized and ready to server the request
+? Initialize your nets in workers, not in the detector's initializer? What about Qs?
+? How to check if something's initialized? In memory (like workers, NNs, Qs etc) Do it before
+  server each request. (https://pythonise.com/series/learning-flask/python-before-after-request)
+
 - FROZEN. Cracks module
 - FROZEN. Subtract other object's boxes from the pillar BB (less noise for cracks detection)
+
 
 CRUCIAL:
 ! Batch processing to ensure GPU 100% used (now 40%)
 ! CPU-GPU data transfer issue between block 1-2 (will break when add more networks) Apache Arrow
-! New objects representation
+! New objects representation? One object for the whole image? Not many smaller?
 ! Q size optimization to ensure efficient memory usage (than constantly moving HOST-DEVICE)
+
+? Once we made a cap object out of the video (whats in memory)? When we decode frames and put them
+  in the Q where in memory do they go? Optimizing Q size means we can have as many images on GPU
+  or in RAM? CLARIFY!
 
 
 KNOWN ISSUES:
-- You pass frame between workers whereas its already stored inside each detected pole object
 - BBs modification. Overlapping check.
 - Class names and accuracy once written look bad
 - 2 pillars can potentially get generated
 - Not well optimized line filtering algorithm
-
-
-SERVER:
-One endpoint - sorter. N number of parallel pipelines that all have access to the database.
-Neural networks folder should become subfolder of whatever uses them. Things need to be independent

@@ -52,6 +52,7 @@ class FrameReaderThread(threading.Thread):
                 # For an image reads it ones and breaks out
                 has_frame, frame = cap.read()
 
+
                 if not has_frame:
                     break
 

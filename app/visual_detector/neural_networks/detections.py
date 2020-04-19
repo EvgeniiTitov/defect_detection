@@ -68,9 +68,10 @@ class SubImage:
     """
     Represents part, section of the image on which detection takes place. Is used to
     save objects detected by neural networks with reference to the image section on
-    which the detection took place. For instance block 1 neural network uses the
-    whole full size image. Block 2 neural net does detection on the objects found
-    by the block1 nets. We need this referencing for proper result handling at the end
+    which the detection took place - Relative Coordinates.
+    For instance block 1 neural network uses the whole full size image. Block 2 neural
+    net does detection on the objects found by the block1 nets - subimages containing poles.
+    We need this referencing for proper result handling at the end
     """
     def __init__(self, name):
 
@@ -96,3 +97,15 @@ class SubImage:
         self.left = left
         self.right = right
         self.bottom = bottom
+
+
+class Detection:
+    """
+
+    Image: poles
+    Poles: components
+    Components: Defected / Not Defected
+
+    """
+
+    pass

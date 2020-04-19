@@ -2,7 +2,7 @@ from flask import jsonify, request, abort
 from app.visual_detector import visual, detector
 #TODO: Routes need detector instance, where to instantiate it?
 
-@visual.route('/predict', methods=["POST"])
+@visual.route('/visual/predict', methods=["POST"])
 def predict():
     # TODO: Check if threads and NN are ready (running)
 
@@ -34,7 +34,7 @@ def predict():
     return jsonify(response)
 
 
-@visual.route('/status', methods=["GET"])
+@visual.route('/visual/status', methods=["GET"])
 def status():
     data = request.get_json()
     id = data["id"]
@@ -48,7 +48,7 @@ def status():
     return abort(404)
 
 
-@visual.route('/shutdown')
+@visual.route('/visual/shutdown')
 def shut_down_server():
     """
     TODO: Some sort of key or something to be able to stop the threads

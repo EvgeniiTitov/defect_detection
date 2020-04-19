@@ -29,9 +29,8 @@ class MainDetector:
         else:
             self.check_defects = False
 
+        # Initialize detectors and auxiliary modules
         self.results_processor = ResultsHandler(save_path=save_path)
-
-        # Initialize detectors
         self.pole_detector = PolesDetector()
         self.component_detector = ComponentsDetector()
         self.defect_detector = DefectDetector(
