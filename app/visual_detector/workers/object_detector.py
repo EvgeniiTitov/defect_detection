@@ -48,6 +48,7 @@ class ObjectDetectorThread(threading.Thread):
             #       in one batch of size N and perform batch processing. You can use your
             #       self.progress to check if working with photo/video, how many frames i
             #       can expect etc.
+            #       + If END - process any frames stored in self.frames, so we dont lose them
             # if self.progress[file_id]["file_type"] == "video" and len(self.frames) < self.batch_size:
             #     self.frames.append(frame)
             #     continue
@@ -63,6 +64,11 @@ class ObjectDetectorThread(threading.Thread):
 
             # Predict components, returns dict (pole_bb_subimage: components found within)
             components = self.components_detector.predict(image=frame, pole_predictions=poles)
+
+            # TODO: When doing batch processing, we will get N coordinates from the nets. The images themselves
+            #       stay on GPU, we send coordinates further. So, we don't send images but coordinates.
+
+
             self.Q_out.put((frame, poles, components, file_id))
 
         print("ObjectDetectorThread killed")

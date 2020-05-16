@@ -181,10 +181,7 @@ class ResultsHandler:
 
 class MetaDataExtractor:
 
-    def __init__(
-            self,
-            kernel_size=9
-    ):
+    def __init__(self, kernel_size=9):
         self.kernel_size = kernel_size
 
     def get_angles(self, path_to_image):
@@ -194,10 +191,8 @@ class MetaDataExtractor:
         """
         with open(path_to_image, encoding="utf8", errors="ignore") as d:
             metadata = d.read()
-
             if not metadata:
                 return None
-
             start = metadata.find("<x:xmpmeta")
             end = metadata.find("</x:xmpmeta")
             data = metadata[start:end + 1]
@@ -219,4 +214,4 @@ class MetaDataExtractor:
             # Since values are stored in lists
             return float(pitch_angle[0]), float(roll_degree[0])
         else:
-            return None
+            return ()

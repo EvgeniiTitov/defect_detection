@@ -29,23 +29,20 @@ class ConcreteExtractor:
         :param height:
         :return:
         """
-        extended_lines = self.line_modifier().extend_lines(lines_to_extend=the_edges,
-                                                           image=image)
+        extended_lines = self.line_modifier().extend_lines(lines_to_extend=the_edges, image=image)
 
         # Change coordinates order as per warp perspective requirements
         extended_lines.append(extended_lines.pop(extended_lines.index(extended_lines[1])))
-
         points = np.array(extended_lines, dtype="float32")
         dim = (width, height)
 
-        return cv2.resize(self.wrap_perspective(image, points),
-                          dim,
-                          interpolation=cv2.INTER_AREA)
+        return cv2.resize(
+            self.wrap_perspective(image, points),
+            dim,
+            interpolation=cv2.INTER_AREA
+        )
 
-    def wrap_perspective(
-            self,
-            image,
-            points):
+    def wrap_perspective(self, image, points):
         """
         Rebuild image based on the points provided - make it look bird-like view
         :param image:

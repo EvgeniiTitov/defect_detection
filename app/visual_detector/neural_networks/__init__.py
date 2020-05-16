@@ -1,3 +1,3 @@
-from .detections import DetectedObject, SubImage
-from .models import YOLOv3
-from .detectors import PolesDetector, ComponentsDetector
+from .detections_repr import DetectedObject, SubImage
+from .yolo import PolesDetector, ComponentsDetector
+from .vib_dump_classifier import DumperClassifier

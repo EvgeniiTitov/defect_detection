@@ -1,5 +1,5 @@
 from collections import defaultdict
-from .detections import DetectedObject, SubImage
+from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
 from .models import YOLOv3
 import numpy as np
 import os

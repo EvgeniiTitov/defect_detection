@@ -1,9 +1,9 @@
-from mongoengine import connect
 from datetime import datetime
 import threading
 import cv2
 import os
 import numpy as np
+import json
 
 
 class ResultsProcessorThread(threading.Thread):
@@ -27,11 +27,6 @@ class ResultsProcessorThread(threading.Thread):
 
         self.video_writer = None
         self.previous_id = None
-
-        try:
-            connect(db='futurelab')
-        except Exception as e:
-            print(f"Failed to connect to the database. Error: {e}")
 
     def run(self) -> None:
 
@@ -83,8 +78,14 @@ class ResultsProcessorThread(threading.Thread):
 
             self.progress[file_id]["processed"] += 1
 
+            # After all frames processed, save results
             if self.progress[file_id]["processed"] == self.progress[file_id]["total_frames"]:
-                self.save_results_to_db(file_id, filename, store_path)
+                #self.save_results_to_db(file_id, filename, store_path)
+                self.save_results_to_json(
+                    filename=filename,
+                    store_path=store_path,
+                    payload=self.progress[file_id]["defects"]
+                )
                 self.progress[file_id]["status"] = "Processed"
 
                 # TODO: Once dumped, clean the progress tracking dictionary
@@ -96,6 +97,21 @@ class ResultsProcessorThread(threading.Thread):
 
     def clean_video_writer(self):
         self.video_writer = None
+
+    def save_results_to_json(self, filename, store_path, payload):
+        """
+        Dumps processing results into a json file saved in the same folder where the
+        processed image will be saved
+        :param filename:
+        :param store_path:
+        :param payload:
+        :return:
+        """
+        try:
+            with open(os.path.join(store_path, filename + ".json"), "w") as f:
+                json.dump(payload, f)
+        except Exception as e:
+            print(f"Error while saving dumping results to JSON. Error {e}")
 
     def save_results_to_db(self, file_id, filename, store_path):
         """

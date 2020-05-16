@@ -1,3 +1,2 @@
 from .defect_managing_hub import DefectDetector
-from .line_modifier import LineModifier
-from .concrete_extractor import ConcreteExtractor
+from .inclination_detection import ConcreteExtractor, LineModifier

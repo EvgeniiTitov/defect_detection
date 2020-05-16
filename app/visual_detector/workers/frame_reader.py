@@ -4,7 +4,6 @@ import os
 
 
 class FrameReaderThread(threading.Thread):
-
     def __init__(
             self,
             in_queue,
@@ -52,6 +51,10 @@ class FrameReaderThread(threading.Thread):
                 # For an image reads it ones and breaks out
                 has_frame, frame = cap.read()
 
+                # TODO: Now we're putting in the Q reference to the frame in CPU
+                #       Collect N frames here and send them to GPU right from here!
+                #       gpu_frame = float.tensor.to_gpu, then we send this gpu_frame which is
+                #       the reference to the frames already on GPU!
 
                 if not has_frame:
                     break

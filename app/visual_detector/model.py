@@ -13,7 +13,7 @@ class MainDetector:
     def __init__(
             self,
             save_path: str,
-            db,
+            db=None,
             search_defects: bool = True
     ):
         # Path on the server where processed data gets stored
@@ -193,9 +193,7 @@ class MainDetector:
             thread.start()
 
     def stop(self):
-
         self.files_to_process_Q.put("STOP")
-
         # Wait until all threads complete their job and exit
         for thread in (
             self.frame_reader_thread,

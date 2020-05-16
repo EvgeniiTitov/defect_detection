@@ -1,9 +1,5 @@
 from flask import Flask
-from flask_pymongo import PyMongo
 import os
-
-
-mongo = PyMongo()
 
 
 def create_app(config_type):
@@ -16,9 +12,6 @@ def create_app(config_type):
     app = Flask(__name__)
     path_to_config = os.path.join(os.getcwd(), "config", config_type + ".py")
     app.config.from_pyfile(path_to_config)
-
-    # Initialize the database
-    mongo.init_app(app=app)
 
     # Import and register blueprints
     from app.visual_detector import visual

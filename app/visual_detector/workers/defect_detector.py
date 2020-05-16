@@ -52,7 +52,8 @@ class DefectDetectorThread(threading.Thread):
             if components and self.check_defects and self.currently_processing % 10 == 0:
                 detected_defects = self.defect_detector.search_defects(
                     detected_objects=components,
-                    image=frame
+                    image=frame,
+                    image_name=self.progress[file_id]["path_to_file"]
                 )
 
                 # Add only if any defects have been detected
