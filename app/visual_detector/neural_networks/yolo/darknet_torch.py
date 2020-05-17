@@ -241,7 +241,6 @@ class Darknet(nn.Module):
         # so we cache output from each layer
         outputs={}
 
-
         write=0
         # Loop over all layers skiping the first one since it is not a layer
         for i,module in enumerate(modules):

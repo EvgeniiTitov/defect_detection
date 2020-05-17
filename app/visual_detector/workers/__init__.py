@@ -1,4 +1,5 @@
 from .defect_detector import DefectDetectorThread
 from .frame_reader import FrameReaderThread
-from .object_detector import ObjectDetectorThread
+from .pole_detector import PoleDetectorThread
 from .results_processor import ResultsProcessorThread
+from .component_detector import ComponentDetectorThread

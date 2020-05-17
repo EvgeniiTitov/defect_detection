@@ -56,7 +56,7 @@ class DumperClassifier:
             print(f"Failed to move batch to GPU. Error: {e}")
             raise
 
-        labels =  self.run_forward_pass(images_batch)
+        labels = self.run_forward_pass(images_batch)
 
         return labels
 

@@ -1,4 +1,4 @@
-from app.visual_detector.workers import FrameReaderThread, ObjectDetectorThread
+from app.visual_detector.workers import FrameReaderThread, PoleDetectorThread, ComponentDetectorThread
 from app.visual_detector.workers import DefectDetectorThread, ResultsProcessorThread
 from app.visual_detector.neural_networks import PolesDetector, ComponentsDetector
 from app.visual_detector.defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
@@ -13,8 +13,9 @@ class MainDetector:
     def __init__(
             self,
             save_path: str,
+            batch_size: int,
+            search_defects: bool = True,
             db=None,
-            search_defects: bool = True
     ):
         # Path on the server where processed data gets stored
         self.save_path = save_path
@@ -43,35 +44,42 @@ class MainDetector:
 
         # Initialize Qs and workers
         self.files_to_process_Q = queue.Queue()
-        self.frame_to_block1 = queue.Queue(maxsize=24)
-        self.block1_to_block2 = queue.Queue(maxsize=6)
-        self.block2_to_writer = queue.Queue(maxsize=10)
+        self.frame_to_pole_detector = queue.Queue(maxsize=24)
+        self.pole_to_comp_detector = queue.Queue(maxsize=24)
+        self.comp_to_defect_detector = queue.Queue(maxsize=6)
+        self.defect_to_writer = queue.Queue(maxsize=10)
 
         self.frame_reader_thread = FrameReaderThread(
+            batch_size=batch_size,
             in_queue=self.files_to_process_Q,
-            out_queue=self.frame_to_block1,
+            out_queue=self.frame_to_pole_detector,
             progress=self.progress
         )
 
-        self.object_detector_thread = ObjectDetectorThread(
-            in_queue=self.frame_to_block1,
-            out_queue=self.block1_to_block2,
+        self.pole_detector_thread = PoleDetectorThread(
+            in_queue=self.frame_to_pole_detector,
+            out_queue=self.pole_to_comp_detector,
             poles_detector=self.pole_detector,
-            components_detector=self.component_detector,
-            progress=self.progress,
-            batch_size=3
+            progress=self.progress
+        )
+
+        self.component_detector_thread = ComponentDetectorThread(
+            in_queue=self.pole_to_comp_detector,
+            out_queue=self.comp_to_defect_detector,
+            component_detector=self.component_detector,
+            progress=self.progress
         )
 
         self.defect_detector_thread = DefectDetectorThread(
-            in_queue=self.block1_to_block2,
-            out_queue=self.block2_to_writer,
+            in_queue=self.comp_to_defect_detector,
+            out_queue=self.defect_to_writer,
             defect_detector=self.defect_detector,
             progress=self.progress,
             check_defects=search_defects
         )
 
         self.results_processor_thread = ResultsProcessorThread(
-            in_queue=self.block2_to_writer,
+            in_queue=self.defect_to_writer,
             save_path=save_path,
             results_processor=self.results_processor,
             progress=self.progress,
@@ -158,14 +166,16 @@ class MainDetector:
             request_id: str
     ) -> str:
         """
+
         :param path_to_file:
         :param pole_number:
+        :param file_type:
+        :param request_id:
         :return:
         """
         # Each file to process gets a unique ID number to track its progress
         file_id = str(uuid.uuid4())
 
-        # TODO: Store what needs to be done to a file: angle or defects calculations
         # Keep track of processing progress
         self.progress[file_id] = {
             "status": "Awaiting processing",
@@ -186,7 +196,8 @@ class MainDetector:
     def start(self):
         for thread in (
             self.frame_reader_thread,
-            self.object_detector_thread,
+            self.pole_detector_thread,
+            self.component_detector_thread,
             self.defect_detector_thread,
             self.results_processor_thread
         ):
@@ -197,7 +208,8 @@ class MainDetector:
         # Wait until all threads complete their job and exit
         for thread in (
             self.frame_reader_thread,
-            self.object_detector_thread,
+            self.pole_detector_thread,
+            self.component_detector_thread,
             self.defect_detector_thread,
             self.results_processor_thread
         ):

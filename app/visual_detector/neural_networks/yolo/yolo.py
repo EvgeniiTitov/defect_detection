@@ -1,15 +1,15 @@
 import cv2
 import torch
 from .darknet_torch import Darknet
+import torch.nn.functional as F
+from typing import List
 import numpy as np
 import sys
+from app.visual_detector.utils import HostDeviceManager
 
 
 class YOLOv3:
-    """
-    Class for detecting and classifying
-    """
-    def initialize_model(
+    def __init__(
             self,
             config,
             weights,
@@ -18,42 +18,68 @@ class YOLOv3:
             NMS_threshold=0.2,
             network_resolution=416
     ):
-        """
-        Initializes network with config and weights provided.
-        :param config: path to config
-        :param weights: path to weights
-        :param classes: path to .txt file with classes listed
-        :param confidence:
-        :param NMS_threshold:
-        :param network_resolution:
-        :return:
-        """
         # Network's parameters
         self.confidence = confidence
         self.NMS_threshold = NMS_threshold
         self.network_resolution = network_resolution
         self.batch_size = 1
-
         self.classes = self.load_classes(classes)
         self.num_classes = len(self.classes)
 
         # Load model using cfg and weights provided
-        self.model = Darknet(config)
-        self.model.load_weights(weights)
+        try:
+            self.model = Darknet(config)
+            self.model.load_weights(weights)
+        except Exception as e:
+            print(f"Failed during YOLO initialization. Error: {e}")
+            raise
 
         self.input_dimension = int(self.model.net_info["height"])
 
         # Check CUDA availability. Push model into GPU memory if available
         self.CUDA = torch.cuda.is_available()
-
         if self.CUDA:
             self.model.cuda()
 
-        # Set model to .eval() so that we do not change its parameters during
-        # testing
+        # Set model to .eval() so that we do not change its parameters during testing
         self.model.eval()
 
-    def predict(self, image):
+    def predict_batch(self, images: torch.Tensor) -> list:
+        """
+
+        :param images:
+        :return:
+        """
+        # TODO: Got stuck reimplementing yolo for batch processing
+        #       1. Wrong resizing. You need to keep aspect ratio. IF you resize it correctly it might work already.
+        #       2. 2 types of resizing. Either here, right in YOLO but them you'll need to do those
+        #          downsampling-upsampling things to match predictions. OR, resize your images in your
+        #          frame reader, but you'll need to postprocess all prediction you get to make sure you
+        #          get coordinates for the whole image and not downsamples one.
+        #       3. Consider rebuilding the system using OpenCV. Can do batch processing. Can I use the same blob
+        #          in 2 models? One predicts poles, the other components.
+
+        # 1. We need to resize images first to correspond to the network's resolution
+        resized_images = F.interpolate(images, size=self.input_dimension)
+        HostDeviceManager.visualise_sliced_img([resized_images])
+        print(resized_images.shape)  # torch.Size([5, 3, 416, 416])
+
+        sys.exit()
+        with torch.no_grad():
+            predictions = self.model(resized_images, self.CUDA)
+        print("Predictions:", predictions[0].shape)
+        #print("Len of predictions:", len(predictions))  # 5
+
+        output = self.process_predictions(predictions)
+        print("Processed predictions:", output)
+
+        sys.exit()
+        if type(output) == int:
+            return []
+
+        return output.tolist()
+
+    def predict(self, image: np.ndarray) -> list:
         """
         Detects objects on the image provided
         :param image: list of np.ndarrays
@@ -70,7 +96,7 @@ class YOLOv3:
             # print("Moved to CUDA")
 
         with torch.no_grad():
-            # Row bounding boxes are predicted. Note predictions from from
+            # Row bounding boxes are predicted. Note predictions from
             # 3 YOLO layers get concatenated into 1 big tensor.
             raw_predictions = self.model(img, self.CUDA)
 
@@ -109,7 +135,6 @@ class YOLOv3:
         - the score of class with max confidence
         - index of this class
         """
-
         # predictions.shape torch.Size([1, 22743, 7]), where 1 is batch size,
         # 4 BBs coordinates + 1 objectness score + 2 classes for metal/concrete
         # 22743 / 2 - Nb of BBs predicted per class
@@ -131,6 +156,7 @@ class YOLOv3:
 
         # Batch size - nb of images
         batch_size = predictions.size(0)
+        print("Batch size (from postprocessing method):", batch_size)
         write = False
 
         # Conf thresholding and NMS need to be done for each image in the batch
@@ -218,7 +244,6 @@ class YOLOv3:
         tensor_np = tensor.cpu().numpy()
         unique_np = np.unique(tensor_np)
         unique_tensor = torch.from_numpy(unique_np)
-
         tensor_res = tensor.new(unique_tensor.shape)
         tensor_res.copy_(unique_tensor)
 
@@ -259,11 +284,10 @@ class YOLOv3:
         :param filename:
         :return:
         """
-
         with open(filename, "r") as file:
             names = file.read().split("\n")
 
-            return names
+        return names
 
     def preprocess_image(self, img):
         """
@@ -288,16 +312,12 @@ class YOLOv3:
         :param inp_dim:
         :return:
         """
-
         img_w, img_h = img.shape[1], img.shape[0]
         w, h = inp_dim
         new_w = int(img_w * min(w / img_w, h / img_h))
         new_h = int(img_h * min(w / img_w, h / img_h))
-
         resized_image = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
-
         canvas = np.full((inp_dim[1], inp_dim[0], 3), 128)
-
         canvas[(h - new_h) // 2:(h - new_h) // 2 + new_h, (w - new_w) // 2:(w - new_w) // 2 + new_w, :] = resized_image
 
         return canvas

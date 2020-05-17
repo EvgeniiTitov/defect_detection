@@ -1,67 +1,49 @@
 from collections import defaultdict
 from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
-from .models import YOLOv3
+from typing import List
+from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
 import numpy as np
 import os
-
-
-class ObjectDetector(object):
-    """
-    An idea: One class within which we can detect all objects. Poles, then componenets without having to
-    return data back to the CPU twice -> Will be used inside one thread
-
-    BLOCKERS:
-    1. New weights for poles - 3 classes
-    2. New weights for components - 3 classes
-    3. Find out how to run inferences without moving data btwn CPU - GPU
-    """
-    pass
+import torch
 
 
 class PolesDetector:
     """
-    Class performing utility poles prediction using the YOLOv3 neural net. Represents objects detected
-    as class objects and saves them in a dictionary for subsequent processing.
-
+    Class performing poles detection using the YOLOv3 neural net. A wrapper around the actual
+    network that can do preprocessing / postprocessing of images / predictions.
     Weights: Pole try 9.
     """
     path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\dependencies"
     dependencies = "poles"
+    confidence = 0.2
+    NMS_thresh = 0.2
+    net_res = 416
 
     def __init__(self):
-        # Initialize predictor - neural network
-        self.poles_predictor = YOLOv3()
-
-        # Detector's dependencies
+        # Network's dependencies
         config_path = os.path.join(self.path_to_dependencies, self.dependencies + ".cfg")
         weights_path = os.path.join(self.path_to_dependencies, self.dependencies + ".weights")
         classes_path = os.path.join(self.path_to_dependencies, self.dependencies + ".txt")
-
-        # Detector's parameters
-        # TODO: Move it to txt file, so that there's no need to open the code to tune it.
-        confidence = 0.2
-        NMS_thresh = 0.2
-        net_res = 416
-
-        # Initialize neural network and prepare it for predictions
-        self.poles_predictor.initialize_model(
+        # Initialize predictor - neural network
+        self.poles_predictor = YOLOv3(
             config=config_path,
             weights=weights_path,
             classes=classes_path,
-            confidence=confidence,
-            NMS_threshold=NMS_thresh,
-            network_resolution=net_res
+            confidence=PolesDetector.confidence,
+            NMS_threshold=PolesDetector.NMS_thresh,
+            network_resolution=PolesDetector.net_res
         )
-
         print("Poles detector initialized")
 
-    def predict(
-            self,
-            image: np.ndarray
-    ) -> dict:
+    # def predict(self, image):
+    #     " DELETE ME I AM FOR DEBUGGING"
+    #     poles = self.poles_predictor.predict(image)
+    #     print("PREDICTIONS:", poles)
+
+    def predict_batch(self, images: torch.Tensor) -> dict:
         """
-        :param image: Image on which to perform pole detection (the whole original image)
-        :return: Dictionary containing all poles detected on the image
+        :param images: Batch of images concatinated and moved to GPU
+        :return:
         """
         # Create a dictionary to store any poles detected
         poles_detected = defaultdict(list)
@@ -72,7 +54,10 @@ class PolesDetector:
         # Call neural net to get predictions. poles - list of lists, each object is represented as
         # a list of 8 items: image index in the batch (0),4BBs coordinates, objectness score,
         # the score of class with max confidence, index on this class
-        poles = self.poles_predictor.predict(image)
+        poles = self.poles_predictor.predict_batch(images)
+        print("POLE PREDICTIONS:", poles)
+        import sys
+        sys.exit()
 
         # Represent each object detected as a class object. Add all objects
         # to the dictionary as values.
@@ -169,52 +154,38 @@ class ComponentsDetector:
     path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\dependencies"
     dependencies_comp = "components"
     dependencies_pil = "pillars"
+    confidence = 0.15
+    NMS_thresh = 0.25
+    net_res = 608
 
     def __init__(self):
-
         # Initialize components predictor
-        self.components_predictor = YOLOv3()
-        # TEMPORARY. Will be replaced with 3 class predictor for concrete poles
-        self.pillar_predictor = YOLOv3()
-
-        # Detector's parameters
-        # TO DO: Move it to txt file, so that a user doesn't need to open the code to change it.
-        confidence = 0.15
-        NMS_thresh = 0.25
-        net_res = 608
-
-        # Detector's dependencies
         config_path_comp = os.path.join(self.path_to_dependencies, self.dependencies_comp + ".cfg")
         weights_path_comp = os.path.join(self.path_to_dependencies, self.dependencies_comp + ".weights")
         classes_path_comp = os.path.join(self.path_to_dependencies, self.dependencies_comp + ".txt")
-
-        # Initialize neural network and prepare it for predictions
-        self.components_predictor.initialize_model(
+        self.components_predictor = YOLOv3(
             config=config_path_comp,
             weights=weights_path_comp,
             classes=classes_path_comp,
-            confidence=confidence,
-            NMS_threshold=NMS_thresh,
-            network_resolution=net_res
+            confidence=ComponentsDetector.confidence,
+            NMS_threshold=ComponentsDetector.NMS_thresh,
+            network_resolution=ComponentsDetector.net_res
         )
-
         print("Components detector initialized")
 
-        # Pillar detector's dependencies
+        # TEMPORARY. Will be replaced with 3 class predictor for concrete poles
+        # Initialize pole predictor
         config_path_pil = os.path.join(self.path_to_dependencies, self.dependencies_pil + ".cfg")
         weights_path_pil = os.path.join(self.path_to_dependencies, self.dependencies_pil + ".weights")
         classes_path_pil = os.path.join(self.path_to_dependencies, self.dependencies_pil + ".txt")
-
-        # Initialize neural network and prepare it for predictions
-        self.pillar_predictor.initialize_model(
+        self.pillar_predictor = YOLOv3(
             config=config_path_pil,
             weights=weights_path_pil,
             classes=classes_path_pil,
-            confidence=confidence,
-            NMS_threshold=NMS_thresh,
+            confidence=ComponentsDetector.confidence,
+            NMS_threshold=ComponentsDetector.NMS_thresh,
             network_resolution=416
         )
-
         print("Pillar detector initialized")
 
     def determine_object_class(self, components_detected: dict) -> None:

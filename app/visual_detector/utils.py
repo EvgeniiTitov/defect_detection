@@ -1,7 +1,81 @@
+from torchvision import transforms
+from typing import List
 import cv2
 import os
 import numpy as np
 import re
+import torch
+import torchvision
+
+
+class HostDeviceManager:
+
+    @staticmethod
+    def load_images_to_GPU(images: List[np.ndarray]) -> torch.Tensor:
+        """
+        :param images:
+        :return:
+        """
+        image_tensors = list()
+        for image in images:
+            image_tensor = HostDeviceManager.preprocess_image(image)
+            image_tensor.unsqueeze_(0)
+            image_tensors.append(image_tensor)
+
+        batch = torch.cat(image_tensors)
+        try:
+            batch_gpu = batch.cuda()
+            print("Images successfully moved from host to device")
+            return batch_gpu
+        except Exception as e:
+            print(f"Moving images to GPU failed. Error: {e}")
+            raise
+
+    @staticmethod
+    def preprocess_image(image: np.ndarray) -> torch.Tensor:
+        """
+
+        :param image:
+        :return:
+        """
+        image_transforms = torchvision.transforms.Compose([
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        [0.485, 0.456, 0.406],
+                        [0.229, 0.224, 0.225]
+                    )]
+        )
+        return image_transforms(image)
+
+    @staticmethod
+    def read_images(paths: list) -> list:
+        """
+        Opens images using PIL.Image
+        :param paths:
+        :return:
+        """
+        images = []
+        for path_to_image in paths:
+            try:
+                #image = Image.open(path_to_image)
+                image = cv2.imread(path_to_image)
+            except Exception as e:
+                print(f"Failed to open image {path_to_image}. Error: {e}")
+                continue
+            images.append(image)
+
+        return images
+
+    @staticmethod
+    def visualise_sliced_img(images: List[torch.Tensor]) -> None:
+        for image in images:
+            image = image.squeeze()
+            image = image.permute(1, 2, 0)
+            image = image.cpu().numpy()
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # plt.imshow(image)
+            cv2.imshow("window", image_rgb)
+            cv2.waitKey(0)
 
 
 class ResultsHandler:
