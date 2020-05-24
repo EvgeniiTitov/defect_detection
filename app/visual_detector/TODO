@@ -6,58 +6,38 @@ KNOWN ISSUES - BUGS:
 - NEW: results do not get returned for images where a concrete pole was not detected
 
 
-
 SHORT TERM TASKS:
+0. Add logger
 1. Retrain poles net to work with 3 class (Make sure classes are balanced)
 2. Retrain components net to replace 2 YOLOs in sequence with 1 trained for 3 components classes (Balance dataset)
-3. Dumpers module (Wait for Leonid to augment data, try teaching)
+3. Dumpers module (integrate into the system)
 4. Wooden pole defects (Dasha)
 5. Tuning:
     - Tune YOLOs parameters (NMS, threshold etc)
     - Tune line filtering algorithm
-
 6. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then update them)
 Technically, we want to run NNs only on the frames when we're running defect detection. On the frames between defect detection,
 we should be doing BB interpolation: run NN once in M frames remembering objects location within the frame.
-
 7. Object tracking (bb overlapping check suggested by Igor) - could be done right in the writer or another
 worker before it.
 Kinda contradicts to the point 6. We want to run NNs on each frame in order to be able to match objects detected on the
 current frame with the objects from previous frames.
-
 9. We might want to remove NNs and workers from memory in order to get more memory for other tasks. Implement:
     - Killing workers and NNs
     - Before serving next request check if they are initialized and ready to server the request
 ? Initialize your nets in workers, not in the detector's initializer? What about Qs?
 
-- FROZEN. Cracks module
-- FROZEN. Subtract other object's boxes from the pillar BB (less noise for cracks detection)
+
+FROZENS TASKS:
+- Cracks module
+- Subtract other object's boxes from the pillar BB (less noise for cracks detection)
+- Missing middle pole for wooden poles
 
 
 CRUCIAL:
 ! Batch processing to ensure GPU 100% used (now 40%)
-
 ! CPU-GPU data transfer issue between block 1-2 (will break when add more networks)
 Иметь копию на СПУ и ГПУ. Передавать только координаты, которые сплювывают нейронки.
 Слайс делать легко - структура, которая говорит на какие участки оригинального блока памяти ты ссылаешься.
-
-concat - соединяем несколько тензоров в один с доп размерностью. Типо как книга, 2Д листы (картинки) собираем в
-стопку и разом прогоняем. Но их надо собрать в один объект через concat.
-
-In frame reader collect N frames and move to GPU, then send reference to things on GPU not CPU.
-
 ! Q size optimization to ensure efficient memory usage (than constantly moving HOST-DEVICE)
 Put as many frames as possible onto GPU, because CPU-GPU transfer is expensive.
-
-_____________________________________________________________________________
-Any things that require waiting like GPU processing, DB connection etc should be done in a separate thread in order not to block any other processes.
-
-1. You can move all your Qs and thread initialization to a separate method. In your detector's constructor add a flag - is_started to check if threads
-   are alive and ready to work. If not, call your self.start() method.
-2. Все сетки на ГПУ запущены. Зачем экономить ГПУ если его никто больше не использует? Разве не в РАМ сетки висят?
-3. Подключение к базе данных. Из конфига получаем данные по БД, создаём соединение и записываем в приложуху. Потом в каждом запросе его можно вытащить
-из приложухи и с ним работать. Приложуха app is shared among different запросов.
-    - Посмотреть как взаимодействует SQLAlchemy and Flask (flask sqlalchemy integration example)
-    - Детектор тоже надо зарегистрировать с приложухой, тогда в запросах его тоже можно будет вытащить. Каждый объект в питоне
-    это словарик. Меджду запросами передаётся объект приложение, а объект приложение может содержать в себе ссылки на другие объекты.
-

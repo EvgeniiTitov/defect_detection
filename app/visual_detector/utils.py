@@ -1,4 +1,5 @@
 from torchvision import transforms
+from PIL import Image
 from typing import List
 import cv2
 import os
@@ -11,14 +12,16 @@ import torchvision
 class HostDeviceManager:
 
     @staticmethod
-    def load_images_to_GPU(images: List[np.ndarray]) -> torch.Tensor:
+    def load_images_to_GPU(images: List[np.ndarray], img_size=None) -> torch.Tensor:
         """
         :param images:
         :return:
         """
         image_tensors = list()
         for image in images:
-            image_tensor = HostDeviceManager.preprocess_image(image)
+            # Preprocess images before .cat() ing them.
+            #image_tensor = HostDeviceManager.preprocess_image(image)
+            image_tensor = HostDeviceManager.preprocess_image_including_resizing(image, img_size)
             image_tensor.unsqueeze_(0)
             image_tensors.append(image_tensor)
 
@@ -34,7 +37,6 @@ class HostDeviceManager:
     @staticmethod
     def preprocess_image(image: np.ndarray) -> torch.Tensor:
         """
-
         :param image:
         :return:
         """
@@ -46,6 +48,25 @@ class HostDeviceManager:
                     )]
         )
         return image_transforms(image)
+
+    @staticmethod
+    def preprocess_image_including_resizing(image: np.ndarray, new_size: int) -> torch.Tensor:
+        image_transforms = torchvision.transforms.Compose([
+            transforms.Resize((new_size, new_size)),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                [0.485, 0.456, 0.406],
+                [0.229, 0.224, 0.225]
+            )]
+        )
+        # Cast image to PIL's Image since .Resize() and .Crop() do not work with np.ndarrays
+        try:
+            image_pil = Image.fromarray(image)
+        except Exception as e:
+            print(f"Failed during converting np.ndarray -> to PIL's Image. Error: {e}")
+            raise
+
+        return image_transforms(image_pil)
 
     @staticmethod
     def read_images(paths: list) -> list:
@@ -69,8 +90,11 @@ class HostDeviceManager:
     @staticmethod
     def visualise_sliced_img(images: List[torch.Tensor]) -> None:
         for image in images:
-            image = image.squeeze()
-            image = image.permute(1, 2, 0)
+            image = image.permute(2, 3, 1, 0)
+
+            print("IMG SHAPE:", image.shape)
+            # TODO: How to drop torch.Size([416, 416, 3, 5]) batch size at the end?
+
             image = image.cpu().numpy()
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             # plt.imshow(image)

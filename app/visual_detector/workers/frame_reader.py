@@ -19,6 +19,7 @@ class FrameReaderThread(threading.Thread):
         self.Q_in = in_queue
         self.Q_out = out_queue
         self.progress = progress
+        self.input_size = 416
 
     def run(self) -> None:
         while True:
@@ -51,6 +52,7 @@ class FrameReaderThread(threading.Thread):
             batch_frames = list()
             to_break = False
             while True:
+                # Collect N (batch size) of images
                 if len(batch_frames) < self.batch_size and file_type == "video":
                     has_frame, frame = cap.read()
                     if not has_frame:
@@ -65,22 +67,28 @@ class FrameReaderThread(threading.Thread):
                     else:
                         batch_frames.append(frame)
 
+                # Preprocess images including resizing to YOLO's input size, move batch of frames to
+                # GPU and send further to pole detector worker
+                # if batch_frames:
+                #     try:
+                #         gpu_batch_frames = HostDeviceManager.load_images_to_GPU(batch_frames, img_size=self.input_size)
+                #     except Exception as e:
+                #         print(f"Failed to move a batch of frames to GPU. Error: {e}")
+                #         raise
+                #     # Send original images, imaged on GPU and file id to the next worker
+                #     print(f"Sending batch of size {len(gpu_batch_frames)} to pole detector")
+                #     self.Q_out.put((batch_frames, gpu_batch_frames, file_id))
+
+                # Approach 2. Send actual np.ndarrays. Will be moved to GPU in yolo.py that will return both
+                # predictions and image uploaded to GPU.
                 if batch_frames:
-                    # Move batch of frames to GPU
-                    try:
-                        gpu_batch_frames = HostDeviceManager.load_images_to_GPU(batch_frames)
-                    except Exception as e:
-                        print(f"Failed to move a batch of frames to GPU. Error: {e}")
-                        raise
-
-                    # Send original images, imaged and GPU and file id to the next worker
-                    print(f"Sending batch of size {len(gpu_batch_frames)} to pole detector")
-                    self.Q_out.put((batch_frames, gpu_batch_frames, file_id))
-
-                if to_break:
-                    batch_frames = list()
+                    print(f"Sending batch of size {len(batch_frames)} to pole detector")
+                    self.Q_out.put((batch_frames, file_id))
+                    # DELETE ME
                     break
 
+                if to_break:
+                    break
                 batch_frames = list()
 
             cap.release()

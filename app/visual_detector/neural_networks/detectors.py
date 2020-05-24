@@ -33,29 +33,32 @@ class PolesDetector:
             NMS_threshold=PolesDetector.NMS_thresh,
             network_resolution=PolesDetector.net_res
         )
-        print("Poles detector initialized")
+        print("Pole detector initialized")
 
     # def predict(self, image):
     #     " DELETE ME I AM FOR DEBUGGING"
     #     poles = self.poles_predictor.predict(image)
     #     print("PREDICTIONS:", poles)
 
-    def predict_batch(self, images: torch.Tensor) -> dict:
+    def predict_batch(self, images: List[np.ndarray]) -> dict:
         """
         :param images: Batch of images concatinated and moved to GPU
         :return:
         """
         # Create a dictionary to store any poles detected
         poles_detected = defaultdict(list)
-
         # Specify image section on which predictions take place
         detecting_image_section = SubImage(name="poles")
+
 
         # Call neural net to get predictions. poles - list of lists, each object is represented as
         # a list of 8 items: image index in the batch (0),4BBs coordinates, objectness score,
         # the score of class with max confidence, index on this class
-        poles = self.poles_predictor.predict_batch(images)
-        print("POLE PREDICTIONS:", poles)
+        poles, batch_on_gpu = self.poles_predictor.predict_batch(images)
+        print("Predicted poles for a batch:")
+        for pole in poles:
+            print(pole)
+
         import sys
         sys.exit()
 

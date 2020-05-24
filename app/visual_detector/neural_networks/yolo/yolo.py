@@ -1,6 +1,7 @@
 import cv2
 import torch
 from .darknet_torch import Darknet
+from torch.autograd import Variable
 import torch.nn.functional as F
 from typing import List
 import numpy as np
@@ -44,40 +45,37 @@ class YOLOv3:
         # Set model to .eval() so that we do not change its parameters during testing
         self.model.eval()
 
-    def predict_batch(self, images: torch.Tensor) -> list:
+    def predict_batch(self, images: List[np.ndarray]) -> tuple:
         """
 
         :param images:
         :return:
         """
-        # TODO: Got stuck reimplementing yolo for batch processing
-        #       1. Wrong resizing. You need to keep aspect ratio. IF you resize it correctly it might work already.
-        #       2. 2 types of resizing. Either here, right in YOLO but them you'll need to do those
-        #          downsampling-upsampling things to match predictions. OR, resize your images in your
-        #          frame reader, but you'll need to postprocess all prediction you get to make sure you
-        #          get coordinates for the whole image and not downsamples one.
-        #       3. Consider rebuilding the system using OpenCV. Can do batch processing. Can I use the same blob
-        #          in 2 models? One predicts poles, the other components.
+        # Prepare images - resize, move to torch.Tensor, .cat() them together
+        preprocessed_imgs = list(map(self.preprocess_image, images))
+        try:
+            batch = torch.cat(preprocessed_imgs)
+        except Exception as e:
+            print(f"Failed during .cat() ing images. Error: {e}")
+            raise
 
-        # 1. We need to resize images first to correspond to the network's resolution
-        resized_images = F.interpolate(images, size=self.input_dimension)
-        HostDeviceManager.visualise_sliced_img([resized_images])
-        print(resized_images.shape)  # torch.Size([5, 3, 416, 416])
+        # Save dimensions of the original images
+        dimensions_list = [(img.shape[1], img.shape[0]) for img in images]
+        dimensions_list = torch.FloatTensor(dimensions_list).repeat(1, 2)
 
-        sys.exit()
+        if self.CUDA:
+            dimensions_list = dimensions_list.cuda()
+            batch = batch.cuda()
+
         with torch.no_grad():
-            predictions = self.model(resized_images, self.CUDA)
-        print("Predictions:", predictions[0].shape)
-        #print("Len of predictions:", len(predictions))  # 5
+            # Row bounding boxes are predicted. Note predictions from
+            # 3 YOLO layers get concatenated into 1 big tensor.
+            raw_predictions = self.model(Variable(batch), self.CUDA)
 
-        output = self.process_predictions(predictions)
-        print("Processed predictions:", output)
+        # Process raw predictions, do NMS, thresholding etc
+        output = self.process_predictions(raw_predictions)
 
-        sys.exit()
-        if type(output) == int:
-            return []
-
-        return output.tolist()
+        return output, batch
 
     def predict(self, image: np.ndarray) -> list:
         """
@@ -93,7 +91,6 @@ class YOLOv3:
         if self.CUDA:
             img = img.cuda()
             im_dim = im_dim.cuda()
-            # print("Moved to CUDA")
 
         with torch.no_grad():
             # Row bounding boxes are predicted. Note predictions from
@@ -124,22 +121,19 @@ class YOLOv3:
 
         return output.tolist()
 
-    def process_predictions(self, predictions):
+    def process_predictions(self, predictions: torch.Tensor) -> list:
         """
-        Filter out BBs by 1) Thresholding by object confidence, 2) NMS
         :param predictions:
-        :return: Tensor of shape D x 8.
-        - index of the image in the batch - 0
-        - 4 BBs coordinates
-        - objectness score
-        - the score of class with max confidence
-        - index of this class
+        :return:
         """
-        # predictions.shape torch.Size([1, 22743, 7]), where 1 is batch size,
-        # 4 BBs coordinates + 1 objectness score + 2 classes for metal/concrete
-        # 22743 / 2 - Nb of BBs predicted per class
-        # print(predictions.shape)  # len(predictions[0]) = 22743
-
+        '''
+        Output (predictions) tensor shape: batch_size, 10647, 5 + nb_of_classes. The output
+        needs to be filtered by a) Thresholding by object confidence, b) NMS
+        
+        Object Confidence Thresholding
+        Prediction tensor contain info about batch_size x 10647 bbs. For all bbs whose conf 
+        threshold < confidence, set all its values to 0.
+        '''
         # Each BBs with objectness score < threshold, get all its values set to 0
         conf_mask = (predictions[:, :, 4] > self.confidence).float().unsqueeze(2)
         predictions = predictions * conf_mask
@@ -156,38 +150,36 @@ class YOLOv3:
 
         # Batch size - nb of images
         batch_size = predictions.size(0)
-        print("Batch size (from postprocessing method):", batch_size)
         write = False
 
-        # Conf thresholding and NMS need to be done for each image in the batch
-        # separately
+        # Save predictions for each image in the batch
+        output_results = [[i, []] for i in range(batch_size)]
+
+        # Conf thresholding and NMS need to be done for each image in the batch separately
         for ind in range(batch_size):
             image_pred = predictions[ind]  # image Tensor
-            # confidence threshholding
-            # NMS
 
+            # Clean up
             max_conf, max_conf_score = torch.max(image_pred[:, 5:5 + self.num_classes], 1)
             max_conf = max_conf.float().unsqueeze(1)
             max_conf_score = max_conf_score.float().unsqueeze(1)
             seq = (image_pred[:, :5], max_conf, max_conf_score)
             image_pred = torch.cat(seq, 1)
 
+            # Get rid of rows whose confidence was < the conf thresh, so we set their rows to 0s
             non_zero_ind = (torch.nonzero(image_pred[:, 4]))
             try:
                 image_pred_ = image_pred[non_zero_ind.squeeze(), :].view(-1, 7)
             except:
                 continue
-
             if image_pred_.shape[0] == 0:
                 continue
-            #
 
             # Get the various classes detected in the image
             img_classes = self.unique(image_pred_[:, -1])  # -1 index holds the class index
 
+            # perform NMS
             for cls in img_classes:
-                # perform NMS
-
                 # get the detections with one particular class
                 cls_mask = image_pred_ * (image_pred_[:, -1] == cls).float().unsqueeze(1)
                 class_mask_ind = torch.nonzero(cls_mask[:, -2]).squeeze()
@@ -206,7 +198,6 @@ class YOLOv3:
                         ious = self.bbox_iou(image_pred_class[i].unsqueeze(0), image_pred_class[i + 1:])
                     except ValueError:
                         break
-
                     except IndexError:
                         break
 
@@ -218,29 +209,20 @@ class YOLOv3:
                     non_zero_ind = torch.nonzero(image_pred_class[:, 4]).squeeze()
                     image_pred_class = image_pred_class[non_zero_ind].view(-1, 7)
 
-                batch_ind = image_pred_class.new(image_pred_class.size(0), 1).fill_(
-                    ind)  # Repeat the batch_id for as many detections of the class cls in the image
-                seq = batch_ind, image_pred_class
+                # # Repeat the batch_id for as many detections of the class cls in the image
+                # batch_ind = image_pred_class.new(image_pred_class.size(0), 1).fill_(ind)
+                # seq = batch_ind, image_pred_class
 
-                if not write:
-                    output = torch.cat(seq, 1)
-                    write = True
-                else:
-                    out = torch.cat(seq, 1)
-                    output = torch.cat((output, out))
+                output_results[ind][-1].append(image_pred_class.data)
 
-        # Check if anything has been detected at all
-        try:
-            return output
-        except:
-            return 0
+        return output_results
 
     def unique(self, tensor):
         """
-
         :param tensor:
         :return:
         """
+        # TODO: Look into this .cpu() transfer. This is ridiculous
         tensor_np = tensor.cpu().numpy()
         unique_np = np.unique(tensor_np)
         unique_tensor = torch.from_numpy(unique_np)
@@ -297,14 +279,13 @@ class YOLOv3:
         """
         # Resize image to match the network resolution
         img = (self.letterbox_image(img, (self.input_dimension, self.input_dimension)))
-        # RGB -> Something
         img = img[:, :, ::-1].transpose((2, 0, 1)).copy()
-        # Create torch object, normalize all pixels, add extra dimension?
+        # Create torch object, normalize all pixels, add extra dimension - batch size
         img = torch.from_numpy(img).float().div(255.0).unsqueeze(0)
 
         return img
 
-    def letterbox_image(self, img, inp_dim):
+    def letterbox_image(self, img, inp_dim: tuple):
         """
         Resize image with unchanged aspect ratio using padding. Left out areas after
         resizing get painted in 128,128,128 colour.
