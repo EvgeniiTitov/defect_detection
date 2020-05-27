@@ -34,7 +34,7 @@ class PoleDetectorThread(threading.Thread):
                 self.Q_out.put("END")
                 continue
 
-            (batch_frames, file_id) = input_
+            (batch_frames, gpu_batch_frames, file_id) = input_
             self.progress[file_id]["now_processing"] += len(batch_frames)
 
             # Predict poles, returns dict with (image: predicted poles)
