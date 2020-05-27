@@ -2,11 +2,33 @@ import cv2
 import torch
 from .darknet_torch import Darknet
 from torch.autograd import Variable
+from torchvision import transforms
 import torch.nn.functional as F
-from typing import List
+from typing import List, Dict
 import numpy as np
+import torchvision
 import sys
 from app.visual_detector.utils import HostDeviceManager
+
+
+'''
+Step 1 - Tower detection
+You need to load original images on GPU. 
+Then for YOLO, resize them, do predictions, recalculate bb coordinates for original sizes
+Return original size images on GPU and coordinates on them 
+
+Step 2 - Component detection
+Gets images on GPU + tower coordinates. Crops images on GPU, resizes them, ,cat() in a batch,
+get component detections, recalculate their bb coordinates for original sizes
+Returns
+
+Step 3 - Defect detection
+Same
+
+TODO:
+c) If you have N images in a batch, M towers on them, you will get Z components predicted. 
+   How to match predicted components with the towers they belong to? 
+'''
 
 
 class YOLOv3:
@@ -26,6 +48,8 @@ class YOLOv3:
         self.batch_size = 1
         self.classes = self.load_classes(classes)
         self.num_classes = len(self.classes)
+        # Size of images YOLO can work with
+        self.expected_image_size = 416
 
         # Load model using cfg and weights provided
         try:
@@ -38,16 +62,55 @@ class YOLOv3:
         self.input_dimension = int(self.model.net_info["height"])
 
         # Check CUDA availability. Push model into GPU memory if available
+        self.is_model_on_gpu = False
         self.CUDA = torch.cuda.is_available()
         if self.CUDA:
-            self.model.cuda()
+            try:
+                self.model.cuda()
+                self.is_model_on_gpu = True
+            except Exception as e:
+                print(f"Failed to move model to GPU. Error: {e}")
 
         # Set model to .eval() so that we do not change its parameters during testing
         self.model.eval()
 
-    def predict_batch(self, images: List[np.ndarray]) -> tuple:
+    def process_batch(self, images: torch.Tensor) -> dict:
         """
+        Receives a batch of images already preprocessed and loaded onto the GPU. Simply runs the net and post-
+        processes the predictions
+        :param images:
+        :return:
+        """
+        assert isinstance(images, torch.Tensor), "The batch provided is of the wrong data type. Torch tensor expected"
+        assert images.is_cuda == self.is_model_on_gpu, "The provided batch and model on different devices"
 
+        # Before processing the batch of images, make a copy and resize images to the expected size keeping
+        # the aspect ratio (.
+        # TODO: Double check if this is safe and efficient
+        copy_images = images
+
+        # TODO: PROPER REIZING - keep aspect ratio
+        #resized_images = HostDeviceManager.resize_tensor(tensor=copy_images, new_size=self.expected_image_size)
+        resized_images = HostDeviceManager.resize_tensor_v2(copy_images, (self.expected_image_size, self.expected_image_size))
+
+        # Run the batch of images through the net
+        with torch.no_grad():
+            # Row bounding boxes are predicted. Note predictions from
+            # 3 YOLO layers get concatenated into 1 big tensor.
+            raw_predictions = self.model(Variable(resized_images), self.CUDA)
+
+        # Process raw predictions by filtering out results using NMS and thresholding
+        output = self.process_predictions(raw_predictions)
+
+        # Recalculate bb coordinates relatively to the images of the original size
+        # TODO: Recalculate BB relatively to the original image
+
+        return output
+
+    def predict_batch_on_cpu(self, images: List[np.ndarray]) -> tuple:
+        """
+        Receives a list of images. Preprocesses them (cast to torch.Tensor, reshape etc), .cat()s them in a batch
+        and them runs it throught the net.
         :param images:
         :return:
         """
@@ -79,7 +142,7 @@ class YOLOv3:
 
     def predict(self, image: np.ndarray) -> list:
         """
-        Detects objects on the image provided
+        Runs the net on only 1 image
         :param image: list of np.ndarrays
         :return:
         """
@@ -121,7 +184,7 @@ class YOLOv3:
 
         return output.tolist()
 
-    def process_predictions(self, predictions: torch.Tensor) -> list:
+    def process_predictions(self, predictions: torch.Tensor) -> Dict[int, list]:
         """
         :param predictions:
         :return:
@@ -153,8 +216,7 @@ class YOLOv3:
         write = False
 
         # Save predictions for each image in the batch
-        output_results = [[i, []] for i in range(batch_size)]
-
+        output_results = {i: [] for i in range(batch_size)}
         # Conf thresholding and NMS need to be done for each image in the batch separately
         for ind in range(batch_size):
             image_pred = predictions[ind]  # image Tensor
@@ -213,7 +275,7 @@ class YOLOv3:
                 # batch_ind = image_pred_class.new(image_pred_class.size(0), 1).fill_(ind)
                 # seq = batch_ind, image_pred_class
 
-                output_results[ind][-1].append(image_pred_class.data)
+                output_results[ind].append(image_pred_class.tolist())
 
         return output_results
 
@@ -277,10 +339,12 @@ class YOLOv3:
         Transforms numpy object to PyTorch's input format (changes the order to PuyTorch's
         one: BatchSize x Channels x Height x Width
         """
-        # Resize image to match the network resolution
+        # Resize image to match the network resolution. For instance: (416, 416, 3)
         img = (self.letterbox_image(img, (self.input_dimension, self.input_dimension)))
+        # Swap colour axis. Result: (3, 416, 416)
         img = img[:, :, ::-1].transpose((2, 0, 1)).copy()
-        # Create torch object, normalize all pixels, add extra dimension - batch size
+        # Create torch object, normalize all pixels, add extra dimension - batch size at the beginning
+        # Result: torch.Size([1, 3, 416, 416])
         img = torch.from_numpy(img).float().div(255.0).unsqueeze(0)
 
         return img

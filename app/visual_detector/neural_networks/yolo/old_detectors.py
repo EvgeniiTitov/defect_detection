@@ -88,7 +88,7 @@ class PoleDetector:
 
         # Call neural net to get predictions. poles - list of lists, each object is represented as
         # a list of 6 items: class, confidence, coordinates
-        poles = self.poles_predictor.predict(image)
+        poles = self.poles_predictor.process_batch(image)
 
         # Represent each object detected as a class object. Add all objects
         # to the dictionary as values.
@@ -188,13 +188,13 @@ class ComponentsDetector:
 
                     # ! Depending on the pole's class we want to detect different number of objects
                     if pole.class_id == 0:  # metal
-                        components += self.components_predictor.predict(pole_subimage)
+                        components += self.components_predictor.process_batch(pole_subimage)
 
                     elif pole.class_id == 1:  # concrete
                         # TEMPORARY: Will be replaced with ONE 3 class predictor
-                        components += self.components_predictor.predict(pole_subimage)
+                        components += self.components_predictor.process_batch(pole_subimage)
 
-                        pillar = self.pillar_predictor.predict(pole_subimage)
+                        pillar = self.pillar_predictor.process_batch(pole_subimage)
 
                         # REMOVE ME AFTER TESTS AND RESEARCH
                         if len(pillar) > 1:
@@ -224,10 +224,10 @@ class ComponentsDetector:
         else:
             # In case no poles have been detected, send the whole image for components detection
             # in case there are any close-up components on the image
-            components = self.components_predictor.predict(image)
+            components = self.components_predictor.process_batch(image)
 
             # TEMPORARY:
-            pillar = self.pillar_predictor.predict(image)
+            pillar = self.pillar_predictor.process_batch(image)
 
             if len(pillar) > 1:
                 print("WARNING: MORE THAN ONE PILLAR DETECTED")

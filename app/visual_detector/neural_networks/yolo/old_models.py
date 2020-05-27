@@ -5,7 +5,7 @@ import numpy as np
 class NetPoles:
     """
     UTILITY POLES detecting and classifying neural network.
-    predict method receives IMAGE (NumPy array)
+    process_batch method receives IMAGE (NumPy array)
     Returns list of the objects (utility poles) predicted.
     """
 

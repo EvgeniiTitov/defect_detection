@@ -1,6 +1,6 @@
 from app.visual_detector.workers import FrameReaderThread, PoleDetectorThread, ComponentDetectorThread
 from app.visual_detector.workers import DefectDetectorThread, ResultsProcessorThread
-from app.visual_detector.neural_networks import PolesDetector, ComponentsDetector
+from app.visual_detector.neural_networks import TowerDetector, ComponentsDetector
 from app.visual_detector.defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
 from app.visual_detector.utils import ResultsHandler
 import queue
@@ -32,7 +32,7 @@ class MainDetector:
 
         # Initialize detectors and auxiliary modules
         self.results_processor = ResultsHandler(save_path=save_path)
-        self.pole_detector = PolesDetector()
+        self.pole_detector = TowerDetector()
         self.component_detector = ComponentsDetector()
         self.defect_detector = DefectDetector(
             line_modifier=LineModifier,
