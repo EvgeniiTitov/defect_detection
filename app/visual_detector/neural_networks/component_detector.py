@@ -60,7 +60,6 @@ class ComponentsDetector:
         2. For M towers you get Z component detection. Each detection is to be represented as DetectedObject
         3. Perform matching. Distribute Z detected components among M towers belonging to N images.
         '''
-
         detected_towers = list()
         for img_batch_index, detections in towers_predictions.items():
             for subimage, detected_objects in detections.items():
@@ -72,6 +71,10 @@ class ComponentsDetector:
         2. On each image in the batch at least one tower detected - crop out, preprocess, predict
         3. Tower(s) detected not on all images in the batch - combine entire frames + towers and predict 
         '''
+
+        print("DETECTED TOWERS:")
+        for k, v in towers_predictions.items():
+            print(f"Image: {k}. Predictions: {v}")
 
         # If any towers have been detected, search for components within towers bounding boxes
         if detected_towers:

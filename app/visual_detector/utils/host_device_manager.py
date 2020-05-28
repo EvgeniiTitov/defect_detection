@@ -85,13 +85,12 @@ class HostDeviceManager:
         return image_transforms(image_pil)
 
     @staticmethod
-    def resize_tensor(tensor: torch.Tensor, new_size: int) -> torch.Tensor:
+    def resize_tensor(tensor: torch.Tensor, new_size: int, background_color: float = 128.) -> torch.Tensor:
         """
-        Receives torch tensor and resizes it.
-
-        F.interpolate - Down/up samples the input to either the given size or the given scale_factor
+        Receives torch tensor and resizes it keeping the aspect ratio and filling the rest of the image
         :param tensor:
         :param new_size:
+        :param background_color:
         :return:
         """
         assert new_size > 0, "Cannot resize tensor to a negative value"
@@ -104,62 +103,18 @@ class HostDeviceManager:
         coef = new_size / float(tensor_height) if tall else new_size / float(tensor_width)
         # Resize to the new sizes
         new_dimension = (new_size, int(tensor_width * coef)) if tall else (int(tensor_height * coef), new_size)
-
         # Resize tensor to a new shape
         y = F.interpolate(tensor, new_dimension)
         # Create a new tensor of the required output shape filled with grey colour
-        res = torch.ones(batch_size, 3, new_size, new_size) * 126.
+        res = torch.ones(batch_size, 3, new_size, new_size).cuda() * background_color
         # Calculate margin (отступ от края изображения)
         margin = (new_size - new_dimension[1])//2 if tall else (new_size - new_dimension[0])//2
-
         if tall:
             res[:, :, :, margin:new_size-margin] = y
         else:
             res[:, :, margin:new_size - margin, :] = y
 
         return res
-
-    @staticmethod
-    def resize_tensor_v2(tensor: torch.Tensor, size: Tuple[int, int]) -> torch.Tensor:
-        """
-        Resizes, but does not keep the aspect ratio.
-        :param tensor:
-        :param size:
-        :return:
-        """
-        return (F.adaptive_avg_pool2d(tensor, size)).data
-
-    @staticmethod
-    def resize_tensor_keep_aspratio(tensors: torch.Tensor, new_size: int) -> torch.Tensor:
-        """
-
-        :param tensors: shape: torch.Size([BATCH_SIZE, 3, HEIGHT, WIDTH])
-        :param new_size:
-        :return:
-        """
-        resized_tensors = list()
-        assert new_size > 0, "Cannot resize tensor to a negative value"
-
-        for tensor in tensors:
-            tensor_height, tensor_width = tensor.shape[1:3]
-            # Before resizing tensor to 416 x 416 keeping the aspect ratio, determine which side is greater
-            tall = True if tensor_height >= tensor_width else False
-            # Calculate the coefficient to keep aspect ratio
-            coef = new_size / float(tensor_height) if tall else new_size / float(tensor_width)
-            # Resize to the new sizes
-            new_dimension = (new_size, int(tensor_width * coef)) if tall else (int(tensor_height * coef), new_size)
-            # Create tensor 416 by 416, and put your new image in it
-            zeros = torch.zeros((new_size, new_size))
-            resized_tensor = torch.cat([zeros, new_dimension, zeros], 1)
-            resized_tensors.append(resized_tensor)
-
-        try:
-            output = torch.cat(resized_tensors)
-        except Exception as e:
-            print(f"Failed to .cat() tensors. Error: {e}")
-            raise
-
-        return output
 
     @staticmethod
     def read_images(paths: list) -> list:
@@ -184,9 +139,8 @@ class HostDeviceManager:
     def visualise_sliced_img(images: torch.Tensor) -> None:
         for image in images:
             image = image.permute(1, 2, 0)
-            # TODO: Check how to drop torch.Size([416, 416, 3, 5]) batch size at the end?
             image = image.cpu().numpy()
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            # plt.imshow(image)
+            #cv2.imwrite(r"D:\Desktop\system_output\INPUT\4_out.jpg", image_rgb)
             cv2.imshow("window", image_rgb)
             cv2.waitKey(0)

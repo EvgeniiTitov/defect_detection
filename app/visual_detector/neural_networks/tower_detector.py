@@ -77,7 +77,6 @@ class TowerDetector:
                     else:
                         print("ERROR: Wrong class index got detected!")
                         continue
-
                     # Represent each detected pole as an object, so that we can easily change its state (adjust
                     # BB coordinates) and add more information to it as it moves along the processing pipeline
                     pole_detection = DetectedObject(

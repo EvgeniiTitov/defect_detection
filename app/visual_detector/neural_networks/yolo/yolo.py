@@ -83,19 +83,12 @@ class YOLOv3:
         assert isinstance(images, torch.Tensor), "The batch provided is of the wrong data type. Torch tensor expected"
         assert images.is_cuda == self.is_model_on_gpu, "The provided batch and model on different devices"
 
-        # Before processing the batch of images, make a copy and resize images to the expected size keeping
-        # the aspect ratio (.
+        # Make a copy and resize images to the expected size keeping the aspect ratio
         # TODO: Copy your oriignal images, they must not be resized
         copy_images = images
-
-
-        # TODO: PROPER RESIZING - keep aspect ratio
-        print("SHAPE BEFORE:", copy_images.shape)
         resized_images = HostDeviceManager.resize_tensor(tensor=copy_images, new_size=self.input_dimension)
         HostDeviceManager.visualise_sliced_img(resized_images)
-        print("SHAPE AFTER:", resized_images.shape)
-        sys.exit()
-
+        print("IS CUDS:", resized_images.is_cuda)
 
         # Run the batch of images through the net
         with torch.no_grad():

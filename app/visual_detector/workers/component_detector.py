@@ -27,12 +27,12 @@ class ComponentDetectorThread(threading.Thread):
                 self.Q_out.put("END")  # video's over
                 continue
 
-            batch_frames, gpu_batch_frames, poles, file_id = input_
+            batch_frames, gpu_batch_frames, towers, file_id = input_
             # Check if any pole's been detected happens in the component detector
             components = self.component_detector.process_batch(
                 images_on_gpu=gpu_batch_frames,
-                towers_predictions=poles
+                towers_predictions=towers
             )
-            self.Q_out.put((batch_frames, gpu_batch_frames, file_id, poles, components))
+            self.Q_out.put((batch_frames, gpu_batch_frames, file_id, towers, components))
 
         print("ComponentDetectorThread killed")
