@@ -80,13 +80,6 @@ class FrameReaderThread(threading.Thread):
                     # DELETE ME - to generate just one batch of frames
                     break
 
-
-                # Approach 2. Send actual np.ndarrays. Will be moved to GPU in yolo.py that will return both
-                # predictions and image uploaded to GPU.
-                # if batch_frames:
-                #     print(f"Sending batch of size {len(batch_frames)} to pole detector")
-                #     self.Q_out.put((batch_frames, file_id))
-
                 if to_break:
                     break
                 batch_frames = list()

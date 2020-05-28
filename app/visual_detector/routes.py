@@ -2,7 +2,7 @@ from flask import jsonify, request, abort
 from app.visual_detector import visual, detector
 #TODO: Routes need detector instance, where to instantiate it?
 
-@visual.route('/visual/process_batch', methods=["POST"])
+@visual.route('/visual/predict', methods=["POST"])
 def predict():
     # TODO: Check if threads and NN are ready (running)
 
@@ -19,7 +19,7 @@ def predict():
         return jsonify(response)
 
     try:
-        ids = detector.process_batch(
+        ids = detector.predict(
             path_to_data=path_to_data,
             pole_number=pole_number,
             request_id=request_id

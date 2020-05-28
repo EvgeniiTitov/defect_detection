@@ -193,7 +193,7 @@ class MainDetector:
 
         return file_id
 
-    def start(self):
+    def start(self) -> None:
         for thread in (
             self.frame_reader_thread,
             self.pole_detector_thread,
@@ -203,7 +203,7 @@ class MainDetector:
         ):
             thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self.files_to_process_Q.put("STOP")
         # Wait until all threads complete their job and exit
         for thread in (

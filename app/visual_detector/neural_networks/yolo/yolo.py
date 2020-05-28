@@ -48,8 +48,6 @@ class YOLOv3:
         self.batch_size = 1
         self.classes = self.load_classes(classes)
         self.num_classes = len(self.classes)
-        # Size of images YOLO can work with
-        self.expected_image_size = 416
 
         # Load model using cfg and weights provided
         try:
@@ -59,6 +57,7 @@ class YOLOv3:
             print(f"Failed during YOLO initialization. Error: {e}")
             raise
 
+        # Determines size of an input image required
         self.input_dimension = int(self.model.net_info["height"])
 
         # Check CUDA availability. Push model into GPU memory if available
@@ -86,12 +85,17 @@ class YOLOv3:
 
         # Before processing the batch of images, make a copy and resize images to the expected size keeping
         # the aspect ratio (.
-        # TODO: Double check if this is safe and efficient
+        # TODO: Copy your oriignal images, they must not be resized
         copy_images = images
 
-        # TODO: PROPER REIZING - keep aspect ratio
-        #resized_images = HostDeviceManager.resize_tensor(tensor=copy_images, new_size=self.expected_image_size)
-        resized_images = HostDeviceManager.resize_tensor_v2(copy_images, (self.expected_image_size, self.expected_image_size))
+
+        # TODO: PROPER RESIZING - keep aspect ratio
+        print("SHAPE BEFORE:", copy_images.shape)
+        resized_images = HostDeviceManager.resize_tensor(tensor=copy_images, new_size=self.input_dimension)
+        HostDeviceManager.visualise_sliced_img(resized_images)
+        print("SHAPE AFTER:", resized_images.shape)
+        sys.exit()
+
 
         # Run the batch of images through the net
         with torch.no_grad():
@@ -100,7 +104,7 @@ class YOLOv3:
             raw_predictions = self.model(Variable(resized_images), self.CUDA)
 
         # Process raw predictions by filtering out results using NMS and thresholding
-        output = self.process_predictions(raw_predictions)
+        output = self._process_predictions(raw_predictions)
 
         # Recalculate bb coordinates relatively to the images of the original size
         # TODO: Recalculate BB relatively to the original image
@@ -136,7 +140,7 @@ class YOLOv3:
             raw_predictions = self.model(Variable(batch), self.CUDA)
 
         # Process raw predictions, do NMS, thresholding etc
-        output = self.process_predictions(raw_predictions)
+        output = self._process_predictions(raw_predictions)
 
         return output, batch
 
@@ -163,7 +167,7 @@ class YOLOv3:
         # BBs need to be filtered by object confidence and NMS
         # tensor of shape [Nb of objects found, 8]
         # 8: 4 BBs coordinates, objectness score, max conf score and its index
-        output = self.process_predictions(raw_predictions)
+        output = self._process_predictions(raw_predictions)
 
         # Got 0 instead of Tensor object. Nothing's been detected
         if type(output) == int:
@@ -184,7 +188,7 @@ class YOLOv3:
 
         return output.tolist()
 
-    def process_predictions(self, predictions: torch.Tensor) -> Dict[int, list]:
+    def _process_predictions(self, predictions: torch.Tensor) -> Dict[int, list]:
         """
         :param predictions:
         :return:
