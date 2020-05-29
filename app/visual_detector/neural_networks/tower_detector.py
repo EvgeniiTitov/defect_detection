@@ -12,7 +12,7 @@ class TowerDetector:
     A wrapper around a neural network to do preprocessing / postprocessing
     Weights: Pole try 9.
     """
-    path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\dependencies"
+    path_to_dependencies = r"D:\Desktop\branch_dependencies"
     dependencies = "poles"
     confidence = 0.2
     NMS_thresh = 0.2

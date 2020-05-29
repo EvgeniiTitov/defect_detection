@@ -13,7 +13,7 @@ class ComponentsDetector:
     A wrapper around a neural network to do preprocessing / postprocessing
     Weights: Try 6 components
     """
-    path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\dependencies"
+    path_to_dependencies = r"D:\Desktop\branch_dependencies"
     dependencies_comp = "components"
     confidence = 0.15
     NMS_thresh = 0.25

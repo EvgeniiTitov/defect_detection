@@ -53,8 +53,8 @@ class HostDeviceManager:
         :param image:
         :return:
         """
-        img = image[:, :, ::-1].transpose((2, 0, 1)).copy()  # rgb -> bgr
-        img = torch.from_numpy(img).float().unsqueeze(0)  # div(255.0) here makes them almost black!
+        img = image[:, :, ::-1].transpose((2, 0, 1)).copy()  # rgb -> bgr, change channel order
+        img = torch.from_numpy(img).float().unsqueeze(0)
 
         return img
 

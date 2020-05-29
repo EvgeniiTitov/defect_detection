@@ -85,8 +85,11 @@ class YOLOv3:
 
         copy_images = images
         resized_images = HostDeviceManager.resize_tensor(tensor=copy_images, new_size=self.input_dimension)
+        HostDeviceManager.visualise_sliced_img(resized_images, name="before inference before .div(255.0)")
+        # Normalize tensor
+        resized_images.div_(255.0)
+        HostDeviceManager.visualise_sliced_img(resized_images, name="before inference after .div(255.0)")
 
-        HostDeviceManager.visualise_sliced_img(resized_images, name="before inference")
         # Run the batch of images through the net
         with torch.no_grad():
             # Row bounding boxes are predicted. Note predictions from

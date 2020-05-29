@@ -155,7 +155,7 @@ class MainDetector:
                 request_id=request_id
             )
         else:
-            print(f"\nERROR: file {filename} cannot be processed, wrong extension")
+            print(f"ERROR: file {filename}'s extension is not supported")
             return "None"
 
     def process_file(
