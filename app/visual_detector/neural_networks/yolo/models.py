@@ -69,6 +69,12 @@ class YOLOv3:
             im_dim = im_dim.cuda()
             # print("Moved to CUDA")
 
+        image = img.squeeze(0).permute(1, 2, 0)
+        image = image.cpu().numpy()
+        import os
+        save_path = r"D:\Desktop\system_output\INPUT\1\result"
+        cv2.imwrite(os.path.join(save_path, "master_before_net.jpg"), image)
+
         with torch.no_grad():
             # Row bounding boxes are predicted. Note predictions from from
             # 3 YOLO layers get concatenated into 1 big tensor.

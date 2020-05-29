@@ -78,14 +78,14 @@ class DefectDetector:
                     # msg = [subimage.top + element.BB_top, subimage.top + element.BB_bottom,\
                     #        subimage.left + element.BB_left, subimage.left + element.BB_right]
                     # print(msg)
-                    try:
-                        cv2.imwrite(
-                            os.path.join("D:\Desktop\system_output\OUTPUT\dumpers", str(random.randint(0,10**7)) + ".jpg"),
-                            img=dumper_subimage
-                        )
-                    except Exception as e:
-                        print(f"Failed to saved the cropped dumper. Error: {e}")
-                        exit()
+                    # try:
+                    #     cv2.imwrite(
+                    #         os.path.join("D:\Desktop\system_output\OUTPUT\dumpers", str(random.randint(0,10**7)) + ".jpg"),
+                    #         img=dumper_subimage
+                    #     )
+                    # except Exception as e:
+                    #     print(f"Failed to saved the cropped dumper. Error: {e}")
+                    #     exit()
 
                     # Search for defects on vibration dumpers
                     continue

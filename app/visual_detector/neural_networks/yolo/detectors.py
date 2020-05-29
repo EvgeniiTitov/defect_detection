@@ -25,7 +25,7 @@ class PolesDetector:
 
     Weights: Pole try 9.
     """
-    path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\dependencies"
+    path_to_dependencies = r"D:\Desktop\master_dependencies"
     dependencies = "poles"
 
     def __init__(self):
@@ -166,7 +166,7 @@ class ComponentsDetector:
     role of a dictionary key.
     Weights: Try 6 components
     """
-    path_to_dependencies = r"C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\dependencies"
+    path_to_dependencies = r"D:\Desktop\master_dependencies"
     dependencies_comp = "components"
     dependencies_pil = "pillars"
 
