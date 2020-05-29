@@ -84,11 +84,12 @@ class YOLOv3:
         assert images.is_cuda == self.is_model_on_gpu, "The provided batch and model on different devices"
 
         copy_images = images
-        resized_images = HostDeviceManager.resize_tensor(tensor=copy_images, new_size=self.input_dimension)
-        HostDeviceManager.visualise_sliced_img(resized_images, name="before inference before .div(255.0)")
+        resized_images, scaling_factor = HostDeviceManager.resize_tensor_keeping_aspratio(
+            tensor=copy_images,
+            new_size=self.input_dimension
+        )
         # Normalize tensor
         resized_images.div_(255.0)
-        HostDeviceManager.visualise_sliced_img(resized_images, name="before inference after .div(255.0)")
 
         # Run the batch of images through the net
         with torch.no_grad():
@@ -98,11 +99,22 @@ class YOLOv3:
 
         # Process raw predictions by filtering out results using NMS and thresholding
         output = self._process_predictions(raw_predictions)
-
-        # Recalculate bb coordinates relatively to the images of the original size
-        # TODO: Recalculate BB relatively to the original image
-
-        return output
+        '''
+        output format:
+        {
+            0: [[[detection_1]], [[detection_2]]...],
+            1: [[[detection_1]], [[detection_2]]...],
+            ...
+        }
+        Detection format: [left, top, right, bottom, objectness score, confidence, index]
+        '''
+        #TODO:
+        # Recalculate bb coordinates relatively to the original images (now they're relatively to the resized ones)
+        recalculated_output = HostDeviceManager.recalculate_bb(
+            scaling_factor=scaling_factor,
+            detections=output
+        )
+        return recalculated_output
 
     def predict_batch_on_cpu(self, images: List[np.ndarray]) -> tuple:
         """

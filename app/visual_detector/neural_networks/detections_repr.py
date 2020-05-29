@@ -16,6 +16,7 @@ class DetectedObject:
         self.object_name = object_name
         assert all((left >= 0, top >= 0, right >= 0, bottom >= 0)), "ERROR: Negative BB coordinate provided"
         self.confidence = confidence
+        # Original bb coordinates to draw bounding boxes
         self.BB_top = top
         self.BB_left = left
         self.BB_right = right
@@ -24,7 +25,7 @@ class DetectedObject:
         self.inclination = None
         self.cracked = None
 
-        # Second set of coordinates to modify BBs of objects detected.
+        # Second set of coordinates to be able to modify them
         self._top = top
         self._left = left
         self._right = right

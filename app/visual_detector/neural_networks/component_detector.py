@@ -2,6 +2,7 @@ from collections import defaultdict
 from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
 from typing import List, Dict, Tuple
 from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
+from app.visual_detector.utils import HostDeviceManager
 import numpy as np
 import os
 import torch
@@ -60,52 +61,75 @@ class ComponentsDetector:
         2. For M towers you get Z component detection. Each detection is to be represented as DetectedObject
         3. Perform matching. Distribute Z detected components among M towers belonging to N images.
         '''
-        # Check if any towers have been detected
-        detected_towers = list()
-        for img_batch_index, detections in towers_predictions.items():
-            for subimage, detected_objects in detections.items():
-                if detected_objects:
-                    detected_towers.extend(obj for obj in detected_objects)
-        '''
-        1. No towers detected on all images in the batch - for all run entire frames 
-        2. On each image in the batch at least one tower detected - crop out, preprocess, predict
-        3. Tower(s) detected not on all images in the batch - combine entire frames + towers and predict 
-        '''
-        print("DETECTED TOWERS:")
-        for k, v in towers_predictions.items():
-            print(f"Image: {k}. Predictions: {v}")
+
+        # TODO: 1. Slice out (crop out) all detected towers from images_on_gpu
+        #       2. Remember how many towers found on each image
+        #       3. Resize all towers to one YOLO input size
+        #       4. .cat() them in one batch
+        #       5. Process predictions:
+        #         a) Represent objects as DetectedObject, bb as ImageSections
+        #         b) Perform matching - what components, belong to what tower, belong to what image in the batch
+
+        # Collect all images that will be used to search for components + how many towers found on each image
+        imgs_to_search_components_on, distribute_info = self.collect_imgs(
+            images_on_gpu=images_on_gpu,
+            towers=towers_predictions
+        )
+
 
         sys.exit()
 
-        # If any towers have been detected, search for components within towers bounding boxes
-        if detected_towers:
-            #TODO: 1. Slice out (crop out) all detected towers from images_on_gpu
-            #      2. Remember how many towers found on each image
-            #      3. Resize all towers to one YOLO input size
-            #      4. .cat() them in one batch
-            #      5. Process predictions:
-            #         a) Represent objects as DetectedObject, bb as ImageSections
-            #         b) Perform matching - what components, belong to what tower, belong to what image in the batch
-
-            detected_components = self.search_components_within_towers()
-            raise NotImplementedError("Not yet Eugene")
-        # If no towers have been detected, search for components on entire images
-        else:
-            detected_components = self.search_components_entire_frame(images_on_gpu=images_on_gpu)
 
 
-    def search_components_entire_frame(self, images_on_gpu: torch.Tensor) -> dict:
+        # print("\nDETECTED TOWERS:")
+        # for k, v in towers_predictions.items():
+        #     print(f"Image: {k}. Predictions: {v}")
+        # print("COMPONENTS DETECTED:")
+        # for k, v in detected_components.items():
+        #     print(f"Image: {k}. Predictions: {v}")
+        # sys.exit()
+
+    def collect_imgs(self, images_on_gpu: torch.Tensor, towers: dict) -> Tuple[list, list]:
         """
 
-        :param images_on_gpu:
+        :param images_on_gpu: batch of images on gpu
+        :param towers: detected towers
         :return:
         """
-        batch_detections = {i: {} for i in range(len(images_on_gpu))}
-        batch_components_detections = self.components_net.process_batch(images=images_on_gpu)
-        print("COMPONENTS DETECTED:", batch_components_detections)
+        imgs_to_search_components_on = list()
+        distrib_info = list()
 
-    def search_components_within_towers(self):
-        pass
+        # Check each image in the batch and if any towers were found on it
+        for i in range(len(images_on_gpu)):
+            # Get detections for an image in the batch and the image itself
+            detections = list(towers[i].values())[0]  # TODO: Fix this nested nightmare
+            image = images_on_gpu[i]
+
+            if not len(detections) > 0:
+                # If no towers found on an image, add entire image - will use it for searching components
+                imgs_to_search_components_on.append(image)
+                # 0 towers found for i-th image in the batch
+                distrib_info.append((i, 0))
+                continue
+
+            for detection in detections:
+                left = detection.left
+                top = detection.top
+                right = detection.right
+                bot = detection.bottom
+                # for each detection, slice out the tower bb
+                tower_bb_image = HostDeviceManager.slice_out_tensor(image, [left, top, right, bot])
+                imgs_to_search_components_on.append(tower_bb_image)
+            # Keep track of how many towers found on the i-th image in the batch
+            distrib_info.append((i, len(detections)))
+
+        return imgs_to_search_components_on, distrib_info
+
+
+
+
+
+
 
 
         # # If any pole have been detected

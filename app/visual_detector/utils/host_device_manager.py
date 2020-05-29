@@ -41,7 +41,6 @@ class HostDeviceManager:
         # Move the new tensor to GPU and return reference to it
         try:
             batch_gpu = batch.cuda()
-            print("Images successfully moved from host to device")
             return batch_gpu
         except Exception as e:
             print(f"\nATTENTION: Moving images to GPU failed. Error: {e}")
@@ -78,7 +77,11 @@ class HostDeviceManager:
         return image_transforms(image_pil)
 
     @staticmethod
-    def resize_tensor(tensor: torch.Tensor, new_size: int, background_color: float = 128.) -> torch.Tensor:
+    def resize_tensor_keeping_aspratio(
+            tensor: torch.Tensor,
+            new_size: int,
+            background_color: float = 128.
+    ) -> Tuple[torch.Tensor, float]:
         """
         Receives torch tensor and resizes it keeping the aspect ratio and filling the rest of the image
         :param tensor:
@@ -107,7 +110,40 @@ class HostDeviceManager:
         else:
             res[:, :, margin:new_size - margin, :] = resized_tensor
 
-        return res
+        return res, coef
+
+    @staticmethod
+    def slice_out_tensor(image: torch.Tensor, coordinates: list) -> torch.Tensor:
+        """
+        Slices out a tensor using the coordinates provided
+        :param image:
+        :param coordinates:
+        :return:
+        """
+        assert isinstance(image, torch.Tensor), "Wrong image data type. Tensor expected"
+        assert len(coordinates) == 4, "No or wrong number of coordinates provided. Expected 4"
+        left = coordinates[0]
+        top = coordinates[1]
+        right  = coordinates[2]
+        bot  = coordinates[3]
+        try:
+            subimage = image[:, top:bot, left:right]
+        except Exception as e:
+            print(f"Failed while slicing out a tensor. Error: {e}")
+            raise
+
+        return subimage
+
+    @staticmethod
+    def recalculate_bb(scaling_factor: float, detections: dict) -> dict:
+        """
+
+        :param scaling_factor:
+        :param detections:
+        :return:
+        """
+
+        return detections
 
     @staticmethod
     def read_images(paths: list) -> list:
