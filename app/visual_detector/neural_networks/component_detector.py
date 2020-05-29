@@ -55,26 +55,27 @@ class ComponentsDetector:
             ...
         }
         For N images in the batch, we get M detected towers. On each tower up to Z components can be detected. 
-        1. Slice out all detected towers, bring them all to one size (YOLO: 416x416) and .cat() them. We need to
+        1. Slice out all detected towers, bring them all to one size and .cat() them. We need to
            remember how many towers were detected on each image in the batch.
         2. For M towers you get Z component detection. Each detection is to be represented as DetectedObject
         3. Perform matching. Distribute Z detected components among M towers belonging to N images.
         '''
+        # Check if any towers have been detected
         detected_towers = list()
         for img_batch_index, detections in towers_predictions.items():
             for subimage, detected_objects in detections.items():
                 if detected_objects:
                     detected_towers.extend(obj for obj in detected_objects)
-
         '''
         1. No towers detected on all images in the batch - for all run entire frames 
         2. On each image in the batch at least one tower detected - crop out, preprocess, predict
         3. Tower(s) detected not on all images in the batch - combine entire frames + towers and predict 
         '''
-
         print("DETECTED TOWERS:")
         for k, v in towers_predictions.items():
             print(f"Image: {k}. Predictions: {v}")
+
+        sys.exit()
 
         # If any towers have been detected, search for components within towers bounding boxes
         if detected_towers:

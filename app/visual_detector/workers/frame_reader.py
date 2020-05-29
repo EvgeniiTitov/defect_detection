@@ -71,6 +71,7 @@ class FrameReaderThread(threading.Thread):
                 if batch_frames:
                     try:
                         gpu_batch_frames = HostDeviceManager.load_images_to_GPU(batch_frames)
+                        #HostDeviceManager.visualise_sliced_img(gpu_batch_frames, name="from_frame_reader")
                     except Exception as e:
                         print(f"Failed to move a batch of frames to GPU. Error: {e}")
                         raise

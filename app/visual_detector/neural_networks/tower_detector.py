@@ -56,41 +56,41 @@ class TowerDetector:
         4 bbs coordinates, objectness score, confidence, index of this class
         '''
         batch_poles_detections = self.poles_net.process_batch(images_on_gpu)
-        if batch_poles_detections:
-            for i in range(len(batch_poles_detections)):
-                # Poles were searched for on original images, not subimages (cropped out objects)
-                image_section = SubImage(name="poles")
-                # For each image create a key-value pair. Key - image section on which the detection took place - the whole
-                # frame in this case. Value - detected poles
-                detections_output[i][image_section] = list()
-                # Get nb of towers detected on the image - affects bb modification
-                nb_of_poles = len(batch_poles_detections[i])
-                # Process predictions for each image in the batch separately
-                for pole in batch_poles_detections[i]:
-                    pole = pole[0]  # yolo returns result as nested lists
-                    if pole[-1] == 0:
-                        class_name = "metal"
-                    elif pole[-1] == 1:
-                        class_name = "concrete"
-                    elif pole[-1] == 2:
-                        class_name = "wood"
-                    else:
-                        print("ERROR: Wrong class index got detected!")
-                        continue
-                    # Represent each detected pole as an object, so that we can easily change its state (adjust
-                    # BB coordinates) and add more information to it as it moves along the processing pipeline
-                    pole_detection = DetectedObject(
-                        class_id=pole[-1],
-                        object_name=class_name,
-                        confidence=pole[5],
-                        left=int(pole[1]),
-                        top=int(pole[2]),
-                        right=int(pole[3]),
-                        bottom=int(pole[4])
-                    )
-                    # Create a copy of pole's bb and modify them (widen)
-                    self.modify_pole_bb(pole_detection, nb_of_poles, images_on_gpu[i])
-                    detections_output[i][image_section].append(pole_detection)
+        # Represent all detections as class objects for convenience
+        for i in range(len(batch_poles_detections)):
+            # Poles were searched for on original images, not subimages (cropped out objects)
+            image_section = SubImage(name="poles")
+            # For each image create a key-value pair. Key - image section on which the detection took place - the whole
+            # frame in this case. Value - detected poles
+            detections_output[i][image_section] = list()
+            # Get nb of towers detected on the image - affects bb modification
+            nb_of_poles = len(batch_poles_detections[i])
+            # Process predictions for each image in the batch separately
+            for pole in batch_poles_detections[i]:
+                pole = pole[0]  # yolo returns result as nested lists
+                if pole[-1] == 0:
+                    class_name = "metal"
+                elif pole[-1] == 1:
+                    class_name = "concrete"
+                elif pole[-1] == 2:
+                    class_name = "wood"
+                else:
+                    print("ERROR: Wrong class index got detected!")
+                    continue
+                # Represent each detected pole as an object, so that we can easily change its state (adjust
+                # BB coordinates) and add more information to it as it moves along the processing pipeline
+                pole_detection = DetectedObject(
+                    class_id=pole[-1],
+                    object_name=class_name,
+                    confidence=pole[5],
+                    left=int(pole[1]),
+                    top=int(pole[2]),
+                    right=int(pole[3]),
+                    bottom=int(pole[4])
+                )
+                # Create a copy of pole's bb and modify them (widen)
+                self.modify_pole_bb(pole_detection, nb_of_poles, images_on_gpu[i])
+                detections_output[i][image_section].append(pole_detection)
         '''
         Output format if any towers detected: 
         {

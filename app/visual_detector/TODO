@@ -41,3 +41,6 @@ CRUCIAL:
 Слайс делать легко - структура, которая говорит на какие участки оригинального блока памяти ты ссылаешься.
 ! Q size optimization to ensure efficient memory usage (than constantly moving HOST-DEVICE)
 Put as many frames as possible onto GPU, because CPU-GPU transfer is expensive.
+
+COMMENTS:
+On 2 branches different predictions -> images come with different preprocessing. Check!

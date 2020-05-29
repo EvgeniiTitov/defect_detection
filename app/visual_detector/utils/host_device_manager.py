@@ -24,11 +24,11 @@ class HostDeviceManager:
         for image in images:
             # Preprocess images before .cat()ing them.
             if img_size:
+                print("ATTENTION: Images will be resized before being moved to GPU")
                 image_tensor = HostDeviceManager.preprocess_image_including_resizing(image, img_size)
             else:
                 image_tensor = HostDeviceManager.preprocess_image(image)
-
-            image_tensor.unsqueeze_(0)
+            #HostDeviceManager.visualise_sliced_img(image_tensor, "fromOptimizer")
             image_tensors.append(image_tensor)
 
         # Concat torch tensors into one tensor
@@ -53,17 +53,10 @@ class HostDeviceManager:
         :param image:
         :return:
         """
+        img = image[:, :, ::-1].transpose((2, 0, 1)).copy()  # rgb -> bgr
+        img = torch.from_numpy(img).float().unsqueeze(0)  # div(255.0) here makes them almost black!
 
-        # TODO: Check if you need Normalize() here for your system
-
-        image_transforms = torchvision.transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(
-                [0.485, 0.456, 0.406],
-                [0.229, 0.224, 0.225]
-            )]
-        )
-        return image_transforms(image)
+        return img
 
     @staticmethod
     def preprocess_image_including_resizing(image: np.ndarray, new_size: int) -> torch.Tensor:
@@ -103,16 +96,16 @@ class HostDeviceManager:
         coef = new_size / float(tensor_height) if tall else new_size / float(tensor_width)
         # Resize to the new sizes
         new_dimension = (new_size, int(tensor_width * coef)) if tall else (int(tensor_height * coef), new_size)
-        # Resize tensor to a new shape
-        y = F.interpolate(tensor, new_dimension)
+        # Resize tensor to a new size (width and height)
+        resized_tensor = F.interpolate(tensor, new_dimension)
         # Create a new tensor of the required output shape filled with grey colour
         res = torch.ones(batch_size, 3, new_size, new_size).cuda() * background_color
         # Calculate margin (отступ от края изображения)
         margin = (new_size - new_dimension[1])//2 if tall else (new_size - new_dimension[0])//2
         if tall:
-            res[:, :, :, margin:new_size-margin] = y
+            res[:, :, :, margin:new_size-margin] = resized_tensor
         else:
-            res[:, :, margin:new_size - margin, :] = y
+            res[:, :, margin:new_size - margin, :] = resized_tensor
 
         return res
 
@@ -136,11 +129,18 @@ class HostDeviceManager:
         return images
 
     @staticmethod
-    def visualise_sliced_img(images: torch.Tensor) -> None:
+    def visualise_sliced_img(images: torch.Tensor, name=None) -> None:
         for image in images:
             image = image.permute(1, 2, 0)
             image = image.cpu().numpy()
-            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            #cv2.imwrite(r"D:\Desktop\system_output\INPUT\4_out.jpg", image_rgb)
-            cv2.imshow("window", image_rgb)
-            cv2.waitKey(0)
+            #image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+            save_path = r"D:\Desktop\system_output\INPUT\1\result"
+            cv2.imwrite(os.path.join(save_path, f"{name}.jpg"), image)
+            # cv2.imshow("window", image)
+            # cv2.waitKey(0)
+
+    @staticmethod
+    def show_image(image: np.ndarray) -> None:
+        cv2.imshow("", image)
+        cv2.waitKey(0)

@@ -83,18 +83,15 @@ class YOLOv3:
         assert isinstance(images, torch.Tensor), "The batch provided is of the wrong data type. Torch tensor expected"
         assert images.is_cuda == self.is_model_on_gpu, "The provided batch and model on different devices"
 
-        # Make a copy and resize images to the expected size keeping the aspect ratio
-        # TODO: Copy your oriignal images, they must not be resized
         copy_images = images
         resized_images = HostDeviceManager.resize_tensor(tensor=copy_images, new_size=self.input_dimension)
-        HostDeviceManager.visualise_sliced_img(resized_images)
-        print("IS CUDS:", resized_images.is_cuda)
 
+        HostDeviceManager.visualise_sliced_img(resized_images, name="before inference")
         # Run the batch of images through the net
         with torch.no_grad():
             # Row bounding boxes are predicted. Note predictions from
             # 3 YOLO layers get concatenated into 1 big tensor.
-            raw_predictions = self.model(Variable(resized_images), self.CUDA)
+            raw_predictions = self.model(resized_images, self.CUDA)
 
         # Process raw predictions by filtering out results using NMS and thresholding
         output = self._process_predictions(raw_predictions)
