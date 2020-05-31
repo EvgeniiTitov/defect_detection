@@ -1,7 +1,7 @@
 import threading
 import cv2
 import os
-from app.visual_detector.utils import HostDeviceManager
+from app.visual_detector.utils import DataProcessor
 
 
 class FrameReaderThread(threading.Thread):
@@ -70,8 +70,7 @@ class FrameReaderThread(threading.Thread):
                 #Preprocess images, move batch of frames to GPU and send further to pole detector worker
                 if batch_frames:
                     try:
-                        gpu_batch_frames = HostDeviceManager.load_images_to_GPU(batch_frames)
-                        #HostDeviceManager.visualise_sliced_img(gpu_batch_frames, name="from_frame_reader")
+                        gpu_batch_frames = DataProcessor.load_images_to_GPU(batch_frames)
                     except Exception as e:
                         print(f"Failed to move a batch of frames to GPU. Error: {e}")
                         raise

@@ -21,6 +21,8 @@ class DetectedObject:
         self.BB_left = left
         self.BB_right = right
         self.BB_bottom = bottom
+
+        # Deficiency information
         self.deficiency_status = None
         self.inclination = None
         self.cracked = None

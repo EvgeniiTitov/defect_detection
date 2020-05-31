@@ -2,7 +2,7 @@ from collections import defaultdict
 from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
 from typing import List, Dict, Tuple
 from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
-from app.visual_detector.utils import HostDeviceManager
+from app.visual_detector.utils import DataProcessor
 import numpy as np
 import os
 import torch
@@ -62,10 +62,14 @@ class ComponentsDetector:
         3. Perform matching. Distribute Z detected components among M towers belonging to N images.
         '''
 
-        # TODO: 1. Slice out (crop out) all detected towers from images_on_gpu
-        #       2. Remember how many towers found on each image
-        #       3. Resize all towers to one YOLO input size
-        #       4. .cat() them in one batch
+        print("\nDETECTED TOWERS:")
+        for k, v in towers_predictions.items():
+            print(f"Image: {k}. Predictions: {v}")
+
+        # TODO: +. Slice out (crop out) all detected towers from images_on_gpu
+        #       +. Remember how many towers found on each image
+        #       +. Resize all towers to one YOLO input size
+        #       +. .cat() them in one batch
         #       5. Process predictions:
         #         a) Represent objects as DetectedObject, bb as ImageSections
         #         b) Perform matching - what components, belong to what tower, belong to what image in the batch
@@ -75,19 +79,55 @@ class ComponentsDetector:
             images_on_gpu=images_on_gpu,
             towers=towers_predictions
         )
+        # Resize all collected images to the expected size of the net. Remember scaling factors for each resized img
+        resized_images, scaling_factors = self.resize_imgs(imgs_to_search_components_on)
 
+        # Concat all resized images in one tensor
+        try:
+            batch_search_components = torch.cat(resized_images)
+        except Exception as e:
+            print(f"Failed while .cat()ing images to search components on. Error: {e}")
+            raise e
+
+        # Run net, get component detections
+        comp_detections = self.components_net.process_batch(images=batch_search_components)
+
+        # Recalculate bbs relatively
+        print("Components:")
+        for k, v in comp_detections.items():
+            print(f"{k}: {v}")
 
         sys.exit()
+        # Postprocess results - represent all detections as class objects for convenience
 
+        # Perform matching
 
+        # TODO: SHOULD I REPRESENT EACH IMAGE AS A CLASS OBJECT?
 
-        # print("\nDETECTED TOWERS:")
-        # for k, v in towers_predictions.items():
-        #     print(f"Image: {k}. Predictions: {v}")
-        # print("COMPONENTS DETECTED:")
-        # for k, v in detected_components.items():
-        #     print(f"Image: {k}. Predictions: {v}")
-        # sys.exit()
+    def resize_imgs(self, images: List[torch.Tensor]) -> Tuple[list, list]:
+        """
+        Resizes provided images to the expected net size. Keeps track and returns scaling factor
+        for each resized image
+        :param images:
+        :return:
+        """
+        resized_images = list()
+        scaling_factors = list()
+
+        for i in range(len(images)):
+            image = images[i]
+            try:
+                resized_image, scaling_factor = DataProcessor.resize_tensor_keeping_aspratio(
+                    tensor=image.unsqueeze(0),
+                    new_size=ComponentsDetector.net_res
+                )
+            except Exception as e:
+                print(f"Failed during image resizing. Error: {e}")
+                raise
+            resized_images.append(resized_image)
+            scaling_factors.append((i, scaling_factor))
+
+        return resized_images, scaling_factors
 
     def collect_imgs(self, images_on_gpu: torch.Tensor, towers: dict) -> Tuple[list, list]:
         """
@@ -98,15 +138,19 @@ class ComponentsDetector:
         """
         imgs_to_search_components_on = list()
         distrib_info = list()
-
-        # Check each image in the batch and if any towers were found on it
+        '''
+        Check each image in the batch and if any towers were found on it, slice out the tower's bb
+        If no towers found on the image, add the entire image to the list of images on which
+        components will be detected 
+        '''
+        assert len(images_on_gpu) == len(towers), "ERROR: N of imgs in the batch != N of imgs sent from tower detector"
         for i in range(len(images_on_gpu)):
             # Get detections for an image in the batch and the image itself
-            detections = list(towers[i].values())[0]  # TODO: Fix this nested nightmare
+            detections = list(towers[i].values())[0]
             image = images_on_gpu[i]
 
             if not len(detections) > 0:
-                # If no towers found on an image, add entire image - will use it for searching components
+                # If no towers found on an image, take the entire image
                 imgs_to_search_components_on.append(image)
                 # 0 towers found for i-th image in the batch
                 distrib_info.append((i, 0))
@@ -118,9 +162,9 @@ class ComponentsDetector:
                 right = detection.right
                 bot = detection.bottom
                 # for each detection, slice out the tower bb
-                tower_bb_image = HostDeviceManager.slice_out_tensor(image, [left, top, right, bot])
+                tower_bb_image = DataProcessor.slice_out_tensor(image, [left, top, right, bot])
                 imgs_to_search_components_on.append(tower_bb_image)
-            # Keep track of how many towers found on the i-th image in the batch
+            # Keep track of how many towers detected on the i-th image in the batch
             distrib_info.append((i, len(detections)))
 
         return imgs_to_search_components_on, distrib_info

@@ -1,6 +1,8 @@
 import cv2
 import os
 import numpy as np
+from typing import List
+import torch
 
 
 class ResultsHandler:
@@ -176,3 +178,32 @@ class ResultsHandler:
                  (line[2], line[3]),
                  (0, 0, 255), 4,
                  cv2.LINE_AA)
+
+    @staticmethod
+    def draw_bb_for_batch(images: List[np.ndarray], batch_predictions: dict) -> None:
+        """
+
+        :param image:
+        :param batch_predictions:
+        :return:
+        """
+        save_path = r"D:\Desktop\system_output\OUTPUT"
+        assert len(images) == len(batch_predictions), "Nb of images in the batch and batch predictions do no match"
+        for i in range(len(batch_predictions)):
+            image = images[i]
+            predictions = batch_predictions[i]
+
+            tower_objects = list(predictions.values())[0]
+            for tower_object in tower_objects:
+                left = int(tower_object.BB_left)
+                top = int(tower_object.BB_top)
+                right = int(tower_object.BB_right)
+                bot = int(tower_object.BB_bottom)
+                #print(f"FROM DRAWER COORDINATES: {left} {top} , {right} {bot}")
+                pt1 = left, top
+                pt2 = right, bot
+                cv2.rectangle(image, pt1, pt2, (255, 0, 0), 2)
+
+            cv2.imwrite(os.path.join(save_path, f"{i}_out.jpg"), image)
+
+        return

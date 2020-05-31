@@ -8,7 +8,7 @@ from typing import List, Dict
 import numpy as np
 import torchvision
 import sys
-from app.visual_detector.utils import HostDeviceManager
+from app.visual_detector.utils import DataProcessor
 
 
 '''
@@ -81,21 +81,13 @@ class YOLOv3:
         :return:
         """
         assert isinstance(images, torch.Tensor), "The batch provided is of the wrong data type. Torch tensor expected"
-        assert images.is_cuda == self.is_model_on_gpu, "The provided batch and model on different devices"
-
-        copy_images = images
-        resized_images, scaling_factor = HostDeviceManager.resize_tensor_keeping_aspratio(
-            tensor=copy_images,
-            new_size=self.input_dimension
-        )
-        # Normalize tensor
-        resized_images.div_(255.0)
+        assert images.is_cuda == self.is_model_on_gpu, "The provided batch and the net are on different devices"
 
         # Run the batch of images through the net
         with torch.no_grad():
             # Row bounding boxes are predicted. Note predictions from
             # 3 YOLO layers get concatenated into 1 big tensor.
-            raw_predictions = self.model(resized_images, self.CUDA)
+            raw_predictions = self.model(images, self.CUDA)
 
         # Process raw predictions by filtering out results using NMS and thresholding
         output = self._process_predictions(raw_predictions)
@@ -108,13 +100,8 @@ class YOLOv3:
         }
         Detection format: [left, top, right, bottom, objectness score, confidence, index]
         '''
-        #TODO:
-        # Recalculate bb coordinates relatively to the original images (now they're relatively to the resized ones)
-        recalculated_output = HostDeviceManager.recalculate_bb(
-            scaling_factor=scaling_factor,
-            detections=output
-        )
-        return recalculated_output
+
+        return output
 
     def predict_batch_on_cpu(self, images: List[np.ndarray]) -> tuple:
         """

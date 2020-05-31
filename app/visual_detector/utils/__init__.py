@@ -1,3 +1,3 @@
 from .result_processor import ResultsHandler
-from .host_device_manager import HostDeviceManager
+from .data_processor import DataProcessor
 from .metadata_extractor import MetaDataExtractor

@@ -1,6 +1,7 @@
 from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
 from typing import List, Tuple, Dict
 from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
+from app.visual_detector.utils import DataProcessor, ResultsHandler
 import numpy as np
 import os
 import torch
@@ -9,7 +10,8 @@ import sys
 
 class TowerDetector:
     """
-    A wrapper around a neural network to do preprocessing / postprocessing
+    A wrapper around a neural network to do preprocessing / postprocessing of data before
+    and after the neural network to detect towers
     Weights: Pole try 9.
     """
     path_to_dependencies = r"D:\Desktop\branch_dependencies"
@@ -47,27 +49,38 @@ class TowerDetector:
         :param images:
         :return:
         """
-        # To save result for each image in the batch
+        # Preprocess images
+        preprocessed_imgs, original_shape = DataProcessor.resize_tensor_keeping_aspratio(
+            tensor=images_on_gpu,
+            new_size=TowerDetector.net_res
+        )
+        preprocessed_imgs.div_(255.0)
+
+        # Get tower detections
+        tower_detections = self.poles_net.process_batch(preprocessed_imgs)
+
+        # Rescace bounding boxes relatively to images of the original dimensions
+        recalculated_detections = DataProcessor.reslace_bb(
+            detections=tower_detections,
+            current_dim=TowerDetector.net_res,
+            original_shape=original_shape
+        )
+
+        print("Detections before:", tower_detections)
+        print("Detections after:", recalculated_detections)
+
+        # Postprocess results - represent all detections as class objects for convenience
         detections_output = {i: {} for i in range(len(images_on_gpu))}
-        '''
-        Call neural net to get predictions on a batch of images already uploaded to GPU.
-        Returns dict: {image_index_in_batch: [detected poles],...}
-        Each detected pole is represented as a list of 7 items:
-        4 bbs coordinates, objectness score, confidence, index of this class
-        '''
-        batch_poles_detections = self.poles_net.process_batch(images_on_gpu)
-        # Represent all detections as class objects for convenience
-        for i in range(len(batch_poles_detections)):
+        for i in range(len(recalculated_detections)):
             # Poles were searched for on original images, not subimages (cropped out objects)
             image_section = SubImage(name="poles")
             # For each image create a key-value pair. Key - image section on which the detection took place - the whole
             # frame in this case. Value - detected poles
             detections_output[i][image_section] = list()
             # Get nb of towers detected on the image - affects bb modification
-            nb_of_poles = len(batch_poles_detections[i])
+            nb_of_poles = len(recalculated_detections[i])
             # Process predictions for each image in the batch separately
-            for pole in batch_poles_detections[i]:
-                pole = pole[0]  # yolo returns result as nested lists
+            for pole in recalculated_detections[i]:
                 if pole[-1] == 0:
                     class_name = "metal"
                 elif pole[-1] == 1:
@@ -83,10 +96,10 @@ class TowerDetector:
                     class_id=pole[-1],
                     object_name=class_name,
                     confidence=pole[5],
-                    left=int(pole[1]),
-                    top=int(pole[2]),
-                    right=int(pole[3]),
-                    bottom=int(pole[4])
+                    left=int(pole[0]),
+                    top=int(pole[1]),
+                    right=int(pole[2]),
+                    bottom=int(pole[3])
                 )
                 # Create a copy of pole's bb and modify them (widen)
                 self.modify_pole_bb(pole_detection, nb_of_poles, images_on_gpu[i])
