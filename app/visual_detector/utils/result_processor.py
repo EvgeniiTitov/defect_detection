@@ -180,7 +180,7 @@ class ResultsHandler:
                  cv2.LINE_AA)
 
     @staticmethod
-    def draw_bb_for_batch(images: List[np.ndarray], batch_predictions: dict) -> None:
+    def draw_bb_for_batch(images: List[np.ndarray], batch_predictions: dict, name: str) -> None:
         """
 
         :param image:
@@ -204,6 +204,6 @@ class ResultsHandler:
                 pt2 = right, bot
                 cv2.rectangle(image, pt1, pt2, (255, 0, 0), 2)
 
-            cv2.imwrite(os.path.join(save_path, f"{i}_out.jpg"), image)
+            cv2.imwrite(os.path.join(save_path, f"{i}_{name}_out.jpg"), image)
 
         return

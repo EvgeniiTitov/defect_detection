@@ -1,5 +1,4 @@
 import threading
-import sys
 from app.visual_detector.utils import ResultsHandler
 
 
@@ -40,7 +39,7 @@ class PoleDetectorThread(threading.Thread):
 
             # Detect power line towers
             poles = self.tower_detector.process_batch(images_on_gpu=gpu_batch_frames)
-            #ResultsHandler.draw_bb_for_batch(images=batch_frames, batch_predictions=poles)
+            ResultsHandler.draw_bb_for_batch(images=batch_frames, batch_predictions=poles, name="tower")
             self.Q_out.put((batch_frames, gpu_batch_frames, poles, file_id))
 
         print("PoleDetectorThread killed")

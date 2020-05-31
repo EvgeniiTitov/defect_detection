@@ -1,3 +1,4 @@
+from app.visual_detector.utils import ResultsHandler
 import threading
 
 
@@ -33,6 +34,7 @@ class ComponentDetectorThread(threading.Thread):
                 images_on_gpu=gpu_batch_frames,
                 towers_predictions=towers
             )
+            ResultsHandler.draw_bb_for_batch(images=batch_frames, batch_predictions=components, name="comp")
             self.Q_out.put((batch_frames, gpu_batch_frames, file_id, towers, components))
 
         print("ComponentDetectorThread killed")

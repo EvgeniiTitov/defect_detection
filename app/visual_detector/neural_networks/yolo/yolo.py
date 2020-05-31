@@ -8,7 +8,6 @@ from typing import List, Dict
 import numpy as np
 import torchvision
 import sys
-from app.visual_detector.utils import DataProcessor
 
 
 '''

@@ -2,10 +2,8 @@ from app.visual_detector.neural_networks.detections_repr import DetectedObject, 
 from typing import List, Tuple, Dict
 from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
 from app.visual_detector.utils import DataProcessor, ResultsHandler
-import numpy as np
 import os
 import torch
-import sys
 
 
 class TowerDetector:
@@ -46,12 +44,12 @@ class TowerDetector:
         Receives a batch of images, runs them through the net to get predictions,
         processes results by representing all detected objects as class objects. Depending
         on class of detected objects, modifies bb.
-        :param images:
+        :param images_on_gpu:
         :return:
         """
         # Preprocess images
         preprocessed_imgs, original_shape = DataProcessor.resize_tensor_keeping_aspratio(
-            tensor=images_on_gpu,
+            batch_tensor=images_on_gpu,
             new_size=TowerDetector.net_res
         )
         preprocessed_imgs.div_(255.0)
@@ -60,15 +58,11 @@ class TowerDetector:
         tower_detections = self.poles_net.process_batch(preprocessed_imgs)
 
         # Rescace bounding boxes relatively to images of the original dimensions
-        recalculated_detections = DataProcessor.reslace_bb(
+        recalculated_detections = DataProcessor.rescale_bb(
             detections=tower_detections,
             current_dim=TowerDetector.net_res,
             original_shape=original_shape
         )
-
-        print("Detections before:", tower_detections)
-        print("Detections after:", recalculated_detections)
-
         # Postprocess results - represent all detections as class objects for convenience
         detections_output = {i: {} for i in range(len(images_on_gpu))}
         for i in range(len(recalculated_detections)):
@@ -77,8 +71,6 @@ class TowerDetector:
             # For each image create a key-value pair. Key - image section on which the detection took place - the whole
             # frame in this case. Value - detected poles
             detections_output[i][image_section] = list()
-            # Get nb of towers detected on the image - affects bb modification
-            nb_of_poles = len(recalculated_detections[i])
             # Process predictions for each image in the batch separately
             for pole in recalculated_detections[i]:
                 if pole[-1] == 0:
@@ -101,8 +93,6 @@ class TowerDetector:
                     right=int(pole[2]),
                     bottom=int(pole[3])
                 )
-                # Create a copy of pole's bb and modify them (widen)
-                self.modify_pole_bb(pole_detection, nb_of_poles, images_on_gpu[i])
                 detections_output[i][image_section].append(pole_detection)
         '''
         Output format if any towers detected: 
@@ -113,40 +103,3 @@ class TowerDetector:
         }
         '''
         return detections_output
-
-    def modify_pole_bb(
-            self,
-            pole: DetectedObject,
-            nb_of_poles: int,
-            image: torch.Tensor
-    ) -> None:
-        """
-        Creates a second set of modified pole coordinates - widen bbx
-        :param pole:
-        :param nb_of_poles:
-        :param image:
-        :return:
-        """
-        if nb_of_poles == 1:
-            new_left_boundary = int(pole.BB_left * 0.4)
-            new_right_boundary = int(pole.BB_right * 1.6) if int(pole.BB_right * 1.6) < \
-                                                                 image.shape[1] else (image.shape[1] - 2)
-            # Move upper border way up, often when a pole is close up many components do not get
-            # included in the box, as a result they do not get found
-            new_top_boundary = int(pole.BB_top * 0.1)
-            new_bot_boundary = int(pole.BB_bottom * 1.1) if int(pole.BB_bottom * 1.1) < \
-                                                                image.shape[0] else (image.shape[0] - 2)
-        else:
-            new_left_boundary = int(pole.BB_left * 0.9)
-            new_right_boundary = int(pole.BB_right * 1.1) if int(pole.BB_right * 1.1) < \
-                                                             image.shape[1] else (image.shape[1] - 2)
-            new_top_boundary = int(pole.BB_top * 0.5)
-            new_bot_boundary = int(pole.BB_bottom * 1.1) if int(pole.BB_bottom * 1.1) < \
-                                                            image.shape[0] else (image.shape[0] - 2)
-
-        pole.update_object_coordinates(
-            left=new_left_boundary,
-            top=new_top_boundary,
-            right=new_right_boundary,
-            bottom=new_bot_boundary
-        )

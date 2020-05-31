@@ -1,18 +1,16 @@
-from collections import defaultdict
 from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
 from app.visual_detector.utils import DataProcessor
 import numpy as np
 import os
 import torch
-import sys
 
 
 class ComponentsDetector:
     """
     A wrapper around a neural network to do preprocessing / postprocessing
-    Weights: Try 6 components
+    Weights: Try 10 components
     """
     path_to_dependencies = r"D:\Desktop\branch_dependencies"
     dependencies_comp = "components"
@@ -61,26 +59,13 @@ class ComponentsDetector:
         2. For M towers you get Z component detection. Each detection is to be represented as DetectedObject
         3. Perform matching. Distribute Z detected components among M towers belonging to N images.
         '''
-
-        print("\nDETECTED TOWERS:")
-        for k, v in towers_predictions.items():
-            print(f"Image: {k}. Predictions: {v}")
-
-        # TODO: +. Slice out (crop out) all detected towers from images_on_gpu
-        #       +. Remember how many towers found on each image
-        #       +. Resize all towers to one YOLO input size
-        #       +. .cat() them in one batch
-        #       5. Process predictions:
-        #         a) Represent objects as DetectedObject, bb as ImageSections
-        #         b) Perform matching - what components, belong to what tower, belong to what image in the batch
-
         # Collect all images that will be used to search for components + how many towers found on each image
         imgs_to_search_components_on, distribute_info = self.collect_imgs(
             images_on_gpu=images_on_gpu,
             towers=towers_predictions
         )
-        # Resize all collected images to the expected size of the net. Remember scaling factors for each resized img
-        resized_images, scaling_factors = self.resize_imgs(imgs_to_search_components_on)
+        # Resize all collected images to the expected size of the net. Remember original sizes for bb rescaling
+        resized_images, original_sizes = self.resize_imgs(imgs_to_search_components_on)
 
         # Concat all resized images in one tensor
         try:
@@ -88,50 +73,159 @@ class ComponentsDetector:
         except Exception as e:
             print(f"Failed while .cat()ing images to search components on. Error: {e}")
             raise e
+        # Normalize all images in the batch as per YOLO requirements
+        batch_search_components.div_(255.0)
+
+        print("Nb of imgs sent for component detection:", len(batch_search_components))
 
         # Run net, get component detections
         comp_detections = self.components_net.process_batch(images=batch_search_components)
 
         # Recalculate bbs relatively
-        print("Components:")
-        for k, v in comp_detections.items():
-            print(f"{k}: {v}")
+        rescaled_detections = DataProcessor.rescale_bb(
+            detections=comp_detections,
+            current_dim=ComponentsDetector.net_res,
+            original_shapes=original_sizes
+        )
+        '''
+        Postprocess results - represent all detections as class objects for convenience and add them to the same
+        dictionary where detection results for towers have been stored.
+        
+        For each image N towers have been detected. This information is stored in distribute_info. 
+        
+        Let's say we have 5 frames. On 5 frames, 5 towers were detected on 4 images (1 had 2), there were no detections
+        on one image. => Once combined, there're 5 + 1 images on which components will be detected. For each of the 6
+        images we will either get or not component detections {1: [], 2: [], ...}
+        
+        We need to match (distrubute) C component detections among B tower detected on A images using the distribute
+        information. 
+        
+        Match comp detections with images on whcih the search happened (towers / entire frames). 
+        '''
+        print("Nb of detections:", len(rescaled_detections))
+        print("Rescaled component detections:", rescaled_detections)
 
-        sys.exit()
-        # Postprocess results - represent all detections as class objects for convenience
+        detections_output = {i: {} for i in range(len(images_on_gpu))}
+        matched_index = 0
+        for i in range(len(images_on_gpu)):
+            # Get number of towers that were detected on the i-th image in the batch
+            index, nb_of_towers = distribute_info[i]
+            assert i == index, "Indices do not match. Cannot perform detections matching"
 
-        # Perform matching
+            # If no towers were detected on i-th image in the batch, then we attempted to search for components on
+            # entire frame. Check ones if anything was detected
+            if nb_of_towers == 0:
+                tower_image_subsection = SubImage(name="entire frame")
+                # Create a key-value pair for i-th image in the batch
+                detections_output[i][tower_image_subsection] = list()
+                # Loop over each detected component representing it as a class object for convenience
+                components = rescaled_detections[matched_index]
+                for component in components:
+                    if component[-1] == 0:
+                        class_name = "insulator"
+                    elif component[-1] == 1:
+                        class_name = "dumper"
+                    elif component[-1] == 2:
+                        class_name = "pillar"
+                    else:
+                        print("ERROR: Wrong class index got detected!")
+                        continue
 
-        # TODO: SHOULD I REPRESENT EACH IMAGE AS A CLASS OBJECT?
+                    comp_obj = DetectedObject(
+                        left=component[0],
+                        top=component[1],
+                        right=component[2],
+                        bottom=component[3],
+                        class_id=component[-1],
+                        object_name=class_name,
+                        confidence=component[5]
+                    )
+                    detections_output[i][tower_image_subsection].append(comp_obj)
+
+                del rescaled_detections[matched_index]
+                matched_index += 1
+                continue
+
+            for j in range(nb_of_towers):
+                tower_obj = list(towers_predictions[i].values())[0][j]
+                # Create a subimage object representing image section within which components were attempted to detect
+                tower_image_subsection = SubImage(name="tower bb")
+                # Save tower bb coordinates relatively to the original image
+                tower_image_subsection.save_relative_coordinates(
+                    left=tower_obj.left,
+                    top=tower_obj.top,
+                    right=tower_obj.right,
+                    bottom=tower_obj.bottom
+                )
+                # Create a key-value pair for i-th image in the batch
+                detections_output[i][tower_image_subsection] = list()
+                # Loop over each detected component representing it as a class object for convenience
+                components = rescaled_detections[matched_index]
+                for component in components:
+                    if component[-1] == 0:
+                        class_name = "insulator"
+                    elif component[-1] == 1:
+                        class_name = "dumper"
+                    elif component[-1] == 2:
+                        class_name = "pillar"
+                    else:
+                        print("ERROR: Wrong class index got detected!")
+                        continue
+
+                    comp_obj = DetectedObject(
+                        left=component[0],
+                        top=component[1],
+                        right=component[2],
+                        bottom=component[3],
+                        class_id=component[-1],
+                        object_name=class_name,
+                        confidence=component[5]
+                    )
+                    detections_output[i][tower_image_subsection].append(comp_obj)
+                del rescaled_detections[matched_index]
+                matched_index += 1
+
+        assert len(rescaled_detections) == 0, "Failed to match component detections results correctly"
+
+        print("\nDETECTED TOWERS:")
+        for k, v in towers_predictions.items():
+            print(f"Image index: {k}. Towers: {v}")
+
+        print("DETECTED COMPONENTS:")
+        for k, v in detections_output.items():
+            print(f"Image index: {k}. Components: {v}")
+
+        return detections_output
 
     def resize_imgs(self, images: List[torch.Tensor]) -> Tuple[list, list]:
         """
-        Resizes provided images to the expected net size. Keeps track and returns scaling factor
-        for each resized image
+        Resizes provided images to the expected net size. Remembers information regarding original sizes
+        of the images, which will be required to rescale bb
         :param images:
         :return:
         """
         resized_images = list()
-        scaling_factors = list()
-
+        original_sizes = list()
         for i in range(len(images)):
             image = images[i]
             try:
-                resized_image, scaling_factor = DataProcessor.resize_tensor_keeping_aspratio(
-                    tensor=image.unsqueeze(0),
+                resized_image, original_size = DataProcessor.resize_tensor_keeping_aspratio(
+                    batch_tensor=image.unsqueeze(0),
                     new_size=ComponentsDetector.net_res
                 )
             except Exception as e:
                 print(f"Failed during image resizing. Error: {e}")
                 raise
             resized_images.append(resized_image)
-            scaling_factors.append((i, scaling_factor))
+            original_sizes.append((i, original_size))
 
-        return resized_images, scaling_factors
+        return resized_images, original_sizes
 
     def collect_imgs(self, images_on_gpu: torch.Tensor, towers: dict) -> Tuple[list, list]:
         """
-
+        Collects images on which components detection will take place.
+        If any towers have been detected, modify their boxes (enlarge) to make sure all components end up
+        within the tower's bounding box.
         :param images_on_gpu: batch of images on gpu
         :param towers: detected towers
         :return:
@@ -156,12 +250,15 @@ class ComponentsDetector:
                 distrib_info.append((i, 0))
                 continue
 
+            nb_of_towers = len(detections)
             for detection in detections:
+                # Modify object (tower)'s bounding boxes
+                DataProcessor.modify_bb_coord(tower=detection, image=image, nb_of_towers=nb_of_towers)
+                # Get modified BB coordinates and slice out the tower
                 left = detection.left
                 top = detection.top
                 right = detection.right
                 bot = detection.bottom
-                # for each detection, slice out the tower bb
                 tower_bb_image = DataProcessor.slice_out_tensor(image, [left, top, right, bot])
                 imgs_to_search_components_on.append(tower_bb_image)
             # Keep track of how many towers detected on the i-th image in the batch
@@ -169,118 +266,7 @@ class ComponentsDetector:
 
         return imgs_to_search_components_on, distrib_info
 
-
-
-
-
-
-
-
-        # # If any pole have been detected
-        # if pole_predictions:
-        #     # FOR loop below just to play it safe. There should be only one item in the dictionary
-        #     # original image (class object) : poles detected on it (list of lists)
-        #     for subimage, poles in pole_predictions.items():
-        #         # Consider all poles detected on the original image
-        #         for pole in poles:
-        #             # For each pole create a separate list for its components to temporary store them
-        #             components = list()
-        #             # Crop out the pole detected to send for components detection (modified coordinates)
-        #             pole_subimage = np.array(image[pole.top:pole.bottom, pole.left:pole.right])
-        #             # Keep track of new subimage cropped out of the original one for components detection
-        #             pole_image_section = SubImage(name="components")
-        #             # Save coordinates of this subimage relatively to the original image for
-        #             # BB drawing and saving objects detected on disk (Relative coordinates)
-        #             pole_image_section.save_relative_coordinates(
-        #                 top=pole.top,
-        #                 left=pole.left,
-        #                 right=pole.right,
-        #                 bottom=pole.bottom
-        #             )
-        #             # ! Depending on the pole's class we want to detect different number of objects
-        #             if pole.class_id == 0:  # metal
-        #                 predictions = self.components_net.predict(pole_subimage)
-        #                 if predictions:
-        #                     components += predictions
-        #
-        #             elif pole.class_id == 1:  # concrete
-        #                 # TEMPORARY: Will be replaced with ONE 3 class predictor
-        #                 predictions = self.components_net.predict(pole_subimage)
-        #                 if predictions:
-        #                     components += predictions
-        #
-        #                 pillar = self.pillar_net.predict(pole_subimage)
-        #
-        #                 # This since we use 2 nets in sequence predicting 2 and 1 classes, so there is
-        #                 # confusion how to keep track what class each object predicted belongs to.
-        #                 if pillar:
-        #                     assert len(pillar) == 1, "\nERROR: More than 1 pillar detected!"
-        #                     # Change class id to 2 for pillars to differ from the rest
-        #                     pillar[0][-1] = 2
-        #                     components.append(pillar[0])
-        #
-        #             # Check if any components have been detected on the pole
-        #             if components:
-        #                 # Represent each component detected as a class object. Save components detected
-        #                 # to the dictionary with the appropriate key - image section (pole) on which they
-        #                 # were detected
-        #                 for component in components:
-        #                     components_detected[pole_image_section].append(
-        #                                                         DetectedObject(
-        #                                                             class_id=component[7],
-        #                                                             confidence=component[5],
-        #                                                             left=int(component[1]),
-        #                                                             top=int(component[2]),
-        #                                                             right=int(component[3]),
-        #                                                             bottom=int(component[4])
-        #                                                         )
-        #                     )
-        #
-        # else:
-        #     # In case no poles have been detected, send the whole image for components detection
-        #     # in case there are any close-up components on the image
-        #     components = list()
-        #     predictions = self.components_net.predict(image)
-        #
-        #     if predictions:
-        #         components += predictions
-        #
-        #     # TEMPORARY:
-        #     pillar = self.pillar_net.predict(image)
-        #
-        #     #assert pillar is None or len(pillar) == 1, "ERROR: More than 1 pillar detected"
-        #     if pillar and len(pillar) > 1:
-        #         print("ATTENTION: MORE THAN ONE PILLAR DETECTED!")
-        #
-        #     # Change its class to 2 (separate net, will be changed after retraining)
-        #     if pillar:
-        #         pillar[0][-1] = 2
-        #         components.append(pillar[0])
-        #
-        #     if components:
-        #         whole_image = SubImage("components")
-        #
-        #         for component in components:
-        #             components_detected[whole_image].append(
-        #                                         DetectedObject(
-        #                                             class_id=component[7],
-        #                                             confidence=component[5],
-        #                                             left=int(component[1]),
-        #                                             top=int(component[2]),
-        #                                             right=int(component[3]),
-        #                                             bottom=int(component[4])
-        #                                         )
-        #             )
-        #
-        # if components_detected:
-        #     # Name objects detected by unique names instead of default 0,1,2 etc.
-        #     self.determine_object_class(components_detected)
-        #     # Modify pillar's BB
-        #     self.modify_pillars_BBs(image, components_detected)
-        #
-        # return components_detected
-
-    def modify_pillars_BBs(self, image: np.ndarray, componenets_detected: dict) -> None:
+    def modify_pillars_bbs(self, image: np.ndarray, componenets_detected: dict) -> None:
         """
         Slightly widens pillar's bb in order to ensure both edges are within the box
         :param image:
@@ -294,24 +280,3 @@ class ComponentsDetector:
                     new_right = component.BB_right * 1.04 if component.BB_right * 1.04 <\
                                                         image.shape[1] else image.shape[1] - 10
                     component.update_object_coordinates(left=int(new_left), right=int(new_right))
-
-    def determine_object_class(self, components_detected: dict) -> None:
-        """
-        Checks object's class and names it. Since we've got multiple nets predicting objects
-        like 0,1,2 classes, we want to make sure it doesn't get confusing during saving data and
-        drawing BBs
-        :return: Nothing. Changes object's state
-        """
-        for subimage, components in components_detected.items():
-
-            for component in components:
-                if component.class_id == 0:
-                    component.object_name = "insl"  # Insulator
-
-                elif component.class_id == 1:
-                    component.object_name = "dump"  # Vibration dumper
-
-                else:
-                    component.object_name = "pillar"
-
-        return
