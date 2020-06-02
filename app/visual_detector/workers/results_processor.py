@@ -89,7 +89,7 @@ class ResultsProcessorThread(threading.Thread):
             else:
                 cv2.imwrite(
                     filename=os.path.join(store_path, filename + "_out.jpg"),
-                    img=batch_frames
+                    img=batch_frames[0]
                 )
             self.progress[file_id]["processed"] += len(batch_frames)
 

@@ -5,26 +5,7 @@
     <bookmark url="file://$PROJECT_DIR$/app/visual_detector/utils/tensor_manager.py" line="160" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/TODO" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/TODO" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/component_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/component_detector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/detections_repr.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/detections_repr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/tower_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/tower_detector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/vib_dump_classifier/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/dumper_classifier/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/vib_dump_classifier/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/dumper_classifier/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/yolo.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/yolo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/utils/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/utils/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/utils/data_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/utils/tensor_manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/utils/result_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/utils/result_processor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/component_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/component_detector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/defect_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/defect_detector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/results_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/results_processor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/tower_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/tower_detector.py" afterDir="false" />
-    </list>
+    <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -144,8 +125,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/utils/result_processor.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="630">
-                  <caret line="99" lean-forward="true" selection-start-line="99" selection-end-line="99" />
+                <state relative-caret-position="92">
+                  <caret line="69" column="19" selection-start-line="69" selection-start-column="19" selection-end-line="69" selection-end-column="19" />
                   <folding>
                     <element signature="e#0#10#0" expanded="true" />
                   </folding>
@@ -525,7 +506,7 @@
       <window_info anchor="bottom" id="Message" order="3" />
       <window_info anchor="bottom" id="Find" order="4" weight="0.42222223" />
       <window_info anchor="bottom" id="Version Control" order="5" weight="0.5411111" />
-      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.033333335" />
+      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.3588889" />
       <window_info anchor="bottom" id="Debug" order="7" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="8" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="9" weight="0.4" />
@@ -941,8 +922,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/utils/result_processor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="630">
-          <caret line="99" lean-forward="true" selection-start-line="99" selection-end-line="99" />
+        <state relative-caret-position="92">
+          <caret line="69" column="19" selection-start-line="69" selection-start-column="19" selection-end-line="69" selection-end-column="19" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
