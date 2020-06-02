@@ -1,7 +1,7 @@
 from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
-from typing import List, Tuple, Dict
+from typing import Dict
 from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
-from app.visual_detector.utils import DataProcessor, ResultsHandler
+from app.visual_detector.utils import TensorManager
 import os
 import torch
 
@@ -16,7 +16,7 @@ class TowerDetector:
     dependencies = "poles"
     confidence = 0.2
     NMS_thresh = 0.2
-    net_res = 416
+    net_res = 512
 
     def __init__(self):
         # Network's dependencies
@@ -37,7 +37,7 @@ class TowerDetector:
             print("Tower detector successfully initialized")
         except Exception as e:
             print(f"Failed during Tower Detector initialization. Error: {e}")
-            raise
+            raise e
 
     def process_batch(self, images_on_gpu: torch.Tensor) -> Dict[SubImage, DetectedObject]:
         """
@@ -48,7 +48,7 @@ class TowerDetector:
         :return:
         """
         # Preprocess images
-        preprocessed_imgs, original_shape = DataProcessor.resize_tensor_keeping_aspratio(
+        preprocessed_imgs, original_shape = TensorManager.resize_tensor_keeping_aspratio(
             batch_tensor=images_on_gpu,
             new_size=TowerDetector.net_res
         )
@@ -58,7 +58,7 @@ class TowerDetector:
         tower_detections = self.poles_net.process_batch(preprocessed_imgs)
 
         # Rescace bounding boxes relatively to images of the original dimensions
-        recalculated_detections = DataProcessor.rescale_bb(
+        recalculated_detections = TensorManager.rescale_bb(
             detections=tower_detections,
             current_dim=TowerDetector.net_res,
             original_shape=original_shape
@@ -67,16 +67,16 @@ class TowerDetector:
         detections_output = {i: {} for i in range(len(images_on_gpu))}
         for i in range(len(recalculated_detections)):
             # Poles were searched for on original images, not subimages (cropped out objects)
-            image_section = SubImage(name="poles")
+            image_section = SubImage(name="frame")
             # For each image create a key-value pair. Key - image section on which the detection took place - the whole
             # frame in this case. Value - detected poles
             detections_output[i][image_section] = list()
             # Process predictions for each image in the batch separately
             for pole in recalculated_detections[i]:
                 if pole[-1] == 0:
-                    class_name = "metal"
-                elif pole[-1] == 1:
                     class_name = "concrete"
+                elif pole[-1] == 1:
+                    class_name = "metal"
                 elif pole[-1] == 2:
                     class_name = "wood"
                 else:
@@ -84,15 +84,19 @@ class TowerDetector:
                     continue
                 # Represent each detected pole as an object, so that we can easily change its state (adjust
                 # BB coordinates) and add more information to it as it moves along the processing pipeline
-                pole_detection = DetectedObject(
-                    class_id=pole[-1],
-                    object_name=class_name,
-                    confidence=pole[5],
-                    left=int(pole[0]),
-                    top=int(pole[1]),
-                    right=int(pole[2]),
-                    bottom=int(pole[3])
-                )
+                try:
+                    pole_detection = DetectedObject(
+                        left=int(pole[0]),
+                        top=int(pole[1]),
+                        right=int(pole[2]),
+                        bottom=int(pole[3]),
+                        class_id=pole[-1],
+                        object_name=class_name,
+                        confidence=pole[5]
+                    )
+                except Exception as e:
+                    print(f"Failed during DetectedObject initialization. Error: {e}")
+                    raise e
                 detections_output[i][image_section].append(pole_detection)
         '''
         Output format if any towers detected: 

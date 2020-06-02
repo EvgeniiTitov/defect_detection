@@ -23,7 +23,7 @@ class DetectedObject:
         self.BB_bottom = bottom
 
         # Deficiency information
-        self.deficiency_status = None
+        self.deficiency_status = False
         self.inclination = None
         self.cracked = None
 

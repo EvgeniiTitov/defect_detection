@@ -1,7 +1,7 @@
 import threading
 import cv2
 import os
-from app.visual_detector.utils import DataProcessor
+from app.visual_detector.utils import TensorManager
 
 
 class FrameReaderThread(threading.Thread):
@@ -70,15 +70,12 @@ class FrameReaderThread(threading.Thread):
                 #Preprocess images, move batch of frames to GPU and send further to pole detector worker
                 if batch_frames:
                     try:
-                        gpu_batch_frames = DataProcessor.load_images_to_GPU(batch_frames)
+                        gpu_batch_frames = TensorManager.load_images_to_GPU(batch_frames)
                     except Exception as e:
                         print(f"Failed to move a batch of frames to GPU. Error: {e}")
                         raise
                     # Send original images, imaged on GPU and file id to the next worker
                     self.Q_out.put((batch_frames, gpu_batch_frames, file_id))
-
-                    # DELETE ME - to generate just one batch of frames
-                    break
 
                 if to_break:
                     break

@@ -7,9 +7,10 @@ KNOWN ISSUES - BUGS:
 
 
 SHORT TERM TASKS:
-0. Add logger
-1. Retrain poles net to work with 3 class (Make sure classes are balanced)
-2. Retrain components net to replace 2 YOLOs in sequence with 1 trained for 3 components classes (Balance dataset)
+1. Ensure preprocessing matches what the net was trained on
+2. Wrong bb drawing
+
+2. Add logger
 3. Dumpers module (integrate into the system)
 4. Wooden pole defects (Dasha)
 5. Tuning:
@@ -32,15 +33,3 @@ FROZENS TASKS:
 - Cracks module
 - Subtract other object's boxes from the pillar BB (less noise for cracks detection)
 - Missing middle pole for wooden poles
-
-
-CRUCIAL:
-! Batch processing to ensure GPU 100% used (now 40%)
-! CPU-GPU data transfer issue between block 1-2 (will break when add more networks)
-Иметь копию на СПУ и ГПУ. Передавать только координаты, которые сплювывают нейронки.
-Слайс делать легко - структура, которая говорит на какие участки оригинального блока памяти ты ссылаешься.
-! Q size optimization to ensure efficient memory usage (than constantly moving HOST-DEVICE)
-Put as many frames as possible onto GPU, because CPU-GPU transfer is expensive.
-
-COMMENTS:
-On 2 branches different predictions -> images come with different preprocessing. Check!

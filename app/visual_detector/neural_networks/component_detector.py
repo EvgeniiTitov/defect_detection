@@ -1,7 +1,7 @@
 from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
 from typing import List, Tuple
 from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
-from app.visual_detector.utils import DataProcessor
+from app.visual_detector.utils import TensorManager
 import numpy as np
 import os
 import torch
@@ -14,7 +14,7 @@ class ComponentsDetector:
     """
     path_to_dependencies = r"D:\Desktop\branch_dependencies"
     dependencies_comp = "components"
-    confidence = 0.15
+    confidence = 0.10
     NMS_thresh = 0.25
     net_res = 608
 
@@ -76,13 +76,11 @@ class ComponentsDetector:
         # Normalize all images in the batch as per YOLO requirements
         batch_search_components.div_(255.0)
 
-        print("Nb of imgs sent for component detection:", len(batch_search_components))
-
         # Run net, get component detections
         comp_detections = self.components_net.process_batch(images=batch_search_components)
 
         # Recalculate bbs relatively
-        rescaled_detections = DataProcessor.rescale_bb(
+        rescaled_detections = TensorManager.rescale_bb(
             detections=comp_detections,
             current_dim=ComponentsDetector.net_res,
             original_shapes=original_sizes
@@ -94,24 +92,22 @@ class ComponentsDetector:
         For each image N towers have been detected. This information is stored in distribute_info. 
         
         Let's say we have 5 frames. On 5 frames, 5 towers were detected on 4 images (1 had 2), there were no detections
-        on one image. => Once combined, there're 5 + 1 images on which components will be detected. For each of the 6
-        images we will either get or not component detections {1: [], 2: [], ...}
+        on one image. => Once combined, there're 5 + 1 images on which components will be detected because if no 
+        towers have been found, we attempt to search component on the entire frame. 
+        For each of the 6 images we will either get some or no component detections {1: [], 2: [], ...}
         
         We need to match (distrubute) C component detections among B tower detected on A images using the distribute
-        information. 
+        information, which lists how many towers were found on each frame in the batch
         
-        Match comp detections with images on whcih the search happened (towers / entire frames). 
+        Match component detections with images on which the search happened (towers / entire frames). 
         '''
-        print("Nb of detections:", len(rescaled_detections))
-        print("Rescaled component detections:", rescaled_detections)
-
         detections_output = {i: {} for i in range(len(images_on_gpu))}
         matched_index = 0
         for i in range(len(images_on_gpu)):
             # Get number of towers that were detected on the i-th image in the batch
             index, nb_of_towers = distribute_info[i]
+            # Assert image's index in the batch corresponds to the image index from distr. info
             assert i == index, "Indices do not match. Cannot perform detections matching"
-
             # If no towers were detected on i-th image in the batch, then we attempted to search for components on
             # entire frame. Check ones if anything was detected
             if nb_of_towers == 0:
@@ -130,16 +126,19 @@ class ComponentsDetector:
                     else:
                         print("ERROR: Wrong class index got detected!")
                         continue
-
-                    comp_obj = DetectedObject(
-                        left=component[0],
-                        top=component[1],
-                        right=component[2],
-                        bottom=component[3],
-                        class_id=component[-1],
-                        object_name=class_name,
-                        confidence=component[5]
-                    )
+                    try:
+                        comp_obj = DetectedObject(
+                            left=component[0],
+                            top=component[1],
+                            right=component[2],
+                            bottom=component[3],
+                            class_id=component[-1],
+                            object_name=class_name,
+                            confidence=component[5]
+                        )
+                    except Exception as e:
+                        print(f"Failed during DetectedObject initialization. Error: {e}")
+                        raise e
                     detections_output[i][tower_image_subsection].append(comp_obj)
 
                 del rescaled_detections[matched_index]
@@ -147,9 +146,16 @@ class ComponentsDetector:
                 continue
 
             for j in range(nb_of_towers):
+                components = rescaled_detections[matched_index]
+                if not components:
+                    del rescaled_detections[matched_index]
+                    matched_index += 1
+                    continue
+
+                # Access each tower object for i-th frame in order to save its relative coordinates
                 tower_obj = list(towers_predictions[i].values())[0][j]
                 # Create a subimage object representing image section within which components were attempted to detect
-                tower_image_subsection = SubImage(name="tower bb")
+                tower_image_subsection = SubImage(name="tower")
                 # Save tower bb coordinates relatively to the original image
                 tower_image_subsection.save_relative_coordinates(
                     left=tower_obj.left,
@@ -160,7 +166,6 @@ class ComponentsDetector:
                 # Create a key-value pair for i-th image in the batch
                 detections_output[i][tower_image_subsection] = list()
                 # Loop over each detected component representing it as a class object for convenience
-                components = rescaled_detections[matched_index]
                 for component in components:
                     if component[-1] == 0:
                         class_name = "insulator"
@@ -171,29 +176,24 @@ class ComponentsDetector:
                     else:
                         print("ERROR: Wrong class index got detected!")
                         continue
-
-                    comp_obj = DetectedObject(
-                        left=component[0],
-                        top=component[1],
-                        right=component[2],
-                        bottom=component[3],
-                        class_id=component[-1],
-                        object_name=class_name,
-                        confidence=component[5]
-                    )
+                    try:
+                        comp_obj = DetectedObject(
+                            left=int(component[0]),
+                            top=int(component[1]),
+                            right=int(component[2]),
+                            bottom=int(component[3]),
+                            class_id=component[-1],
+                            object_name=class_name,
+                            confidence=component[5]
+                        )
+                    except Exception as e:
+                        print(f"Failed during DetectedObject initialization. Error: {e}")
+                        raise e
                     detections_output[i][tower_image_subsection].append(comp_obj)
                 del rescaled_detections[matched_index]
                 matched_index += 1
 
-        assert len(rescaled_detections) == 0, "Failed to match component detections results correctly"
-
-        print("\nDETECTED TOWERS:")
-        for k, v in towers_predictions.items():
-            print(f"Image index: {k}. Towers: {v}")
-
-        print("DETECTED COMPONENTS:")
-        for k, v in detections_output.items():
-            print(f"Image index: {k}. Components: {v}")
+        assert len(rescaled_detections) == 0, "Failed to match all component detections results."
 
         return detections_output
 
@@ -204,18 +204,17 @@ class ComponentsDetector:
         :param images:
         :return:
         """
-        resized_images = list()
-        original_sizes = list()
+        resized_images, original_sizes = list(), list()
         for i in range(len(images)):
             image = images[i]
             try:
-                resized_image, original_size = DataProcessor.resize_tensor_keeping_aspratio(
+                resized_image, original_size = TensorManager.resize_tensor_keeping_aspratio(
                     batch_tensor=image.unsqueeze(0),
                     new_size=ComponentsDetector.net_res
                 )
             except Exception as e:
                 print(f"Failed during image resizing. Error: {e}")
-                raise
+                raise e
             resized_images.append(resized_image)
             original_sizes.append((i, original_size))
 
@@ -233,7 +232,7 @@ class ComponentsDetector:
         imgs_to_search_components_on = list()
         distrib_info = list()
         '''
-        Check each image in the batch and if any towers were found on it, slice out the tower's bb
+        Check each frame in the batch and if any towers were found on it, slice out the tower's bb tensor
         If no towers found on the image, add the entire image to the list of images on which
         components will be detected 
         '''
@@ -250,16 +249,15 @@ class ComponentsDetector:
                 distrib_info.append((i, 0))
                 continue
 
-            nb_of_towers = len(detections)
             for detection in detections:
                 # Modify object (tower)'s bounding boxes
-                DataProcessor.modify_bb_coord(tower=detection, image=image, nb_of_towers=nb_of_towers)
+                TensorManager.modify_bb_coord(tower=detection, image=image, nb_of_towers=len(detections))
                 # Get modified BB coordinates and slice out the tower
                 left = detection.left
                 top = detection.top
                 right = detection.right
                 bot = detection.bottom
-                tower_bb_image = DataProcessor.slice_out_tensor(image, [left, top, right, bot])
+                tower_bb_image = TensorManager.slice_out_tensor(image, [left, top, right, bot])
                 imgs_to_search_components_on.append(tower_bb_image)
             # Keep track of how many towers detected on the i-th image in the batch
             distrib_info.append((i, len(detections)))
@@ -278,5 +276,7 @@ class ComponentsDetector:
                 if component.class_id == 2:
                     new_left = component.BB_left * 0.96
                     new_right = component.BB_right * 1.04 if component.BB_right * 1.04 <\
-                                                        image.shape[1] else image.shape[1] - 10
+                                                             image.shape[1] else image.shape[1] - 10
                     component.update_object_coordinates(left=int(new_left), right=int(new_right))
+
+        return

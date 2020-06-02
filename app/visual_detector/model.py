@@ -2,7 +2,7 @@ from app.visual_detector.workers import FrameReaderThread, PoleDetectorThread, C
 from app.visual_detector.workers import DefectDetectorThread, ResultsProcessorThread
 from app.visual_detector.neural_networks import TowerDetector, ComponentsDetector
 from app.visual_detector.defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
-from app.visual_detector.utils import ResultsHandler
+from app.visual_detector.utils import ResultProcessor
 import queue
 import os
 import uuid
@@ -10,17 +10,10 @@ import uuid
 
 class MainDetector:
 
-    def __init__(
-            self,
-            save_path: str,
-            batch_size: int,
-            search_defects: bool = True,
-            db=None,
-    ):
+    def __init__(self, save_path: str, batch_size: int, search_defects: bool = True, db=None):
         # Path on the server where processed data gets stored
         self.save_path = save_path
         self.search_defects = search_defects
-
         # To keep track of file processing
         self.progress = dict()
 
@@ -31,62 +24,69 @@ class MainDetector:
             self.check_defects = False
 
         # Initialize detectors and auxiliary modules
-        self.results_processor = ResultsHandler(save_path=save_path)
-        self.pole_detector = TowerDetector()
-        self.component_detector = ComponentsDetector()
-        self.defect_detector = DefectDetector(
-            line_modifier=LineModifier,
-            concrete_extractor=ConcreteExtractor,
-            cracks_detector=None,
-            dumpers_defect_detector=None,
-            insulators_defect_detector=None
-        )
+        try:
+            self.results_processor = ResultProcessor(save_path=save_path)
+            self.pole_detector = TowerDetector()
+            self.component_detector = ComponentsDetector()
+            self.defect_detector = DefectDetector(
+                line_modifier=LineModifier,
+                concrete_extractor=ConcreteExtractor,
+                cracks_detector=None,
+                dumpers_defect_detector=None,
+                insulators_defect_detector=None
+            )
+        except Exception as e:
+            print(f"Failed during detectors initialization. Error: {e}")
+            raise e
 
         # Initialize Qs and workers
-        self.files_to_process_Q = queue.Queue()
-        self.frame_to_pole_detector = queue.Queue(maxsize=24)
-        self.pole_to_comp_detector = queue.Queue(maxsize=24)
-        self.comp_to_defect_detector = queue.Queue(maxsize=6)
-        self.defect_to_writer = queue.Queue(maxsize=10)
+        try:
+            self.files_to_process_Q = queue.Queue()
+            self.frame_to_pole_detector = queue.Queue(maxsize=3)
+            self.pole_to_comp_detector = queue.Queue(maxsize=3)
+            self.comp_to_defect_detector = queue.Queue(maxsize=6)
+            self.defect_to_writer = queue.Queue(maxsize=10)
+        except Exception as e:
+            print(f"Failed during queue initialization. Error: {e}")
+            raise e
 
-        self.frame_reader_thread = FrameReaderThread(
-            batch_size=batch_size,
-            in_queue=self.files_to_process_Q,
-            out_queue=self.frame_to_pole_detector,
-            progress=self.progress
-        )
+        try:
+            self.frame_reader_thread = FrameReaderThread(
+                batch_size=batch_size,
+                in_queue=self.files_to_process_Q,
+                out_queue=self.frame_to_pole_detector,
+                progress=self.progress
+            )
+            self.pole_detector_thread = PoleDetectorThread(
+                in_queue=self.frame_to_pole_detector,
+                out_queue=self.pole_to_comp_detector,
+                poles_detector=self.pole_detector,
+                progress=self.progress
+            )
+            self.component_detector_thread = ComponentDetectorThread(
+                in_queue=self.pole_to_comp_detector,
+                out_queue=self.comp_to_defect_detector,
+                component_detector=self.component_detector,
+                progress=self.progress
+            )
+            self.defect_detector_thread = DefectDetectorThread(
+                in_queue=self.comp_to_defect_detector,
+                out_queue=self.defect_to_writer,
+                defect_detector=self.defect_detector,
+                progress=self.progress,
+                check_defects=search_defects
+            )
+            self.results_processor_thread = ResultsProcessorThread(
+                in_queue=self.defect_to_writer,
+                save_path=save_path,
+                results_processor=self.results_processor,
+                progress=self.progress,
+                database=db
+            )
+        except Exception as e:
+            print(f"Failed during workers initialization. Error: {e}")
+            raise e
 
-        self.pole_detector_thread = PoleDetectorThread(
-            in_queue=self.frame_to_pole_detector,
-            out_queue=self.pole_to_comp_detector,
-            poles_detector=self.pole_detector,
-            progress=self.progress
-        )
-
-        self.component_detector_thread = ComponentDetectorThread(
-            in_queue=self.pole_to_comp_detector,
-            out_queue=self.comp_to_defect_detector,
-            component_detector=self.component_detector,
-            progress=self.progress
-        )
-
-        self.defect_detector_thread = DefectDetectorThread(
-            in_queue=self.comp_to_defect_detector,
-            out_queue=self.defect_to_writer,
-            defect_detector=self.defect_detector,
-            progress=self.progress,
-            check_defects=search_defects
-        )
-
-        self.results_processor_thread = ResultsProcessorThread(
-            in_queue=self.defect_to_writer,
-            save_path=save_path,
-            results_processor=self.results_processor,
-            progress=self.progress,
-            database=db
-        )
-
-        # Launch threads and wait for a request
         self.start()
 
     def predict(

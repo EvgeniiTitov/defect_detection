@@ -1,3 +1,3 @@
-from .result_processor import ResultsHandler
-from .data_processor import DataProcessor
+from .result_processor import ResultProcessor
+from .tensor_manager import TensorManager
 from .metadata_extractor import MetaDataExtractor

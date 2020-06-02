@@ -1,11 +1,12 @@
 import cv2
 import os
 import numpy as np
-from typing import List
+from typing import List, Dict
+import json
 import torch
 
 
-class ResultsHandler:
+class ResultProcessor:
     """
     Class performing BBs drawing, saving objects to disk
     """
@@ -35,11 +36,13 @@ class ResultsHandler:
         if not os.path.exists(store_path):
             os.mkdir(store_path)
 
-        self.draw_bounding_boxes(objects_detected=detected_objects,
-                                 image=image)
-
+        self.draw_bb_single_image(objects_detected=detected_objects, image=image)
         new_name = image_name + "_out.jpg"
-        cv2.imwrite(os.path.join(store_path, new_name), image)
+        try:
+            cv2.imwrite(os.path.join(store_path, new_name), image)
+        except Exception as e:
+            print(f"Failed while saving an image. Error: {e}")
+            raise e
 
     def line_text_size(self, image: np.ndarray) -> tuple:
         """
@@ -52,7 +55,74 @@ class ResultsHandler:
 
         return line_thickness, text_size, text_boldness
 
-    def draw_bounding_boxes(
+    def draw_bb_on_batch(self, images: List[np.ndarray], detections: Dict[int, dict]) -> None:
+        """
+
+        :param images:
+        :param detections:
+        :return:
+        """
+        assert len(images) == len(detections.keys()), "Nb of images in the batch and detections do not match"
+        healthy_colours = [
+            (0, 255, 0),
+            (0, 230, 0),
+            (0, 200, 0),
+            (50, 205, 50)
+        ]
+        sick_colour = (0, 0, 255)
+
+        # Loop over images and detections drawing boxes of detected objects checking their deficiency status that
+        # gets reflected by the bounding box colour choice
+        for i in range(len(images)):
+            image = images[i]
+            detection_for_frame = detections[i]
+
+            # Loop over 2 dicts with tower and component detection results
+            for d in detection_for_frame:
+                for subimage, elements in d.items():
+                    for element in elements:
+                        # Determine element bb colour
+                        if element.deficiency_status:
+                            colour = sick_colour
+                        else:
+                            if element.object_name in ["concrete", "metal", "wood"]:
+                                colour = healthy_colours[1]
+                            elif element.object_name == "insulator":
+                                colour = healthy_colours[0]
+                            elif element.object_name == "dumper":
+                                colour = healthy_colours[2]
+                            elif element.object_name == "pillar":
+                                colour = healthy_colours[3]
+
+                        if element.inclination:
+                            text = f"Angle: {element.inclination}"
+                            cv2.putText(image, text, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+
+                        # Draw rectangle
+                        cv2.rectangle(
+                            img=image,
+                            pt1=(subimage.left + element.BB_left, subimage.top + element.BB_top),
+                            pt2=(subimage.left + element.BB_right, subimage.top + element.BB_bottom),
+                            color=colour,
+                            thickness=self.line_text_size(image)[0]
+                        )
+
+                        label = "{}:{:1.2f}".format(element.object_name, element.confidence)
+
+                        label_size, base_line = cv2.getTextSize(
+                            label,
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            self.line_text_size(image)[1], 1
+                        )
+                        top = max(element.top + subimage.top, label_size[1])
+                        cv2.putText(
+                            image, label, (element.left + subimage.left, top),
+                            cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size(image)[1],
+                            (0, 0, 0), self.line_text_size(image)[-1]
+                        )
+        return
+
+    def draw_bb_single_image(
             self,
             objects_detected: dict,
             image: np.ndarray
@@ -99,6 +169,41 @@ class ResultsHandler:
                             (element.left + image_section.left, top),
                             cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size(image)[1],
                             (0, 0, 0), self.line_text_size(image)[-1])
+
+        return
+
+    def save_batch_on_disk(self, images: List[np.ndarray], video_writter: cv2.VideoWriter) -> None:
+        """
+
+        :param images:
+        :param video_writter:
+        :return:
+        """
+        for image in images:
+            try:
+                video_writter.write(image.astype(np.uint8))
+            except Exception as e:
+                print(f"Failed to save a frame. Error: {e}")
+                continue
+
+        return
+
+    def save_results_to_json(self, filename: str, store_path: str, payload) -> bool:
+        """
+        Dumps processing results into a json file saved in the same folder where the
+        processed image will be saved
+        :param filename:
+        :param store_path:
+        :param payload:
+        :return:
+        """
+        try:
+            with open(os.path.join(store_path, filename + ".json"), "w") as f:
+                json.dump(payload, f)
+            return True
+        except Exception as e:
+            print(f"Error while saving dumping results to JSON. Error {e}")
+            return False
 
     def save_objects_detected(
             self,

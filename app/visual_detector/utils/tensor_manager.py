@@ -10,7 +10,7 @@ import torchvision
 import sys
 
 
-class DataProcessor:
+class TensorManager:
 
     @staticmethod
     def load_images_to_GPU(images: List[np.ndarray], img_size=None) -> torch.Tensor:
@@ -25,9 +25,9 @@ class DataProcessor:
             # Preprocess images before .cat()ing them.
             if img_size:
                 print("ATTENTION: Images will be resized before being moved to GPU")
-                image_tensor = DataProcessor.preprocess_image_including_resizing(image, img_size)
+                image_tensor = TensorManager.preprocess_image_including_resizing(image, img_size)
             else:
-                image_tensor = DataProcessor.preprocess_image(image)
+                image_tensor = TensorManager.preprocess_image(image)
             #HostDeviceManager.visualise_sliced_img(image_tensor, "fromOptimizer")
             image_tensors.append(image_tensor)
 
@@ -138,7 +138,7 @@ class DataProcessor:
         try:
             subimage = image[:, top:bot, left:right]
         except Exception as e:
-            print(f"Failed while slicing out a tensor. Error: {e}")
+            print(f"Failed while slicing out a bb tensor. Error: {e}")
             raise e
 
         return subimage
@@ -256,19 +256,19 @@ class DataProcessor:
         if nb_of_towers == 1:
             new_left_boundary = int(tower.BB_left * 0.4)
             new_right_boundary = int(tower.BB_right * 1.6) if int(tower.BB_right * 1.6) < \
-                                                                    img_width else (img_width - 2)
+                                                                      img_width else (img_width - 2)
             # Move upper border way up, often when a pole is close up many components do not get
             # included in the box, as a result they do not get found
             new_top_boundary = int(tower.BB_top * 0.1)
             new_bot_boundary = int(tower.BB_bottom * 1.1) if int(tower.BB_bottom * 1.1) < \
-                                                                    img_height else (img_height - 2)
+                                                                      img_height else (img_height - 2)
         else:
             new_left_boundary = int(tower.BB_left * 0.9)
             new_right_boundary = int(tower.BB_right * 1.1) if int(tower.BB_right * 1.1) < \
-                                                                    img_width else (img_width - 2)
+                                                                      img_width else (img_width - 2)
             new_top_boundary = int(tower.BB_top * 0.5)
             new_bot_boundary = int(tower.BB_bottom * 1.1) if int(tower.BB_bottom * 1.1) < \
-                                                                    img_height else (img_height - 2)
+                                                                      img_height else (img_height - 2)
         try:
             tower.update_object_coordinates(
                 left=new_left_boundary,
@@ -277,7 +277,7 @@ class DataProcessor:
                 bottom=new_bot_boundary
             )
         except Exception as e:
-            print(f"Failed during BB coord updating. Error: {e}")
+            print(f"Failed during BB coordinates updating. Error: {e}")
             raise e
 
     @staticmethod

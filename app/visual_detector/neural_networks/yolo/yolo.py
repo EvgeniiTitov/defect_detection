@@ -68,6 +68,7 @@ class YOLOv3:
                 self.is_model_on_gpu = True
             except Exception as e:
                 print(f"Failed to move model to GPU. Error: {e}")
+                raise e
 
         # Set model to .eval() so that we do not change its parameters during testing
         self.model.eval()
