@@ -101,8 +101,8 @@ class ResultProcessor:
                         # Draw rectangle
                         cv2.rectangle(
                             img=image,
-                            pt1=(subimage.left + element.BB_left, subimage.top + element.BB_top),
-                            pt2=(subimage.left + element.BB_right, subimage.top + element.BB_bottom),
+                            pt1=(element.BB_left, element.BB_top),
+                            pt2=(element.BB_right, element.BB_bottom),
                             color=colour,
                             thickness=self.line_text_size(image)[0]
                         )

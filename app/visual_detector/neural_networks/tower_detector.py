@@ -47,11 +47,12 @@ class TowerDetector:
         :param images_on_gpu:
         :return:
         """
-        # Preprocess images
+        # Preprocess images by resizing them to the expected network resolution
         preprocessed_imgs, original_shape = TensorManager.resize_tensor_keeping_aspratio(
             batch_tensor=images_on_gpu,
             new_size=TowerDetector.net_res
         )
+        # Normalize tensor, so that its values are between 0-1
         preprocessed_imgs.div_(255.0)
 
         # Get tower detections

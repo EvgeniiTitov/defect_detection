@@ -54,7 +54,7 @@ class YOLOv3:
             self.model.load_weights(weights)
         except Exception as e:
             print(f"Failed during YOLO initialization. Error: {e}")
-            raise
+            raise e
 
         # Determines size of an input image required
         self.input_dimension = int(self.model.net_info["height"])

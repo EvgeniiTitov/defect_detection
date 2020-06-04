@@ -1,15 +1,17 @@
 from threading import Thread
+from typing import Dict, List
+from app.visual_detector.neural_networks import DetectedObject
 import functools
 import numpy as np
+import torch
 import os
 import cv2
 import time
 import random
 
+
 class DefectDetector:
-    """
-    TO DO: Consider multiprocessing
-    """
+
     def __init__(
             self,
             line_modifier,
@@ -17,16 +19,65 @@ class DefectDetector:
             cracks_detector=None,
             dumpers_defect_detector=None,
             insulators_defect_detector=None,
+            wood_crack_detector=None
     ):
         # Auxiliary modules
         self.concrete_extractor = concrete_extractor(line_modifier=line_modifier)
 
         # Defect detecting modules
-        self.cracks_tester = cracks_detector
-        self.dumper_tester = dumpers_defect_detector
-        self.insulator_tester = insulators_defect_detector
+        self.crack_classifier = cracks_detector
+        self.dumper_classifier = dumpers_defect_detector
+        self.insulator_classifier = insulators_defect_detector
+        self.wood_crack_classifier = wood_crack_detector
 
-        print("Defect detector initialized\n")
+        print("Defect detector successfully initialized")
+
+    def search_defects_on_batch(self, images_on_gpu: torch.Tensor, towers: dict, components: dict) -> None:
+        """
+
+        :param images_on_gpu:
+        :param towers:
+        :param components:
+        :return:
+        """
+        '''
+        Each detection is represented as the DetectedObject instance which has a number of defects related attributes 
+        such as the .dificiency_status. The aim of this module is to process the detections and explicitly declare 
+        detections defected should they have been classified as so. 
+        
+        1. Traverse over all detected objects
+        2. Sort them into classes
+        3. Slice out tensors of each class separately, preprocess them and .cat() them 
+        4. Give batches of components of different classes to corresponding defect detectors 
+        5. Get results, process them by declaring the corresponding detections as defected 
+        '''
+        sorted_detections = self.sort_objects(towers, components)
+
+
+
+        return
+
+    def sort_objects(self, towers: dict, components: dict) -> Dict[str, List[DetectedObject]]:
+        """
+
+        :param towers:
+        :param components:
+        :return:
+        """
+        output = dict()
+
+        for d in (towers, components):
+            for img_batch_index, detections in d.items():
+                for subimage, detected_objects in detections.items():
+                    for detected_object in detected_objects:
+
+                        obj_class = detected_object.object_name
+                        if obj_class not in output.keys():
+                            output[obj_class] = list()
+
+                        output[obj_class].append(detected_object)
+
+        return output
 
     def search_defects(
             self,

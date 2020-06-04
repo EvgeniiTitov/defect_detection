@@ -177,11 +177,15 @@ class ComponentsDetector:
                         print("ERROR: Wrong class index got detected!")
                         continue
                     try:
+                        '''
+                        While creating a DetectedObject instance for each component, make sure their bb coordinates
+                        are relatively to the original frame and not the object (tower) within which they were detected
+                        '''
                         comp_obj = DetectedObject(
-                            left=int(component[0]),
-                            top=int(component[1]),
-                            right=int(component[2]),
-                            bottom=int(component[3]),
+                            left=int(component[0] + tower_obj.left),
+                            top=int(component[1] + tower_obj.top),
+                            right=int(component[2] + tower_obj.left),
+                            bottom=int(component[3] + tower_obj.top),
                             class_id=component[-1],
                             object_name=class_name,
                             confidence=component[5]
@@ -189,6 +193,7 @@ class ComponentsDetector:
                     except Exception as e:
                         print(f"Failed during DetectedObject initialization. Error: {e}")
                         raise e
+
                     detections_output[i][tower_image_subsection].append(comp_obj)
                 del rescaled_detections[matched_index]
                 matched_index += 1

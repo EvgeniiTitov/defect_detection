@@ -51,6 +51,10 @@ class FrameReaderThread(threading.Thread):
 
             batch_frames = list()
             to_break = False
+
+
+            batches_to_process = 3
+            current_batch = 1
             while True:
                 # Collect N (batch size) of images
                 if len(batch_frames) < self.batch_size and file_type == "video":
@@ -76,6 +80,10 @@ class FrameReaderThread(threading.Thread):
                         raise
                     # Send original images, imaged on GPU and file id to the next worker
                     self.Q_out.put((batch_frames, gpu_batch_frames, file_id))
+
+                    if current_batch == batches_to_process:
+                        break
+                    current_batch += 1
 
                 if to_break:
                     break

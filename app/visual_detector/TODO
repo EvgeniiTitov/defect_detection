@@ -7,9 +7,11 @@ KNOWN ISSUES - BUGS:
 
 
 SHORT TERM TASKS:
-1. Ensure preprocessing matches what the net was trained on
-2. Wrong bb drawing
+0.1 To config add what defect detectors you want to launch
+0.2 Register your detector properly in the flask's app
 
+0. Confidence is 1 for all objects
+1. Ensure preprocessing matches what the net was trained on
 2. Add logger
 3. Dumpers module (integrate into the system)
 4. Wooden pole defects (Dasha)
