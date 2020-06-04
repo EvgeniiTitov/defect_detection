@@ -4,6 +4,7 @@ from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
 from app.visual_detector.utils import TensorManager
 import os
 import torch
+import sys
 
 
 class TowerDetector:
@@ -64,14 +65,10 @@ class TowerDetector:
             current_dim=TowerDetector.net_res,
             original_shape=original_shape
         )
+        assert len(images_on_gpu) == len(recalculated_detections), "Nb of tower detections != batch size"
         # Postprocess results - represent all detections as class objects for convenience
-        detections_output = {i: {} for i in range(len(images_on_gpu))}
+        detections_output = {i: list() for i in range(len(images_on_gpu))}
         for i in range(len(recalculated_detections)):
-            # Poles were searched for on original images, not subimages (cropped out objects)
-            image_section = SubImage(name="frame")
-            # For each image create a key-value pair. Key - image section on which the detection took place - the whole
-            # frame in this case. Value - detected poles
-            detections_output[i][image_section] = list()
             # Process predictions for each image in the batch separately
             for pole in recalculated_detections[i]:
                 if pole[-1] == 0:
@@ -81,7 +78,7 @@ class TowerDetector:
                 elif pole[-1] == 2:
                     class_name = "wood"
                 else:
-                    print("ERROR: Wrong class index got detected!")
+                    print(f"ERROR: Wrong class index got detected: {pole[-1]}")
                     continue
                 # Represent each detected pole as an object, so that we can easily change its state (adjust
                 # BB coordinates) and add more information to it as it moves along the processing pipeline
@@ -98,12 +95,12 @@ class TowerDetector:
                 except Exception as e:
                     print(f"Failed during DetectedObject initialization. Error: {e}")
                     raise e
-                detections_output[i][image_section].append(pole_detection)
+                detections_output[i].append(pole_detection)
         '''
         Output format if any towers detected: 
         {
-            0: {SubImage object: [DetectedObject object, DetectedObject object...]}, 
-            1: {SubImage object: [DetectedObject object...]}, 
+            0: [DetectedObject object, DetectedObject object...]}, 
+            1: [DetectedObject object...]}, 
             ...
         }
         '''

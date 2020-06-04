@@ -65,9 +65,9 @@ class ResultProcessor:
         assert len(images) == len(detections.keys()), "Nb of images in the batch and detections do not match"
         healthy_colours = [
             (0, 255, 0),
-            (0, 230, 0),
-            (0, 200, 0),
-            (50, 205, 50)
+            (255, 0, 255),
+            (204, 0, 0),
+            (0, 255, 255)
         ]
         sick_colour = (0, 0, 255)
 
@@ -77,49 +77,46 @@ class ResultProcessor:
             image = images[i]
             detection_for_frame = detections[i]
 
-            # Loop over 2 dicts with tower and component detection results
-            for d in detection_for_frame:
-                for subimage, elements in d.items():
-                    for element in elements:
-                        # Determine element bb colour
-                        if element.deficiency_status:
-                            colour = sick_colour
-                        else:
-                            if element.object_name in ["concrete", "metal", "wood"]:
-                                colour = healthy_colours[1]
-                            elif element.object_name == "insulator":
-                                colour = healthy_colours[0]
-                            elif element.object_name == "dumper":
-                                colour = healthy_colours[2]
-                            elif element.object_name == "pillar":
-                                colour = healthy_colours[3]
+            for element in detection_for_frame:
+                # Determine element bb colour
+                if element.deficiency_status:
+                    colour = sick_colour
+                else:
+                    if element.object_name in ["concrete", "metal", "wood"]:
+                        colour = healthy_colours[1]
+                    elif element.object_name == "insulator":
+                        colour = healthy_colours[0]
+                    elif element.object_name == "dumper":
+                        colour = healthy_colours[2]
+                    elif element.object_name == "pillar":
+                        colour = healthy_colours[3]
 
-                        if element.inclination:
-                            text = f"Angle: {element.inclination}"
-                            cv2.putText(image, text, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+                if element.inclination:
+                    text = f"Angle: {element.inclination}"
+                    cv2.putText(image, text, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
 
-                        # Draw rectangle
-                        cv2.rectangle(
-                            img=image,
-                            pt1=(element.BB_left, element.BB_top),
-                            pt2=(element.BB_right, element.BB_bottom),
-                            color=colour,
-                            thickness=self.line_text_size(image)[0]
-                        )
+                # Draw rectangle
+                cv2.rectangle(
+                    img=image,
+                    pt1=(element.BB_left, element.BB_top),
+                    pt2=(element.BB_right, element.BB_bottom),
+                    color=colour,
+                    thickness=self.line_text_size(image)[0]
+                )
 
-                        label = "{}:{:1.2f}".format(element.object_name, element.confidence)
+                label = "{}:{:1.2f}".format(element.object_name, element.confidence)
 
-                        label_size, base_line = cv2.getTextSize(
-                            label,
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            self.line_text_size(image)[1], 1
-                        )
-                        top = max(element.top + subimage.top, label_size[1])
-                        cv2.putText(
-                            image, label, (element.left + subimage.left, top),
-                            cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size(image)[1],
-                            (0, 0, 0), self.line_text_size(image)[-1]
-                        )
+                label_size, base_line = cv2.getTextSize(
+                    label,
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    self.line_text_size(image)[1], 1
+                )
+                top = max(element.top, label_size[1])
+                cv2.putText(
+                    image, label, (element.left, top),
+                    cv2.FONT_HERSHEY_SIMPLEX, self.line_text_size(image)[1],
+                    (0, 0, 0), self.line_text_size(image)[-1]
+                )
         return
 
     def draw_bb_single_image(
@@ -185,6 +182,21 @@ class ResultProcessor:
             except Exception as e:
                 print(f"Failed to save a frame. Error: {e}")
                 continue
+
+        return
+
+    def save_image_on_disk(self, save_path: str, image_name: str, image: np.ndarray) -> None:
+        """
+
+        :param save_path:
+        :param image:
+        :return:
+        """
+        try:
+            cv2.imwrite(os.path.join(save_path, image_name), image)
+        except Exception as e:
+            print(f"Failed while saving image {image_name} on disk")
+            raise e
 
         return
 

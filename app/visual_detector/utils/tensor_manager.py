@@ -90,7 +90,9 @@ class TensorManager:
         :param background_color:
         :return:
         """
+        assert 0.0 <= background_color <= 255.0, "Expected background colour 0 - 255"
         assert new_size > 0, "Cannot resize tensor to a negative value"
+
         tensor_height, tensor_width = batch_tensor.shape[2:4]
         batch_size = batch_tensor.shape[0]
         # Before resizing tensor to new_size keeping the aspect ratio, determine which side is greater
@@ -114,10 +116,14 @@ class TensorManager:
         res = torch.ones(batch_size, 3, new_size, new_size).cuda() * background_color
         # Calculate padding size
         padding = (new_size - new_dimension[1])//2 if tall else (new_size - new_dimension[0])//2
-        if tall:
-            res[:, :, :, padding:new_size - padding] = resized_tensor
-        else:
-            res[:, :, padding:new_size - padding, :] = resized_tensor
+        try:
+            if tall:
+                res[:, :, :, padding:new_size - padding] = resized_tensor
+            else:
+                res[:, :, padding:new_size - padding, :] = resized_tensor
+        except Exception as e:
+            print(f"Failed while applying mask of the expected size to the tensor to get resized. Error: {e}")
+            raise e
 
         return res, (tensor_height, tensor_width)
 
@@ -219,7 +225,7 @@ class TensorManager:
                 unpad_w = current_dim - pad_x
 
             for detection in detections:
-                detection = detection[0]
+                #print(f"Img index: {img_batch_index}, Original size: ({original_h}, {original_w}), Detection: {detection}")
                 # Rescale boxes
                 new_left = int(((detection[0] - pad_x // 2) / unpad_w) * original_w)
 

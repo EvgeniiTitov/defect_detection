@@ -59,11 +59,11 @@ class DefectDetectorThread(threading.Thread):
             4. Combine towers and components in one dictionary 
             '''
 
-            defects = self.defect_detector.search_defects_on_batch(
-                images_on_gpu=gpu_batch_frame,
-                towers=towers,
-                components=components
-            )
+            # defects = self.defect_detector.search_defects_on_batch(
+            #     images_on_gpu=gpu_batch_frame,
+            #     towers=towers,
+            #     components=components
+            # )
 
             # if components and self.check_defects and self.currently_processing % 10 == 0:
             #     detected_defects = self.defect_detector.search_defects(
@@ -84,7 +84,7 @@ class DefectDetectorThread(threading.Thread):
             output = defaultdict(list)
             for d in (towers, components):
                 for key, value in d.items():
-                    output[key].append(value)
+                    output[key].extend(value)
 
             self.Q_out.put((batch_frame, file_id, output))
 

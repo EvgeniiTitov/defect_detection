@@ -6,6 +6,7 @@ from app.visual_detector.utils import ResultProcessor
 import queue
 import os
 import uuid
+import time
 
 
 class MainDetector:
@@ -177,6 +178,7 @@ class MainDetector:
         file_id = str(uuid.uuid4())
 
         # Keep track of processing progress
+        start_time = time.time()
         self.progress[file_id] = {
             "status": "Awaiting processing",
             "request_id": request_id,
@@ -186,9 +188,9 @@ class MainDetector:
             "total_frames": None,
             "now_processing": 0,
             "processed": 0,
-            "defects": []
+            "defects": [],
+            "processing_time": start_time
         }
-
         self.files_to_process_Q.put(file_id)
 
         return file_id

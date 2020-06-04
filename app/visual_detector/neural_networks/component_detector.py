@@ -1,10 +1,11 @@
 from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
 from app.visual_detector.utils import TensorManager
 import numpy as np
 import os
 import torch
+import sys
 
 
 class ComponentsDetector:
@@ -38,7 +39,7 @@ class ComponentsDetector:
             print(f"Failed during Component Detector initialization. Error: {e}")
             raise
 
-    def process_batch(self, images_on_gpu: torch.Tensor, towers_predictions: dict) -> dict:
+    def process_batch(self, images_on_gpu: torch.Tensor, towers_predictions: Dict[int, List[DetectedObject]]) -> dict:
         """
         Receives a batch of images already loaded to GPU and poles detected on them
         Detects components within tower bounding boxes
@@ -49,8 +50,8 @@ class ComponentsDetector:
         '''
         Input format of detected towers: 
         {
-            0: {SubImage1 object (entire frame): [DetectedObject1 (tower), DetectedObject2 (tower)...]}, 
-            1: {SubImage2 object (entire frame): [DetectedObject3 (tower)...]}, 
+            0: [DetectedObject1 (tower), DetectedObject2 (tower)...]}, 
+            1: [DetectedObject3 (tower)...]}, 
             ...
         }
         For N images in the batch, we get M detected towers. On each tower up to Z components can be detected. 
@@ -59,6 +60,7 @@ class ComponentsDetector:
         2. For M towers you get Z component detection. Each detection is to be represented as DetectedObject
         3. Perform matching. Distribute Z detected components among M towers belonging to N images.
         '''
+
         # Collect all images that will be used to search for components + how many towers found on each image
         imgs_to_search_components_on, distribute_info = self.collect_imgs(
             images_on_gpu=images_on_gpu,
@@ -101,19 +103,16 @@ class ComponentsDetector:
         
         Match component detections with images on which the search happened (towers / entire frames). 
         '''
-        detections_output = {i: {} for i in range(len(images_on_gpu))}
+        detections_output = {i: list() for i in range(len(images_on_gpu))}
         matched_index = 0
         for i in range(len(images_on_gpu)):
             # Get number of towers that were detected on the i-th image in the batch
             index, nb_of_towers = distribute_info[i]
             # Assert image's index in the batch corresponds to the image index from distr. info
-            assert i == index, "Indices do not match. Cannot perform detections matching"
+            assert i == index, "Indices do not match. Cannot perform detection matching"
             # If no towers were detected on i-th image in the batch, then we attempted to search for components on
-            # entire frame. Check ones if anything was detected
+            # the entire frame. Check if anything was detected
             if nb_of_towers == 0:
-                tower_image_subsection = SubImage(name="entire frame")
-                # Create a key-value pair for i-th image in the batch
-                detections_output[i][tower_image_subsection] = list()
                 # Loop over each detected component representing it as a class object for convenience
                 components = rescaled_detections[matched_index]
                 for component in components:
@@ -124,7 +123,7 @@ class ComponentsDetector:
                     elif component[-1] == 2:
                         class_name = "pillar"
                     else:
-                        print("ERROR: Wrong class index got detected!")
+                        print(f"ERROR: Wrong class index got detected: {component[-1]}")
                         continue
                     try:
                         comp_obj = DetectedObject(
@@ -139,7 +138,7 @@ class ComponentsDetector:
                     except Exception as e:
                         print(f"Failed during DetectedObject initialization. Error: {e}")
                         raise e
-                    detections_output[i][tower_image_subsection].append(comp_obj)
+                    detections_output[i].append(comp_obj)
 
                 del rescaled_detections[matched_index]
                 matched_index += 1
@@ -152,19 +151,8 @@ class ComponentsDetector:
                     matched_index += 1
                     continue
 
-                # Access each tower object for i-th frame in order to save its relative coordinates
-                tower_obj = list(towers_predictions[i].values())[0][j]
-                # Create a subimage object representing image section within which components were attempted to detect
-                tower_image_subsection = SubImage(name="tower")
-                # Save tower bb coordinates relatively to the original image
-                tower_image_subsection.save_relative_coordinates(
-                    left=tower_obj.left,
-                    top=tower_obj.top,
-                    right=tower_obj.right,
-                    bottom=tower_obj.bottom
-                )
-                # Create a key-value pair for i-th image in the batch
-                detections_output[i][tower_image_subsection] = list()
+                # Access each j-th tower object for i-th frame in order to save its relative coordinates
+                tower_obj = towers_predictions[i][j]
                 # Loop over each detected component representing it as a class object for convenience
                 for component in components:
                     if component[-1] == 0:
@@ -174,12 +162,16 @@ class ComponentsDetector:
                     elif component[-1] == 2:
                         class_name = "pillar"
                     else:
-                        print("ERROR: Wrong class index got detected!")
+                        print(f"ERROR: Wrong class index got detected: {component[-1]}")
                         continue
+
+                    #TODO: Pillar bb modification step to be implemented either here, or right before searching for
+                    #      cracks/determining tilt angle.
+
                     try:
                         '''
                         While creating a DetectedObject instance for each component, make sure their bb coordinates
-                        are relatively to the original frame and not the object (tower) within which they were detected
+                        are relative to the original frame and not the object (tower) within which they were detected
                         '''
                         comp_obj = DetectedObject(
                             left=int(component[0] + tower_obj.left),
@@ -194,7 +186,7 @@ class ComponentsDetector:
                         print(f"Failed during DetectedObject initialization. Error: {e}")
                         raise e
 
-                    detections_output[i][tower_image_subsection].append(comp_obj)
+                    detections_output[i].append(comp_obj)
                 del rescaled_detections[matched_index]
                 matched_index += 1
 
@@ -241,10 +233,10 @@ class ComponentsDetector:
         If no towers found on the image, add the entire image to the list of images on which
         components will be detected 
         '''
-        assert len(images_on_gpu) == len(towers), "ERROR: N of imgs in the batch != N of imgs sent from tower detector"
+        assert len(images_on_gpu) == len(towers), "ERROR: N of imgs in the batch != N of tower detections"
         for i in range(len(images_on_gpu)):
             # Get detections for an image in the batch and the image itself
-            detections = list(towers[i].values())[0]
+            detections = towers[i]
             image = images_on_gpu[i]
 
             if not len(detections) > 0:

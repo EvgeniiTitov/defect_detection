@@ -2,6 +2,7 @@ from datetime import datetime
 import threading
 import cv2
 import os
+import time
 import numpy as np
 import json
 
@@ -27,6 +28,7 @@ class ResultsProcessorThread(threading.Thread):
 
         self.video_writer = None
         self.previous_id = None
+        self.folder_created = False
 
     def run(self) -> None:
 
@@ -39,6 +41,7 @@ class ResultsProcessorThread(threading.Thread):
             if input_ == "END":
                 if self.previous_id:
                     self.clean_video_writer()  # Video's over. Delete current video writer
+                    self.folder_created = False
                 continue
 
             # Read data from defect detector
@@ -61,14 +64,16 @@ class ResultsProcessorThread(threading.Thread):
             if file_id != self.previous_id:
                 self.previous_id = file_id
 
-            # TODO: Consider creating a flag for this so we do not check it for each video frame losing time
-            if not os.path.exists(store_path):
+            # Check if the folder to which results will be saved exists
+            if not self.folder_created and not os.path.exists(store_path):
                 try:
                     os.mkdir(store_path)
+                    self.folder_created = True
                 except Exception as e:
                     print(f"Failed to create a folder to save processed images. Error: {e}")
                     raise e
 
+            # Create video writer if required
             if self.video_writer is None and file_type == "video":
                 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                 self.video_writer = cv2.VideoWriter(
@@ -76,21 +81,23 @@ class ResultsProcessorThread(threading.Thread):
                     fourcc, 30, (batch_frames[0].shape[1], batch_frames[0].shape[0]), True
                 )
 
+            # Draw bounding boxes and save image on disk
             self.results_processor.draw_bb_on_batch(
                 images=batch_frames,
                 detections=detected_objects
             )
-
             if file_type == "video":
                 self.results_processor.save_batch_on_disk(
                     images=batch_frames,
                     video_writter=self.video_writer
                 )
             else:
-                cv2.imwrite(
-                    filename=os.path.join(store_path, filename + "_out.jpg"),
-                    img=batch_frames[0]
+                self.results_processor.save_image_on_disk(
+                    save_path=store_path,
+                    image_name=filename + ".jpg",
+                    image=batch_frames[0]
                 )
+
             self.progress[file_id]["processed"] += len(batch_frames)
 
             # ---DELETE ME---
@@ -108,6 +115,8 @@ class ResultsProcessorThread(threading.Thread):
                     payload=self.progress[file_id]["defects"]
                 )
                 self.progress[file_id]["status"] = "Processed"
+                time_taken = time.time() - self.progress[file_id]["processing_time"]
+                print(f"\nTime taken to process: {filename} is {round(time_taken, 4)} seconds")
                 del self.progress[file_id]
                 print(f"Processing of {filename} completed")
 
