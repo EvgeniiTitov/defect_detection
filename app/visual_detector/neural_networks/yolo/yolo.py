@@ -73,7 +73,7 @@ class YOLOv3:
         # Set model to .eval() so that we do not change its parameters during testing
         self.model.eval()
 
-    def process_batch(self, images: torch.Tensor) -> dict:
+    def process_batch(self, images: torch.Tensor):
         """
         Receives a batch of images already preprocessed and loaded onto the GPU. Simply runs the net and post-
         processes the predictions
@@ -101,7 +101,6 @@ class YOLOv3:
         }
         Detection format: [left, top, right, bottom, objectness score, confidence, index]
         '''
-
         return self.format_output_data(output)
 
     def format_output_data(self, predictions):
@@ -196,39 +195,6 @@ class YOLOv3:
         y[..., 2] = x[..., 0] + x[..., 2] / 2
         y[..., 3] = x[..., 1] + x[..., 3] / 2
         return y
-
-    def predict_batch_on_cpu(self, images: List[np.ndarray]) -> tuple:
-        """
-        Receives a list of images. Preprocesses them (cast to torch.Tensor, reshape etc), .cat()s them in a batch
-        and them runs it throught the net.
-        :param images:
-        :return:
-        """
-        # Prepare images - resize, move to torch.Tensor, .cat() them together
-        preprocessed_imgs = list(map(self.preprocess_image, images))
-        try:
-            batch = torch.cat(preprocessed_imgs)
-        except Exception as e:
-            print(f"Failed during .cat() ing images. Error: {e}")
-            raise
-
-        # Save dimensions of the original images
-        dimensions_list = [(img.shape[1], img.shape[0]) for img in images]
-        dimensions_list = torch.FloatTensor(dimensions_list).repeat(1, 2)
-
-        if self.CUDA:
-            dimensions_list = dimensions_list.cuda()
-            batch = batch.cuda()
-
-        with torch.no_grad():
-            # Row bounding boxes are predicted. Note predictions from
-            # 3 YOLO layers get concatenated into 1 big tensor.
-            raw_predictions = self.model(Variable(batch), self.CUDA)
-
-        # Process raw predictions, do NMS, thresholding etc
-        output = self._process_predictions(raw_predictions)
-
-        return output, batch
 
     def predict(self, image: np.ndarray) -> list:
         """

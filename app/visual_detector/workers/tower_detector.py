@@ -18,7 +18,6 @@ class PoleDetectorThread(threading.Thread):
         self.Q_out = out_queue
         self.tower_detector = poles_detector
         self.progress = progress
-        self.video_id = None
 
     def run(self) -> None:
         while True:
@@ -38,7 +37,7 @@ class PoleDetectorThread(threading.Thread):
             self.progress[file_id]["now_processing"] += len(batch_frames)
 
             # Detect power line towers
-            poles = self.tower_detector.process_batch(images_on_gpu=gpu_batch_frames)
-            self.Q_out.put((batch_frames, gpu_batch_frames, poles, file_id))
+            towers = self.tower_detector.process_batch(images_on_gpu=gpu_batch_frames)
+            self.Q_out.put((batch_frames, gpu_batch_frames, towers, file_id))
 
         print("PoleDetectorThread killed")

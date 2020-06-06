@@ -95,32 +95,42 @@ class TensorManager:
 
         tensor_height, tensor_width = batch_tensor.shape[2:4]
         batch_size = batch_tensor.shape[0]
+
         # Before resizing tensor to new_size keeping the aspect ratio, determine which side is greater
         tall = True if tensor_height >= tensor_width else False
+
         # Calculate the coefficient to keep aspect ratio
         coef = new_size / float(tensor_height) if tall else new_size / float(tensor_width)
+
         # Resize to the new sizes
         new_dimension = [new_size, int(tensor_width * coef)] if tall else [int(tensor_height * coef), new_size]
-
-        # TODO: Implement a proper fix for the following:
-        # There can be a situation where new dim [0] or [1] is not even which doesn't allow to pick the padding
-        # number easily. If this is the case, make sure both new dim values are even.
-        if new_dimension[0] % 2 != 0:
-            new_dimension[0] += 1
-        elif new_dimension[1] % 2 != 0:
-            new_dimension[1] += 1
+        assert new_dimension[0] > 0 and new_dimension[1] > 0, "Wrong new dimension. Cannot be 0"
 
         # Resize tensor to a new size (width and height)
         resized_tensor = F.interpolate(batch_tensor, new_dimension)
+
         # Create a new tensor of the required output shape filled with grey colour
         res = torch.ones(batch_size, 3, new_size, new_size).cuda() * background_color
-        # Calculate padding size
-        padding = (new_size - new_dimension[1])//2 if tall else (new_size - new_dimension[0])//2
+
+        # Calculate padding size. Make sure you account for the case when new dim is odd (N % 2 != 0)
+        if tall:
+            if (new_size - new_dimension[1]) % 2 == 0:
+                padding1 = padding2 = (new_size - new_dimension[1]) // 2
+            else:
+                padding1 = (new_size - new_dimension[1]) // 2
+                padding2 = (new_size - new_dimension[1]) - padding1
+        else:
+            if (new_size - new_dimension[0]) % 2 == 0:
+                padding1 = padding2 = (new_size - new_dimension[0]) // 2
+            else:
+                padding1 = (new_size - new_dimension[0]) // 2
+                padding2 = (new_size - new_dimension[0]) - padding1
+
         try:
             if tall:
-                res[:, :, :, padding:new_size - padding] = resized_tensor
+                res[:, :, :, padding1:new_size - padding2] = resized_tensor
             else:
-                res[:, :, padding:new_size - padding, :] = resized_tensor
+                res[:, :, padding1:new_size - padding2, :] = resized_tensor
         except Exception as e:
             print(f"Failed while applying mask of the expected size to the tensor to get resized. Error: {e}")
             raise e
@@ -137,10 +147,14 @@ class TensorManager:
         """
         assert isinstance(image, torch.Tensor), "Wrong image data type. Tensor expected"
         assert len(coordinates) == 4, "No or wrong number of coordinates provided. Expected 4"
+        assert all((coord > 0 for coord in coordinates)), "Coordinates cannot be negative or 0"
+
         left = coordinates[0]
         top = coordinates[1]
         right = coordinates[2]
         bot = coordinates[3]
+        assert all((left < right, top < bot)), "Coordinates provided are incorrect"
+
         try:
             subimage = image[:, top:bot, left:right]
         except Exception as e:
@@ -150,61 +164,108 @@ class TensorManager:
         return subimage
 
     @staticmethod
-    def recalculate_bb(scaling_factor: float, detections: dict) -> dict:
+    def rescale_bounding_box(
+            detections: dict,
+            current_dim: int,
+            equal_origin_shape: bool,
+            original_shape: tuple = None,
+            original_shapes: List[tuple] = None
+    ) -> dict:
         """
-        NOTE: Doesn't work as intended
-        :param scaling_factor:
+
         :param detections:
+        :param current_dim:
+        :param equal_origin_shape:
+        :param original_shape:
+        :param original_shapes:
         :return:
         """
+        if equal_origin_shape:
+            assert original_shape, "Original shape value has not been provided"
+            original_h, original_w = original_shape
+            # Added padding (check if the image was tall of short)
+            pad_x = int(max(original_h - original_w, 0) * (current_dim / max(original_shape)))
+            pad_y = int(max(original_w - original_h, 0) * (current_dim / max(original_shape)))
+            # Image size after padding's been removed
+            unpad_h = int(current_dim - pad_y)
+            unpad_w = int(current_dim - pad_x)
+        else:
+            assert original_shapes, "Original shape values have not been provided"
+
         output = dict()
-        for img_batch_index, detections in detections.items():
+        for img_batch_index, predictions in detections.items():
             output[img_batch_index] = list()
-            # recalculate bb coordinates
-            for detection in detections:
-                detection = detection[0]
-                #TODO: Potential error if top or left = 0
-                new_left = int(detection[0] / scaling_factor)
-                new_top = int(detection[1] / scaling_factor)
-                new_right = int(detection[2] / scaling_factor)
-                new_bot = int(detection[3] / scaling_factor)
-                obj_score = detection[4]
-                conf = detection[5]
-                index = detection[6]
+
+            if not equal_origin_shape:
+                payload = original_shapes[img_batch_index]
+                assert payload[0] == img_batch_index, "Image index and its original shape do not match"
+                original_h, original_w = payload[1]
+                # Added padding (check if the image was tall of short)
+                pad_x = int(max(original_h - original_w, 0) * (current_dim / max(payload[1])))
+                pad_y = int(max(original_w - original_h, 0) * (current_dim / max(payload[1])))
+                # Image size after padding's been removed
+                unpad_h = int(current_dim - pad_y)
+                unpad_w = int(current_dim - pad_x)
+
+            #print(f"\nCurrent dim: {current_dim}, Img shape: {original_h} {original_w},   Unpad shape: {unpad_h} {unpad_w}   Pad: {pad_x} {pad_y}")
+            # On each image in the batch there's a number of detections that need to be rescaled
+            for prediction in predictions:
+                #print("Prediction before check:", prediction)
+                # Ensure predicted bb coordinates do not fall into the padded area
+                if prediction[0] < pad_x // 2:
+                    prediction[0] = pad_x // 2 + 2
+                if prediction[2] > (pad_x // 2 + unpad_w):
+                    prediction[2] = (pad_x // 2 + unpad_w) - 2
+                if prediction[1] < pad_y // 2:
+                    prediction[1] = pad_y // 2 + 2
+                if prediction[3] > (pad_y // 2 + unpad_h):
+                    prediction[3] = (pad_y // 2 + unpad_h) - 2
+
+                #print("Prediction after check:", prediction)
+                # Rescale bbs
+                new_left = int((prediction[0] - pad_x // 2) * (original_w / unpad_w))
+                new_left = 2 if new_left == 0 else new_left
+
+                new_top = int((prediction[1] - pad_y // 2) * (original_h / unpad_h))
+                new_top = 2 if new_top == 0 else new_top
+
+                new_right = int((prediction[2] - pad_x // 2) * (original_w / unpad_w))
+                new_bot = int((prediction[3] - pad_y // 2) * (original_h / unpad_h))
+                obj_score = round(prediction[4], 4)
+                conf = round(prediction[5], 4)
+                index = int(prediction[6])
+
+                # Save modified results
+                # assert all((new_left < new_right, new_top < new_bot)), "Coordinates rescaled wrong"
+                # assert all((new_left > 0, new_top > 0, new_right > 0, new_bot > 0)), "Negative rescaled coordinate(s)"
+                # assert all((new_right <= original_w, new_bot <= original_h)), "Coordinates rescaled wrong"
+                if not all((new_left < new_right, new_top < new_bot)):
+                    print(f"ATTENTION. Wrong coordinates: {new_left} {new_top} {new_right} {new_bot}")
+                if not all((new_left > 0, new_top > 0, new_right > 0, new_bot > 0)):
+                    print(f"ATTENTION. Negative coordinate(s): {new_left} {new_top} {new_right} {new_bot}")
+                if not all((new_right <= original_w, new_bot <= original_h)):
+                    print(f"ATTENTION. Beyond error: {new_left} {new_top} {new_right} {new_bot}")
+
                 output[img_batch_index].append(
                     [new_left, new_top, new_right, new_bot, obj_score, conf, index]
                 )
+
         return output
 
     @staticmethod
     def rescale_bb(
             detections: dict,
             current_dim: int,
-            original_shape: tuple = None,
-            original_shapes: List[tuple] = None
+            original_shapes: List[tuple]
     ) -> dict:
         """
-        Rescale bounding boxes relatively to size(s) of the original image(s)
+
         :param detections:
         :param current_dim:
-        :param original_shape:
         :param original_shapes:
         :return:
         """
-        msg = "ERROR: Expected either ORIGINAL_SHAPE if all imgs were of the same size before resizing " \
-              "or ORIGINAL_SHAPES if resized images varied in size. Both or none seem to have been provided!"
-        assert any ((original_shape, original_shapes)) and not all((original_shape, original_shapes)), msg
-
-        # If all images were of the same size before they'd been resized
-        if original_shape and not original_shapes:
-            original_h, original_w = original_shape
-            # Added padding
-            pad_x = max(original_h - original_w, 0) * (current_dim / max(original_shape))
-            pad_y = max(original_w - original_h, 0) * (current_dim / max(original_shape))
-            # Image height after padding's been removed
-            unpad_h = current_dim - pad_y
-            unpad_w = current_dim - pad_x
-
+        assert len(original_shapes) == len(detections), "Numbers do not match"
         # Traverse over detections for the batch and rescale bb of any detected boxes
         output = dict()
         for img_batch_index, detections in detections.items():
@@ -212,24 +273,23 @@ class TensorManager:
 
             # In case images were of different sizes before they'd been resized, get original size for
             # each image in the batch and rescale bb accordingly
-            if original_shapes and not original_shape:
-                payload = original_shapes[img_batch_index]
-                assert payload[0] == img_batch_index, "ERROR: Hey b0ss, I have an error"
-                original_h, original_w = payload[1]
+            payload = original_shapes[img_batch_index]
+            assert payload[0] == img_batch_index, "ERROR: Hey b0ss, I have an error"
+            original_h, original_w = payload[1]
 
-                # Added padding
-                pad_x = max(original_h - original_w, 0) * (current_dim / max(payload[1]))
-                pad_y = max(original_w - original_h, 0) * (current_dim / max(payload[1]))
-                # Image height after padding's been removed
-                unpad_h = current_dim - pad_y
-                unpad_w = current_dim - pad_x
+            # Added padding
+            pad_x = max(original_h - original_w, 0) * (current_dim / max(payload[1]))
+            pad_y = max(original_w - original_h, 0) * (current_dim / max(payload[1]))
+            # Image height after padding's been removed
+            unpad_h = current_dim - pad_y
+            unpad_w = current_dim - pad_x
 
+            # On each image in the batch there's a number of detections that need to be rescaled
             for detection in detections:
                 #print(f"Img index: {img_batch_index}, Original size: ({original_h}, {original_w}), Detection: {detection}")
                 # Rescale boxes
                 new_left = int(((detection[0] - pad_x // 2) / unpad_w) * original_w)
 
-                # TODO: Find error here (https://github.com/eriklindernoren/PyTorch-YOLOv3/blob/master/utils/utils.py)
                 new_top = int(((detection[1] - pad_y // 2) / unpad_h) * original_h)
                 new_top = 1 if new_top <= 0 else new_top
 
@@ -241,6 +301,8 @@ class TensorManager:
                 obj_score = round(detection[4], 4)
                 conf = round(detection[5], 4)
                 index = int(detection[6])
+
+                assert all((new_left < new_right, new_top < new_bot)), "Coordinates rescaled wrong"
                 # Save modified results
                 output[img_batch_index].append(
                     [new_left, new_top, new_right, new_bot, obj_score, conf, index]
@@ -258,23 +320,23 @@ class TensorManager:
         :param image: image on which the tower was detected
         :return:
         """
-        img_width, img_height = image.shape[1:3]
+        assert nb_of_towers > 0, "Cannot modify bb of not detected towers"
+
+        img_height, img_width = image.shape[1:3]
         if nb_of_towers == 1:
-            new_left_boundary = int(tower.BB_left * 0.4)
-            new_right_boundary = int(tower.BB_right * 1.6) if int(tower.BB_right * 1.6) < \
-                                                                      img_width else (img_width - 2)
-            # Move upper border way up, often when a pole is close up many components do not get
-            # included in the box, as a result they do not get found
-            new_top_boundary = int(tower.BB_top * 0.1)
-            new_bot_boundary = int(tower.BB_bottom * 1.1) if int(tower.BB_bottom * 1.1) < \
-                                                                      img_height else (img_height - 2)
+            new_left_boundary = int(tower.BB_left * 0.4) if int(tower.BB_left * 0.4) > 0 else 2
+            new_right_boundary = int(tower.BB_right * 1.6) if int(tower.BB_right * 1.6) < img_width else (img_width - 2)
+            new_top_boundary = int(tower.BB_top * 0.1) if int(tower.BB_top * 0.1) > 0 else 2
+            new_bot_boundary = int(tower.BB_bottom * 1.1) if int(tower.BB_bottom * 1.1) < img_height else (img_height - 2)
         else:
-            new_left_boundary = int(tower.BB_left * 0.9)
-            new_right_boundary = int(tower.BB_right * 1.1) if int(tower.BB_right * 1.1) < \
-                                                                      img_width else (img_width - 2)
-            new_top_boundary = int(tower.BB_top * 0.5)
-            new_bot_boundary = int(tower.BB_bottom * 1.1) if int(tower.BB_bottom * 1.1) < \
-                                                                      img_height else (img_height - 2)
+            new_left_boundary = int(tower.BB_left * 0.9) if int(tower.BB_left * 0.9) > 0 else 2
+            new_right_boundary = int(tower.BB_right * 1.1) if int(tower.BB_right * 1.1) < img_width else (img_width - 2)
+            new_top_boundary = int(tower.BB_top * 0.5) if int(tower.BB_top * 0.5) > 0 else 2
+            new_bot_boundary = int(tower.BB_bottom * 1.1) if int(tower.BB_bottom * 1.1) < img_height else (img_height - 2)
+
+        msg = "Widen bb coordinate must be greater than 0"
+        assert all([e > 0 for e in [new_left_boundary, new_top_boundary, new_right_boundary, new_bot_boundary]]), msg
+        assert all((new_left_boundary < new_right_boundary, new_top_boundary < new_bot_boundary)), "Wrong coordinates"
         try:
             tower.update_object_coordinates(
                 left=new_left_boundary,
@@ -285,6 +347,8 @@ class TensorManager:
         except Exception as e:
             print(f"Failed during BB coordinates updating. Error: {e}")
             raise e
+
+        return
 
     @staticmethod
     def read_images(paths: list) -> list:

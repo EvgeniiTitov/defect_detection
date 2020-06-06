@@ -44,9 +44,9 @@ class MainDetector:
         try:
             self.files_to_process_Q = queue.Queue()
             self.frame_to_pole_detector = queue.Queue(maxsize=3)
-            self.pole_to_comp_detector = queue.Queue(maxsize=3)
-            self.comp_to_defect_detector = queue.Queue(maxsize=6)
-            self.defect_to_writer = queue.Queue(maxsize=10)
+            self.pole_to_comp_detector = queue.Queue(maxsize=5)
+            self.comp_to_defect_detector = queue.Queue(maxsize=5)
+            self.defect_to_writer = queue.Queue(maxsize=5)
         except Exception as e:
             print(f"Failed during queue initialization. Error: {e}")
             raise e
@@ -178,7 +178,6 @@ class MainDetector:
         file_id = str(uuid.uuid4())
 
         # Keep track of processing progress
-        start_time = time.time()
         self.progress[file_id] = {
             "status": "Awaiting processing",
             "request_id": request_id,
@@ -188,8 +187,7 @@ class MainDetector:
             "total_frames": None,
             "now_processing": 0,
             "processed": 0,
-            "defects": [],
-            "processing_time": start_time
+            "defects": []
         }
         self.files_to_process_Q.put(file_id)
 

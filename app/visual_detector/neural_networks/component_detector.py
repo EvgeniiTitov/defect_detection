@@ -60,7 +60,6 @@ class ComponentsDetector:
         2. For M towers you get Z component detection. Each detection is to be represented as DetectedObject
         3. Perform matching. Distribute Z detected components among M towers belonging to N images.
         '''
-
         # Collect all images that will be used to search for components + how many towers found on each image
         imgs_to_search_components_on, distribute_info = self.collect_imgs(
             images_on_gpu=images_on_gpu,
@@ -82,9 +81,10 @@ class ComponentsDetector:
         comp_detections = self.components_net.process_batch(images=batch_search_components)
 
         # Recalculate bbs relatively
-        rescaled_detections = TensorManager.rescale_bb(
+        rescaled_detections = TensorManager.rescale_bounding_box(
             detections=comp_detections,
             current_dim=ComponentsDetector.net_res,
+            equal_origin_shape=False,
             original_shapes=original_sizes
         )
         '''
@@ -202,6 +202,7 @@ class ComponentsDetector:
         :return:
         """
         resized_images, original_sizes = list(), list()
+
         for i in range(len(images)):
             image = images[i]
             try:
@@ -212,6 +213,7 @@ class ComponentsDetector:
             except Exception as e:
                 print(f"Failed during image resizing. Error: {e}")
                 raise e
+
             resized_images.append(resized_image)
             original_sizes.append((i, original_size))
 
@@ -233,7 +235,7 @@ class ComponentsDetector:
         If no towers found on the image, add the entire image to the list of images on which
         components will be detected 
         '''
-        assert len(images_on_gpu) == len(towers), "ERROR: N of imgs in the batch != N of tower detections"
+        assert len(images_on_gpu) == len(towers), "ERROR: N of imgs in the batch != N of tower detection keys"
         for i in range(len(images_on_gpu)):
             # Get detections for an image in the batch and the image itself
             detections = towers[i]
@@ -246,9 +248,10 @@ class ComponentsDetector:
                 distrib_info.append((i, 0))
                 continue
 
+            nb_of_towers = len(detections)
             for detection in detections:
                 # Modify object (tower)'s bounding boxes
-                TensorManager.modify_bb_coord(tower=detection, image=image, nb_of_towers=len(detections))
+                TensorManager.modify_bb_coord(tower=detection, image=image, nb_of_towers=nb_of_towers)
                 # Get modified BB coordinates and slice out the tower
                 left = detection.left
                 top = detection.top
@@ -256,6 +259,7 @@ class ComponentsDetector:
                 bot = detection.bottom
                 tower_bb_image = TensorManager.slice_out_tensor(image, [left, top, right, bot])
                 imgs_to_search_components_on.append(tower_bb_image)
+
             # Keep track of how many towers detected on the i-th image in the batch
             distrib_info.append((i, len(detections)))
 

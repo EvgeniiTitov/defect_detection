@@ -11,10 +11,6 @@ SHORT TERM TASKS:
 0.2 Register your detector properly in the flask's app
 0.3 Confidence is 1 for all objects
 0.4 Ensure preprocessing matches what the net was trained on
-0.5 Do code review, feels like there a performance drop
-
-
-
 
 2. Add logger
 3. Dumpers module (integrate into the system)

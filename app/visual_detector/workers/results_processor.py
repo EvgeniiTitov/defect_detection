@@ -100,7 +100,7 @@ class ResultsProcessorThread(threading.Thread):
 
             self.progress[file_id]["processed"] += len(batch_frames)
 
-            # ---DELETE ME---
+            #---DELETE ME---
             # for frame in batch_frames:
             #     cv2.imshow("", frame)
             #     if cv2.waitKey(1):
@@ -109,14 +109,12 @@ class ResultsProcessorThread(threading.Thread):
             # After all frames processed, save results
             if self.progress[file_id]["processed"] >= self.progress[file_id]["total_frames"]:
                 #self.save_results_to_db(file_id, filename, store_path)
-                self.results_processor.save_results_to_json(
-                    filename=filename,
-                    store_path=store_path,
-                    payload=self.progress[file_id]["defects"]
-                )
+                # self.results_processor.save_results_to_json(
+                #     filename=filename,
+                #     store_path=store_path,
+                #     payload=self.progress[file_id]["defects"]
+                # )
                 self.progress[file_id]["status"] = "Processed"
-                time_taken = time.time() - self.progress[file_id]["processing_time"]
-                print(f"\nTime taken to process: {filename} is {round(time_taken, 4)} seconds")
                 del self.progress[file_id]
                 print(f"Processing of {filename} completed")
 

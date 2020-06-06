@@ -11,7 +11,7 @@ class TowerDetector:
     """
     A wrapper around a neural network to do preprocessing / postprocessing of data before
     and after the neural network to detect towers
-    Weights: Pole try 9.
+    Weights: Pole try 11
     """
     path_to_dependencies = r"D:\Desktop\branch_dependencies"
     dependencies = "poles"
@@ -53,18 +53,20 @@ class TowerDetector:
             batch_tensor=images_on_gpu,
             new_size=TowerDetector.net_res
         )
-        # Normalize tensor, so that its values are between 0-1
+        # Normalize tensors so that the pixel values are within 0 - 1
         preprocessed_imgs.div_(255.0)
 
         # Get tower detections
         tower_detections = self.poles_net.process_batch(preprocessed_imgs)
 
         # Rescace bounding boxes relatively to images of the original dimensions
-        recalculated_detections = TensorManager.rescale_bb(
+        recalculated_detections = TensorManager.rescale_bounding_box(
             detections=tower_detections,
             current_dim=TowerDetector.net_res,
-            original_shape=original_shape
+            original_shape=original_shape,
+            equal_origin_shape=True
         )
+
         assert len(images_on_gpu) == len(recalculated_detections), "Nb of tower detections != batch size"
         # Postprocess results - represent all detections as class objects for convenience
         detections_output = {i: list() for i in range(len(images_on_gpu))}
@@ -94,7 +96,8 @@ class TowerDetector:
                     )
                 except Exception as e:
                     print(f"Failed during DetectedObject initialization. Error: {e}")
-                    raise e
+                    continue
+
                 detections_output[i].append(pole_detection)
         '''
         Output format if any towers detected: 

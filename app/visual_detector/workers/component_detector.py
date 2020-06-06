@@ -1,4 +1,3 @@
-from app.visual_detector.utils import ResultProcessor
 import threading
 
 
@@ -28,7 +27,12 @@ class ComponentDetectorThread(threading.Thread):
                 self.Q_out.put("END")  # video's over
                 continue
 
-            batch_frames, gpu_batch_frames, towers, file_id = input_
+            try:
+                batch_frames, gpu_batch_frames, towers, file_id = input_
+            except Exception as e:
+                print(f"Failed to unpack values from the input Q. Error: {e}")
+                raise e
+
             # Check if any pole's been detected happens in the component detector
             components = self.component_detector.process_batch(
                 images_on_gpu=gpu_batch_frames,
