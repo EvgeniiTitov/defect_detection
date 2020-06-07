@@ -20,7 +20,7 @@ class DefectDetectorThread(threading.Thread):
             out_queue,
             defect_detector,
             progress,
-            check_defects=True,
+            check_defects,
             *args,
             **kwargs
     ):
@@ -30,7 +30,6 @@ class DefectDetectorThread(threading.Thread):
         self.defect_detector = defect_detector
         self.check_defects = check_defects
         self.progress = progress
-        self.currently_processing = 0
 
     def run(self) -> None:
 
@@ -53,17 +52,46 @@ class DefectDetectorThread(threading.Thread):
                 print(f"Failed to unpack a message from the ComponentDetectorThread. Error: {e}")
                 raise e
             '''
+            We need to run self.defect_detector only if we have found objects for which we have running detectors 
+            
+            Run defect detector on 1 frame in the batch with the most objects found on it 
+            
             1. Check if any components have been detected 
             2. If any, send components and images on gpu for defect detection
             3. Makes sense to handle any detected defects here, result processor just draws boxes, saves results
             4. Combine towers and components in one dictionary 
             '''
 
-            # defects = self.defect_detector.search_defects_on_batch(
-            #     images_on_gpu=gpu_batch_frame,
-            #     towers=towers,
-            #     components=components
-            # )
+            # 1. Check if any objects've been detected and number of objects on each frame.
+            # 2. Collect all detections in one dictionary to send it to the results processor
+            detections_summary = {i: set() for i in range(len(batch_frame))}
+            detections_overall = 0
+            combined_detections = defaultdict(list)
+            for d in [towers, components]:
+                for img_batch_index, detections in d.items():
+                    combined_detections[img_batch_index].extend(detections)
+                    for detection in detections:
+                        detections_summary[img_batch_index].add(detection.object_name)
+                        detections_overall += 1
+
+            # TODO: Check if we have any detectors running for any detected objects
+            # If any objects found, check on which frame the most nb of objects detected and send it for defect
+            # detection
+            if detections_overall > 0 and self.check_defects:
+                most_detections = 0
+                index_frame_check_defects = 0
+                for i, detections in detections_summary.items():
+                    if len(detections) > most_detections:
+                        most_detections = len(detections)
+                        index_frame_check_defects = i
+
+                defects = self.defect_detector.search_defects_on_frame(
+                    image_on_cpu=batch_frame[index_frame_check_defects],
+                    image_on_gpu=gpu_batch_frame[index_frame_check_defects],
+                    towers=towers[index_frame_check_defects],
+                    components=components[index_frame_check_defects]
+                )
+
 
             # if components and self.check_defects and self.currently_processing % 10 == 0:
             #     detected_defects = self.defect_detector.search_defects(
@@ -78,15 +106,7 @@ class DefectDetectorThread(threading.Thread):
 
             del gpu_batch_frame
 
-            self.currently_processing += len(batch_frame)
-            # Merge dictionaries into one
-            assert list(towers.keys()).sort() == list(components.keys()).sort(), "batch index keys do not match"
-            output = defaultdict(list)
-            for d in (towers, components):
-                for key, value in d.items():
-                    output[key].extend(value)
-
-            self.Q_out.put((batch_frame, file_id, output))
+            self.Q_out.put((batch_frame, file_id, combined_detections))
 
         print("DefectDetectorThread killed")
 

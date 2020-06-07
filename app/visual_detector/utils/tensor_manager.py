@@ -351,6 +351,30 @@ class TensorManager:
         return
 
     @staticmethod
+    def modify_pillar_bb(pillar, image: torch.Tensor) -> None:
+        """
+
+        :param pillar:
+        :param image:
+        :return:
+        """
+        img_height, img_width = image.shape[1:3]
+
+        new_left = int(pillar.BB_left * 0.96)
+        new_right = int(pillar.BB_right * 1.04) if int(pillar.BB_right * 1.04) < img_width else img_width - 2
+
+        assert all((new_left > 0, new_right > 0)), "Wrong coordinates"
+        assert new_left < new_right, "Wrong coordinates"
+
+        try:
+            pillar.update_object_coordinates(left=new_left, right=new_right)
+        except Exception as e:
+            print(f"Failed while widening pillar's bb. Error: {e}")
+            raise e
+
+        return
+
+    @staticmethod
     def read_images(paths: list) -> list:
         """
         Opens images using PIL.Image

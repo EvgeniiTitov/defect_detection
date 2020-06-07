@@ -1,1 +1,2 @@
 from .model import DumperClassifier
+from app.visual_detector.neural_networks.dumper_classifier import DumperClassifier

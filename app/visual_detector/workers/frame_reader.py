@@ -84,6 +84,7 @@ class FrameReaderThread(threading.Thread):
                         raise
                     # Send original images, imaged on GPU and file id to the next worker
                     self.Q_out.put((batch_frames, gpu_batch_frames, file_id))
+                    break
 
                 if to_break:
                     break

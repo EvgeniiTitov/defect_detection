@@ -1,6 +1,7 @@
 from app.visual_detector.workers import FrameReaderThread, PoleDetectorThread, ComponentDetectorThread
 from app.visual_detector.workers import DefectDetectorThread, ResultsProcessorThread
-from app.visual_detector.neural_networks import TowerDetector, ComponentsDetector
+from app.visual_detector.workers import TiltDetectorThread, DumperClassifierThread, WoodCracksDetectorThread
+from app.visual_detector.neural_networks import TowerDetector, ComponentsDetector, DumperClassifier
 from app.visual_detector.defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
 from app.visual_detector.utils import ResultProcessor
 import queue
@@ -11,7 +12,13 @@ import time
 
 class MainDetector:
 
-    def __init__(self, save_path: str, batch_size: int, search_defects: bool = True, db=None):
+    def __init__(
+            self,
+            save_path: str,
+            batch_size: int,
+            search_defects: bool = True,
+            db=None
+    ):
         # Path on the server where processed data gets stored
         self.save_path = save_path
         self.search_defects = search_defects
@@ -24,6 +31,27 @@ class MainDetector:
         else:
             self.check_defects = False
 
+        # Initialize Qs and workers
+        try:
+            self.files_to_process_Q = queue.Queue()
+            self.frame_to_pole_detector = queue.Queue(maxsize=3)
+            self.pole_to_comp_detector = queue.Queue(maxsize=5)
+            self.comp_to_defect_detector = queue.Queue(maxsize=5)
+            self.defect_to_writer = queue.Queue(maxsize=5)
+
+            # --- dumper classifier ---
+            self.to_dumper_classifier = queue.Queue(maxsize=3)
+            self.from_dumper_classifier = queue.Queue(maxsize=3)
+            # --- tilt detector ---
+            pass
+            # --- wood tower cracks ---
+            pass
+            # --- conrete tower cracks ---
+            pass
+        except Exception as e:
+            print(f"Failed during queue initialization. Error: {e}")
+            raise e
+
         # Initialize detectors and auxiliary modules
         try:
             self.results_processor = ResultProcessor(save_path=save_path)
@@ -32,23 +60,13 @@ class MainDetector:
             self.defect_detector = DefectDetector(
                 line_modifier=LineModifier,
                 concrete_extractor=ConcreteExtractor,
-                cracks_detector=None,
-                dumpers_defect_detector=None,
+                dumpers_defect_detector=(self.to_dumper_classifier, self.from_dumper_classifier),
+                concrete_cracks_detector=None,
                 insulators_defect_detector=None
             )
+            self.dumper_classifier = DumperClassifier()
         except Exception as e:
             print(f"Failed during detectors initialization. Error: {e}")
-            raise e
-
-        # Initialize Qs and workers
-        try:
-            self.files_to_process_Q = queue.Queue()
-            self.frame_to_pole_detector = queue.Queue(maxsize=3)
-            self.pole_to_comp_detector = queue.Queue(maxsize=5)
-            self.comp_to_defect_detector = queue.Queue(maxsize=5)
-            self.defect_to_writer = queue.Queue(maxsize=5)
-        except Exception as e:
-            print(f"Failed during queue initialization. Error: {e}")
             raise e
 
         try:
@@ -84,6 +102,12 @@ class MainDetector:
                 progress=self.progress,
                 database=db
             )
+            self.dumper_classifier_thread = DumperClassifierThread(
+                in_queue=self.to_dumper_classifier,
+                out_queue=self.from_dumper_classifier,
+                dumper_classifier=self.dumper_classifier,
+                progress=self.progress
+            )
         except Exception as e:
             print(f"Failed during workers initialization. Error: {e}")
             raise e
@@ -98,8 +122,10 @@ class MainDetector:
     ) -> dict:
         """
         API endpoint - parses input data, puts files provided to the Q if of appropriate extension
-        :param path_to_data: Path to data to process - image, video, folder with images, video
-        :return: dictionary {filename : ID, }
+        :param request_id:
+        :param path_to_data:
+        :param pole_number:
+        :return:
         """
         file_IDS = {}
 
@@ -199,7 +225,8 @@ class MainDetector:
             self.pole_detector_thread,
             self.component_detector_thread,
             self.defect_detector_thread,
-            self.results_processor_thread
+            self.results_processor_thread,
+            self.dumper_classifier_thread
         ):
             thread.start()
 
@@ -211,6 +238,7 @@ class MainDetector:
             self.pole_detector_thread,
             self.component_detector_thread,
             self.defect_detector_thread,
-            self.results_processor_thread
+            self.results_processor_thread,
+            self.dumper_classifier_thread
         ):
             thread.join()
