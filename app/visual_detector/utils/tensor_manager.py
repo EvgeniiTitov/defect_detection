@@ -148,7 +148,6 @@ class TensorManager:
         assert isinstance(image, torch.Tensor), "Wrong image data type. Tensor expected"
         assert len(coordinates) == 4, "No or wrong number of coordinates provided. Expected 4"
         assert all((coord > 0 for coord in coordinates)), "Coordinates cannot be negative or 0"
-
         left = coordinates[0]
         top = coordinates[1]
         right = coordinates[2]
@@ -159,6 +158,31 @@ class TensorManager:
             subimage = image[:, top:bot, left:right]
         except Exception as e:
             print(f"Failed while slicing out a bb tensor. Error: {e}")
+            raise e
+
+        return subimage
+
+    @staticmethod
+    def slice_out_np_array(image: np.ndarray, coordinates: list) -> np.ndarray:
+        """
+
+        :param image:
+        :param coordinates:
+        :return:
+        """
+        assert isinstance(image, np.ndarray), "Wrong image data type. Numpy expected"
+        assert len(coordinates) == 4, "No or wrong number of coordinates provided. Expected 4"
+        assert all((coord > 0 for coord in coordinates)), "Coordinates cannot be negative or 0"
+        left = coordinates[0]
+        top = coordinates[1]
+        right = coordinates[2]
+        bot = coordinates[3]
+        assert all((left < right, top < bot)), "Coordinates provided are incorrect"
+
+        try:
+            subimage = np.array(image[top:bot, left:right])
+        except Exception as e:
+            print(f"Failed while scicing out a bb numpy array. Error: {e}")
             raise e
 
         return subimage
@@ -324,8 +348,8 @@ class TensorManager:
 
         img_height, img_width = image.shape[1:3]
         if nb_of_towers == 1:
-            new_left_boundary = int(tower.BB_left * 0.4) if int(tower.BB_left * 0.4) > 0 else 2
-            new_right_boundary = int(tower.BB_right * 1.6) if int(tower.BB_right * 1.6) < img_width else (img_width - 2)
+            new_left_boundary = int(tower.BB_left * 0.2) if int(tower.BB_left * 0.2) > 0 else 2  # turns to 0 if 1 * 0.2
+            new_right_boundary = int(tower.BB_right * 1.8) if int(tower.BB_right * 1.8) < img_width else (img_width - 2)
             new_top_boundary = int(tower.BB_top * 0.1) if int(tower.BB_top * 0.1) > 0 else 2
             new_bot_boundary = int(tower.BB_bottom * 1.1) if int(tower.BB_bottom * 1.1) < img_height else (img_height - 2)
         else:

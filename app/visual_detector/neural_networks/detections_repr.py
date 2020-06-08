@@ -32,7 +32,8 @@ class DetectedObject:
 
         # Deficiency information
         self.deficiency_status = False
-        self.inclination = None
+        self._inclination = None
+        self.edges = list()
         self.cracked = None
 
     @property
@@ -50,6 +51,15 @@ class DetectedObject:
     @property
     def bottom(self):
         return self._bottom
+
+    @property
+    def inclination(self):
+        return self._inclination
+
+    @inclination.setter
+    def inclination(self, angle: float):
+        assert 0.0 <= angle <= 90.0, "Wrong inclination angle provided. Expected 0 - 90 degrees"
+        self._inclination = angle
 
     def update_object_coordinates(
             self,

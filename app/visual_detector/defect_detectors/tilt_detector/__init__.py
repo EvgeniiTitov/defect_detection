@@ -1,2 +1,2 @@
-from .concrete_extractor import ConcreteExtractor
+from .concrete_extractor import ConcretePoleHandler
 from .line_modifier import LineModifier

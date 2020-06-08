@@ -1,17 +1,59 @@
+from threading import Thread
+from typing import List
 import numpy as np
+import functools
 import cv2
 import sys
 
 
-class ConcreteExtractor:
-    """
-    Allows to find pole edges and extract the area confined by these edges
-    """
-    def __init__(
-            self,
-            line_modifier,
-    ):
+def timeout(seconds):
+    # https://stackoverflow.com/questions/21827874/timeout-a-function-windows
+    def deco(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            res = [Exception(f"Function {func.__name__} timeout {seconds} exceeded")]
 
+            def new_func():
+                try:
+                    res[0] = func(*args, **kwargs)
+                except Exception as e:
+                    res[0] = e
+            t = Thread(target=new_func)
+            t.daemon = True
+            try:
+                t.start()
+                # Attempt joining the thread in N seconds
+                t.join(timeout=seconds)
+            except Exception as e:
+                raise e
+
+            ret = res[0]
+            if isinstance(ret, BaseException):
+                raise ret
+
+            return ret
+        return wrapper
+    return deco
+
+
+class ConcretePoleHandler:
+    """
+    Allows to find concrete pole edges and extract the area confined by these edges for crack detection
+    """
+    # HYPER PARAMETERS
+    canny_threshold1 = 50
+    canny_threshold2 = 200
+    canny_ap_size = 3
+    hough_rho = 1
+    hough_theta = np.pi / 180
+    hough_threshold = 100
+    hough_min_line_length = 100
+    hough_max_line_gap = 100
+    mask_iterations = 5
+
+    time_out_line_generation = 7  # in seconds
+
+    def __init__(self, line_modifier):
         self.line_modifier = line_modifier
 
     def retrieve_polygon_v2(
@@ -29,7 +71,7 @@ class ConcreteExtractor:
         :param height:
         :return:
         """
-        extended_lines = self.line_modifier().extend_lines(lines_to_extend=the_edges, image=image)
+        extended_lines = self.line_modifier.extend_lines(lines_to_extend=the_edges, image=image)
 
         # Change coordinates order as per warp perspective requirements
         extended_lines.append(extended_lines.pop(extended_lines.index(extended_lines[1])))
@@ -86,23 +128,18 @@ class ConcreteExtractor:
         # shorter than image's height, extend them first to successfully extract
         # the area confined by them
 
-        extended_lines = self.line_modifier().extend_lines(lines_to_extend=the_lines,
-                                                           image=image)
+        extended_lines = self.line_modifier.extend_lines(lines_to_extend=the_lines, image=image)
 
         # Once line's been extended, use them to extract the image section
         # restricted, defined by them
         support_point = extended_lines[2]
         extended_lines.append(support_point)
-
         points = np.array(extended_lines)
-
         mask = np.zeros((image.shape[0], image.shape[1]))
 
         # Fills  in the shape defined by the points to be white in the mask. The
         # rest is black
-        cv2.fillConvexPoly(img=mask,
-                           points=points,
-                           color=1)
+        cv2.fillConvexPoly(img=mask, points=points, color=1)
 
         # We then convert the mask into Boolean where white pixels refrecling
         # the image section we want to extract as True, the rest is False
@@ -128,40 +165,84 @@ class ConcreteExtractor:
 
         return output_copy
 
-    def find_pole_edges(self, image: np.ndarray) -> list:
+    def find_pole_edges_calculate_angle(self, pillars: List[np.ndarray]) -> List[list]:
         """
-        Find pole's edges by means of generating lines (Canny, HoughTrans) ands .
-
-        :return: edges found (list of lists)
+        Find pole's edges and calculate their angle
+        :return:
         """
-        # Find all lines on the image
-        raw_lines = self.generate_lines(image)
+        output = list()
 
-        # Rewrite lines in a proper form (x1,y1), (x2,y2) if any found. List of lists
-        if raw_lines is None:
-            return []
+        for i, pillar in enumerate(pillars):
+            # Find all lines within the pillar's bb making sure to stop the process should it take more than N time
+            method_to_timeout = timeout(seconds=self.time_out_line_generation)(self.generate_lines)
+            try:
+                raw_lines = method_to_timeout(image=pillar)
+            except:
+                print("Timeout while lines generation")
+                output.append([None, None])
+                continue
 
-        # Process results: merge raw lines where possible to decrease the total
-        # number of lines we are working with
-        merged_lines = self.line_modifier().merge_lines(lines_to_merge=raw_lines)
 
-        # Pick lines based on which the angle will be calculated. Ideally we are looking for 2 lines
-        # which represent both pole's edges. If there is 1, warn user and calculate the angle based
-        # on it. Pick two opposite and parrallel lines within the merged ones. We assume this is pole
-        if len(merged_lines) > 1:
-            the_lines = self.retrieve_pole_lines(merged_lines, image)
+            # Rewrite lines in a proper form (x1,y1), (x2,y2) if any found. List of lists
+            if raw_lines is None:
+                output.append([None, None])
+                continue
 
-        elif len(merged_lines) == 1:
-            print("WARNING: Only one edge detected!")
-            the_lines = merged_lines
+            # Process results: merge raw lines where possible to decrease the total number of lines
+            merged_lines = self.line_modifier.merge_lines(lines_to_merge=raw_lines)
+
+            # Pick lines based on which the angle will be calculated.
+            if len(merged_lines) > 1:
+                the_lines = self.retrieve_pole_lines(merged_lines, pillar)
+            elif len(merged_lines) == 1:
+                print("WARNING: Only one edge detected!")
+                the_lines = merged_lines
+            else:
+                print("WARNING: No edges detected")
+                continue
+
+            msg = "ERROR: Wrong number of lines detected. Sorting algorithm failed"
+            assert the_lines and 1 <= len(the_lines) <= 2, msg
+            # Calculate angle, save results
+            angle = self.calculate_angle(the_lines)
+            output.append([angle, the_lines])
+
+        return output
+
+    def calculate_angle(self, the_lines):
+        """
+        Calculates angle of the line(s) provided
+        :param the_lines: list of lists, lines found and filtered
+        :return: angle
+        """
+        if len(the_lines) == 2:
+            x1_1 = the_lines[0][0][0]
+            y1_1 = the_lines[0][0][1]
+            x2_1 = the_lines[0][1][0]
+            y2_1 = the_lines[0][1][1]
+            angle_1 = round(90 - np.rad2deg(np.arctan2(abs(y2_1 - y1_1), abs(x2_1 - x1_1))), 2)
+
+            x1_2 = the_lines[1][0][0]
+            y1_2 = the_lines[1][0][1]
+            x2_2 = the_lines[1][1][0]
+            y2_2 = the_lines[1][1][1]
+            angle_2 = round(90 - np.rad2deg(np.arctan2(abs(y2_2 - y1_2), abs(x2_2 - x1_2))), 2)
+
+            the_angle = round((angle_1 + angle_2) / 2, 2)
+            assert 0 <= the_angle <= 90, "ERROR: Wrong angle value calculated"
+
+            return the_angle
 
         else:
-            print("WARNING: No edges detected")
-            return []
+            x1 = the_lines[0][0][0]
+            y1 = the_lines[0][0][1]
+            x2 = the_lines[0][1][0]
+            y2 = the_lines[0][1][1]
 
-        assert the_lines and 1 <= len(the_lines) <= 2, "ERROR: Wrong number of lines found"
+            the_angle = round(90 - np.rad2deg(np.arctan2(abs(y2 - y1), abs(x2 - x1))), 2)
+            assert 0 <= the_angle <= 90, "ERROR: Wrong angle value calculated"
 
-        return the_lines
+            return the_angle
 
     def retrieve_pole_lines(
             self,
@@ -186,10 +267,9 @@ class ConcreteExtractor:
         right_section_and_margin = int(image.shape[1] * 0.4)
 
         if len(merged_lines) > 10:
-            print("WARNING: MORE THAN 10 LINES TO SORT. O(N2) WONT PROMISE YOU THAT")
+            print("WARNING: MORE THAN 10 LINES TO SORT. O(n2) WONT FORGIVE YOU THAT")
 
         while merged_lines:
-
             line = merged_lines.pop()
             line_angle = round(90 - np.rad2deg(np.arctan2(abs(line[1][1] - line[0][1]),
                                                           abs(line[1][0] - line[0][0]))), 2)
@@ -227,9 +307,7 @@ class ConcreteExtractor:
             else:
                 for i in range(len(lines_to_the_left) - 1):
                     for j in range(i + 1, len(lines_to_the_left)):
-
                         delta = abs(lines_to_the_left[i][1] - lines_to_the_left[j][1])
-
                         if not delta < optimal_lines[0]:
                             continue
                         else:
@@ -252,9 +330,7 @@ class ConcreteExtractor:
             else:
                 for i in range(len(lines_to_the_right) - 1):
                     for j in range(i + 1, len(lines_to_the_right)):
-
                         delta = abs(lines_to_the_right[i][1] - lines_to_the_right[j][1])
-
                         if not delta < optimal_lines[0]:
                             continue
                         else:
@@ -264,9 +340,7 @@ class ConcreteExtractor:
         else:
             for left_line, left_angle, left_length in lines_to_the_left:
                 for right_line, right_angle, right_length in lines_to_the_right:
-
                     delta = abs(left_angle - right_angle)
-
                     if not delta < optimal_lines[0]:
                         continue
 
@@ -274,7 +348,7 @@ class ConcreteExtractor:
 
         return [optimal_lines[1], optimal_lines[2]]
 
-    def generate_lines(self, image):
+    def generate_lines(self, image: np.ndarray):
         """Generates lines based on which the inclination angle will be
         later calculated
         :param image: image
@@ -282,24 +356,25 @@ class ConcreteExtractor:
         """
         # Apply mask to remove background
         image_masked = self.apply_mask(image)
-
         # Generate edges
-        edges = cv2.Canny(image_masked,
-                          threshold1=50,
-                          threshold2=200,
-                          apertureSize=3)
-
+        edges = cv2.Canny(
+            image_masked,
+            threshold1=self.canny_threshold1,
+            threshold2=self.canny_threshold2,
+            apertureSize=self.canny_ap_size
+        )
         # Based on the edges found, find lines
-        lines = cv2.HoughLinesP(edges,
-                                rho=1,
-                                theta=np.pi / 180,
-                                threshold=100,
-                                minLineLength=100,
-                                maxLineGap=100)
-
+        lines = cv2.HoughLinesP(
+            edges,
+            rho=self.hough_rho,
+            theta=self.hough_theta,
+            threshold=self.hough_threshold,
+            minLineLength=self.hough_min_line_length,
+            maxLineGap=self.hough_max_line_gap
+        )
         return lines
 
-    def apply_mask(self, image):
+    def apply_mask(self, image: np.ndarray):
         """
         Applies rectangular mask to an image in order to remove background
         and mainly focus on the pole
@@ -316,25 +391,18 @@ class ConcreteExtractor:
         #         image.shape[1] - int(image.shape[1] * 0.2),
         #         image.shape[0])
 
-        rect = (1,
-                0,
-                image.shape[1],
-                image.shape[0])
-
-        cv2.grabCut(image,
-                    mask,
-                    rect,
-                    bgd_model,
-                    fgd_model,
-                    5,
-                    cv2.GC_INIT_WITH_RECT)
-
+        rect = (1, 0, image.shape[1], image.shape[0])
+        cv2.grabCut(
+            image,
+            mask,
+            rect,
+            bgd_model,
+            fgd_model,
+            self.mask_iterations,
+            cv2.GC_INIT_WITH_RECT
+        )
         mask2 = np.where((mask == 2) | (mask == 0), 0, 1).astype("uint8")
         img = image * mask2[:, :, np.newaxis]
-
-        ret, thresh = cv2.threshold(img,
-                                    0,
-                                    255,
-                                    cv2.THRESH_BINARY)
+        ret, thresh = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY)
 
         return thresh

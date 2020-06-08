@@ -43,7 +43,6 @@ class DefectDetectorThread(threading.Thread):
 
             if input_ == "END":
                 self.Q_out.put("END")
-                self.refresh_counter()
                 continue
 
             try:
@@ -74,9 +73,11 @@ class DefectDetectorThread(threading.Thread):
                         detections_summary[img_batch_index].add(detection.object_name)
                         detections_overall += 1
 
-            # TODO: Check if we have any detectors running for any detected objects
+            # TODO: Check if we have any detectors running for any detected objects - create a list of all
+            #       running detectors in main model.py and give it to the thread similar to self.progress
             # If any objects found, check on which frame the most nb of objects detected and send it for defect
             # detection
+            index_frame_check_defects = None
             if detections_overall > 0 and self.check_defects:
                 most_detections = 0
                 index_frame_check_defects = 0
@@ -85,30 +86,15 @@ class DefectDetectorThread(threading.Thread):
                         most_detections = len(detections)
                         index_frame_check_defects = i
 
-                defects = self.defect_detector.search_defects_on_frame(
+                # Does not return anything - modifies DetectedObject instances state to declare them defected
+                self.defect_detector.search_defects_on_frame(
                     image_on_cpu=batch_frame[index_frame_check_defects],
                     image_on_gpu=gpu_batch_frame[index_frame_check_defects],
                     towers=towers[index_frame_check_defects],
                     components=components[index_frame_check_defects]
                 )
-
-
-            # if components and self.check_defects and self.currently_processing % 10 == 0:
-            #     detected_defects = self.defect_detector.search_defects(
-            #         detected_objects=components,
-            #         image=frame,
-            #         image_name=self.progress[file_id]["path_to_file"]
-            #     )
-            #
-            #     # Add only if any defects have been detected
-            #     if any(detected_defects[key] for key in detected_defects.keys()):
-            #         self.progress[file_id]["defects"].append(detected_defects)
-
             del gpu_batch_frame
 
-            self.Q_out.put((batch_frame, file_id, combined_detections))
+            self.Q_out.put((batch_frame, file_id, combined_detections, index_frame_check_defects))
 
         print("DefectDetectorThread killed")
-
-    def refresh_counter(self):
-        self.currently_processing = 0

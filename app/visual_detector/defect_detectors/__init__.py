@@ -1,2 +1,2 @@
-from .defect_managing_hub import DefectDetector
-from .tilt_detector import ConcreteExtractor, LineModifier
+from .defect_detector import DefectDetector
+from .tilt_detector import ConcretePoleHandler, LineModifier

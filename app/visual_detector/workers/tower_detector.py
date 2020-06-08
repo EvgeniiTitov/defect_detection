@@ -1,8 +1,8 @@
 import threading
-from app.visual_detector.utils import ResultProcessor
+from app.visual_detector.utils import Drawer
 
 
-class PoleDetectorThread(threading.Thread):
+class TowerDetectorThread(threading.Thread):
 
     def __init__(
             self,
@@ -40,4 +40,4 @@ class PoleDetectorThread(threading.Thread):
             towers = self.tower_detector.process_batch(images_on_gpu=gpu_batch_frames)
             self.Q_out.put((batch_frames, gpu_batch_frames, towers, file_id))
 
-        print("PoleDetectorThread killed")
+        print("TowerDetectorThread killed")

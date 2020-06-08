@@ -1,5 +1,7 @@
 import torch
 import torch.nn.functional as F
+from torchvision.transforms.functional import normalize
+import torchvision
 
 
 class DumperClassifier:
@@ -28,17 +30,33 @@ class DumperClassifier:
 
     def predict(self, images_on_gpu: torch.Tensor) -> list:
         """
-        Receives a batch of sliced tensors of vibration dumpers and classifies them.
+        Receives a batch of sliced tensors (not preprocessed in any way) of vibration dumpers and classifies them.
         :param images_on_gpu:
         :return:
         """
         dumpers_to_classify = list()
         # Resize images to the expected size
         for image in images_on_gpu:
-            # Add batch dimension
-            image = image.unsqueeze(0)
+            #print("TENSOR BEFORE NORMALIZATION:", image)
+            # Normalize image
             try:
-                resized_image = F.interpolate(image, size=DumperClassifier.img_size)
+                # normalize(
+                #     tensor=image,
+                #     mean=[0.485, 0.456, 0.406],
+                #     std=[0.229, 0.224, 0.225],
+                #     inplace=True
+                # )
+                image = self.normalize_image(image)
+            except Exception as e:
+                print(f"Failed during image normalization for dumper classification. Error: {e}")
+                raise e
+
+            #print("TENSOR AFTER NORMALIZATION:", image)
+
+            # Add batch dimension
+            img = image.unsqueeze(0)
+            try:
+                resized_image = F.interpolate(img, size=DumperClassifier.img_size)
             except Exception as e:
                 print(f"Failed during dumper tensor resizing. Error: {e}")
                 raise e
@@ -60,6 +78,17 @@ class DumperClassifier:
 
         return predictions
 
+    def normalize_image(self, image: torch.Tensor) -> torch.Tensor:
+        """
+
+        :param image:
+        :return:
+        """
+        image_transform = torchvision.transforms.Compose([
+            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+        return image_transform(image)
+
     def run_forward_pass(self, batch: torch.Tensor) -> list:
         """
 
@@ -70,8 +99,5 @@ class DumperClassifier:
             model_output = self.model(batch)
 
         labels = [self.classes[out.data.numpy().argmax()] for out in model_output.cpu()]
-
-        # DELETE ME - TESTING
-        labels = ["defected" for _ in labels]
 
         return labels

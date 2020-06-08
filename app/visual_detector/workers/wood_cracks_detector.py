@@ -20,5 +20,13 @@ class WoodCracksDetectorThread(threading.Thread):
 
     def run(self) -> None:
         while True:
-            input = self.Q_in.get()
-            print("Input:", input)
+
+            input_ = self.Q_in.get()
+            if input_ == "END":
+                break
+
+            print("Wood thread input:", input)
+
+            self.Q_out.put("Success")
+
+        print("WoodCracksDetectorThread successfully killed")

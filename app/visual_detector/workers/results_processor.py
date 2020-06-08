@@ -1,10 +1,6 @@
-from datetime import datetime
 import threading
 import cv2
 import os
-import time
-import numpy as np
-import json
 
 
 class ResultsProcessorThread(threading.Thread):
@@ -13,18 +9,16 @@ class ResultsProcessorThread(threading.Thread):
             self,
             save_path,
             in_queue,
-            results_processor,
+            drawer,
             progress,
-            database,
             *args,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.Q_in = in_queue
-        self.results_processor = results_processor
+        self.drawer = drawer
         self.save_path = save_path
         self.progress = progress
-        self.database = database
 
         self.video_writer = None
         self.previous_id = None
@@ -82,17 +76,17 @@ class ResultsProcessorThread(threading.Thread):
                 )
 
             # Draw bounding boxes and save image on disk
-            self.results_processor.draw_bb_on_batch(
+            self.drawer.draw_bb_on_batch(
                 images=batch_frames,
                 detections=detected_objects
             )
             if file_type == "video":
-                self.results_processor.save_batch_on_disk(
+                self.drawer.save_batch_on_disk(
                     images=batch_frames,
                     video_writter=self.video_writer
                 )
             else:
-                self.results_processor.save_image_on_disk(
+                self.drawer.save_image_on_disk(
                     save_path=store_path,
                     image_name=filename + ".jpg",
                     image=batch_frames[0]
@@ -101,10 +95,10 @@ class ResultsProcessorThread(threading.Thread):
             self.progress[file_id]["processed"] += len(batch_frames)
 
             #---DELETE ME---
-            # for frame in batch_frames:
-            #     cv2.imshow("", frame)
-            #     if cv2.waitKey(1):
-            #         break
+            for frame in batch_frames:
+                cv2.imshow("", frame)
+                if cv2.waitKey(1):
+                    break
 
             # After all frames processed, save results
             if self.progress[file_id]["processed"] >= self.progress[file_id]["total_frames"]:
@@ -122,29 +116,3 @@ class ResultsProcessorThread(threading.Thread):
 
     def clean_video_writer(self):
         self.video_writer = None
-
-    def save_results_to_db(self, file_id: int, filename: str, store_path: str) -> bool:
-        """
-        Dumps processing results into the database
-        :param file_id:
-        :param filename:
-        :param store_path:
-        :return:
-        """
-        try:
-            # Creates a collection on the fly or finds the existing one
-            prediction_results = self.database.db.predictions
-            prediction_results.insert(
-                {
-                    "request_id": self.progress[file_id]["request_id"],
-                    "file_id": file_id,
-                    "file_name": filename,
-                    "saved_to": store_path,
-                    "datetime": datetime.utcnow(),
-                    "defects": self.progress[file_id]["defects"]
-                }
-            )
-            return True
-        except Exception as e:
-            print(f"Error while inserting into db: {e}")
-            return False

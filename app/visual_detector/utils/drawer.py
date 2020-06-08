@@ -6,7 +6,7 @@ import json
 import torch
 
 
-class ResultProcessor:
+class Drawer:
     """
     Class performing BBs drawing, saving objects to disk
     """
@@ -93,7 +93,7 @@ class ResultProcessor:
 
                 if element.inclination:
                     text = f"Angle: {element.inclination}"
-                    cv2.putText(image, text, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+                    cv2.putText(image, text, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
                 # Draw rectangle
                 cv2.rectangle(
@@ -103,6 +103,17 @@ class ResultProcessor:
                     color=colour,
                     thickness=self.line_text_size(image)[0]
                 )
+
+                # Draw line(s) used for pole inclination calculations
+                edges = element.edges
+                if edges:
+                    for edge in edges[0]:
+                        p1 = edge[0]
+                        p2 = edge[1]
+                        p1 = p1[0] + element.left, p1[1] + element.top
+                        p2 = p2[0] + element.left, p2[1] + element.top
+
+                        cv2.line(image, p1, p2, (0, 0, 255), 2)
 
                 label = "{}:{:1.2f}".format(element.object_name, element.confidence)
 
