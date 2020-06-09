@@ -10,12 +10,14 @@ SHORT TERM TASKS:
 0.1 To config add what defect detectors you want to launch
 0.2 Register your detector properly in the flask's app
 0.3 Confidence is 1 for all objects
-0.4 Ensure preprocessing matches what the net was trained on
+0.4 TILT DETECTOR: Add condition if angle of the 2 edges is not within N degrees, do not calculate tilt
 
+1. 2 videos in a folder get processed and saved as 1 video
 2. Add logger
-3. Dumpers module (integrate into the system)
 4. Wooden pole defects (Dasha)
 5. Tuning:
+    - Make sure preprocessing for dumper classification is correct
+    - Make sure preprocessing for YOLO is correct
     - Tune YOLOs parameters (NMS, threshold etc)
     - Tune line filtering algorithm
 6. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then update them)

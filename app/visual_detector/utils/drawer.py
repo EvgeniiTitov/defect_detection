@@ -103,7 +103,6 @@ class Drawer:
                     color=colour,
                     thickness=self.line_text_size(image)[0]
                 )
-
                 # Draw line(s) used for pole inclination calculations
                 edges = element.edges
                 if edges:
@@ -112,11 +111,9 @@ class Drawer:
                         p2 = edge[1]
                         p1 = p1[0] + element.left, p1[1] + element.top
                         p2 = p2[0] + element.left, p2[1] + element.top
-
                         cv2.line(image, p1, p2, (0, 0, 255), 2)
 
                 label = "{}:{:1.2f}".format(element.object_name, element.confidence)
-
                 label_size, base_line = cv2.getTextSize(
                     label,
                     cv2.FONT_HERSHEY_SIMPLEX,

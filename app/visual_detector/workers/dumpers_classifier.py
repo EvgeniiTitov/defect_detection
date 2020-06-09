@@ -27,8 +27,6 @@ class DumperClassifierThread(threading.Thread):
             if input_ == "STOP":
                 break
 
-            #print("Dumpers:", input_)
-
             # Collect sliced out tensors and send to the model for preproccessing and
             # subsequent inference
             images_to_preprocess = list()

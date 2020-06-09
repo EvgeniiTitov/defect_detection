@@ -99,10 +99,8 @@ class DefectDetector:
         :return:
         """
         output = dict()
-
         for class_name, elements in detections.items():
             output[class_name] = list()
-
             # Do not have any processors for these classes
             if class_name == "concrete":
                 continue

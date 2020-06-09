@@ -25,8 +25,6 @@ class WoodCracksDetectorThread(threading.Thread):
             if input_ == "END":
                 break
 
-            print("Wood thread input:", input)
-
             self.Q_out.put("Success")
 
         print("WoodCracksDetectorThread successfully killed")

@@ -1,7 +1,9 @@
 import torch
 import torch.nn.functional as F
 from torchvision.transforms.functional import normalize
+from torchvision.transforms import transforms
 import torchvision
+from app.visual_detector.utils import TensorManager
 
 
 class DumperClassifier:
@@ -40,23 +42,18 @@ class DumperClassifier:
             #print("TENSOR BEFORE NORMALIZATION:", image)
             # Normalize image
             try:
-                # normalize(
-                #     tensor=image,
-                #     mean=[0.485, 0.456, 0.406],
-                #     std=[0.229, 0.224, 0.225],
-                #     inplace=True
-                # )
-                image = self.normalize_image(image)
+                image = self.normalize_image(image.div_(255.0))
             except Exception as e:
                 print(f"Failed during image normalization for dumper classification. Error: {e}")
                 raise e
 
             #print("TENSOR AFTER NORMALIZATION:", image)
 
-            # Add batch dimension
-            img = image.unsqueeze(0)
             try:
-                resized_image = F.interpolate(img, size=DumperClassifier.img_size)
+                resized_image = F.interpolate(
+                    image.unsqueeze_(0),
+                    size=DumperClassifier.img_size
+                )
             except Exception as e:
                 print(f"Failed during dumper tensor resizing. Error: {e}")
                 raise e
@@ -68,6 +65,8 @@ class DumperClassifier:
         except Exception as e:
             print(f"Failed during dumper tensors concatination. Error: {e}")
             raise e
+
+        #TensorManager.visualise_sliced_img(batch)
 
         # Get predictions
         try:
@@ -85,7 +84,7 @@ class DumperClassifier:
         :return:
         """
         image_transform = torchvision.transforms.Compose([
-            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         return image_transform(image)
 

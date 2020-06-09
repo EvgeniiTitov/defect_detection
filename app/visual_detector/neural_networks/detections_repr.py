@@ -34,7 +34,8 @@ class DetectedObject:
         self.deficiency_status = False
         self._inclination = None
         self.edges = list()
-        self.cracked = None
+        self.cracked = False
+        self.is_weight_missing = False
 
     @property
     def top(self):

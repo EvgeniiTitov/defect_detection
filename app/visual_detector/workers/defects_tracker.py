@@ -49,9 +49,36 @@ class DefectTrackingThread(threading.Thread):
                defect detection results cannot be linked between different frames 
             '''
 
+            # If any components have been detected, a frame with the most number of elements on it selected and sent
+            # for defect detection, iterate over components on this frame saving their deficiency status
+            defects_on_frame = dict()
             if index_checked_frame:
-                pass
+                components = detections[index_checked_frame]
+                for i, component in enumerate(components):
 
+                    if component.object_name not in defects_on_frame.keys():
+                        defects_on_frame[component.object_name] = list()
+
+                    if component.inclination and component.object_name == "pillar":
+                        defects_on_frame[component.object_name].append(
+                            (f"index_{i}", "angle", component.inclination)
+                        )
+                    if component.object_name == "dumper":
+                        defects_on_frame[component.object_name].append(
+                            (f"index_{i}", "missing_weight", component.is_weight_missing)
+                        )
+                    if component.object_name == "wood" and component.cracked:
+                        defects_on_frame[component.object_name].append(
+                            (f"index_{i}", "cracked_wood", component.cracked)
+                        )
+
+            # TODO: Drop results to the dictionary and add it to self.progress[file_id]["defects"]
+            #       You can drop from here, but trigger JSON generation from result processor ! Good idea actually
+
+            # TODO: Wood integration.
+            # TODO: Dumper preprocessing
+            # TODO: Dumper model retraining
+            # TODO: Tests
 
             # print('\n\n')
             # for img_batch_index, elements in detections.items():

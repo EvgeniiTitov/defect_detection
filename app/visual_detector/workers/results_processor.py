@@ -95,10 +95,10 @@ class ResultsProcessorThread(threading.Thread):
             self.progress[file_id]["processed"] += len(batch_frames)
 
             #---DELETE ME---
-            for frame in batch_frames:
-                cv2.imshow("", frame)
-                if cv2.waitKey(1):
-                    break
+            # for frame in batch_frames:
+            #     cv2.imshow("", frame)
+            #     if cv2.waitKey(1):
+            #         break
 
             # After all frames processed, save results
             if self.progress[file_id]["processed"] >= self.progress[file_id]["total_frames"]:
