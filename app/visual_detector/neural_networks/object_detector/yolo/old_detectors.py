@@ -1,5 +1,5 @@
 from collections import defaultdict
-from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
+from app.visual_detector.neural_networks.object_detector.detections_repr import DetectedObject, SubImage
 import numpy as np
 
 

@@ -34,6 +34,9 @@ class FrameReaderThread(threading.Thread):
                 print(f"Failed to get file information (path to file and file type). Error: {e}")
                 raise e
 
+            if not os.path.exists(path_to_file):
+                continue
+
             # If failed to open a file, signal to other threads the current video / photo cannot be processed
             try:
                 cap = cv2.VideoCapture(path_to_file)
@@ -67,13 +70,11 @@ class FrameReaderThread(threading.Thread):
                     else:
                         batch_frames.append(frame)
                         continue
-
                 elif file_type == "image":
                     has_frame, frame = cap.read()
-                    if not has_frame:
-                        to_break = True
-                    else:
+                    if has_frame:
                         batch_frames.append(frame)
+                    to_break = True
 
                 #Preprocess images, move batch of frames to GPU and send further to pole detector worker
                 if batch_frames:
@@ -81,7 +82,8 @@ class FrameReaderThread(threading.Thread):
                         gpu_batch_frames = TensorManager.load_images_to_GPU(batch_frames)
                     except Exception as e:
                         print(f"Failed to move a batch of frames to GPU. Error: {e}")
-                        raise
+                        raise e
+
                     # Send original images, imaged on GPU and file id to the next worker
                     self.Q_out.put((batch_frames, gpu_batch_frames, file_id))
 

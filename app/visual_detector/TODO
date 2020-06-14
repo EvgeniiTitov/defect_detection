@@ -5,34 +5,33 @@ KNOWN ISSUES - BUGS:
 - Not well optimized line filtering algorithm
 - NEW: results do not get returned for images where a concrete pole was not detected
 
-
+________________________________________________________________________________________________________________________
 SHORT TERM TASKS:
 0.1 To config add what defect detectors you want to launch
 0.2 Register your detector properly in the flask's app
-0.3 Confidence is 1 for all objects
-0.4 TILT DETECTOR: Add condition if angle of the 2 edges is not within N degrees, do not calculate tilt
 
-1. 2 videos in a folder get processed and saved as 1 video
+1. Confidence is 1 for all objects
 2. Add logger
-4. Wooden pole defects (Dasha)
-5. Tuning:
+3. Wooden pole defects (Dasha)
+4. Tuning:
     - Make sure preprocessing for dumper classification is correct
     - Make sure preprocessing for YOLO is correct
     - Tune YOLOs parameters (NMS, threshold etc)
     - Tune line filtering algorithm
-6. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then update them)
+5. We might want to remove NNs and workers from memory in order to get more memory for other tasks. Implement:
+    - Killing workers and NNs
+    - Before serving next request check if they are initialized and ready to server the request
+6. Think how to collect, store and output detected defects
+ _______________________________________________________________________________________________________________________
+LONG TERM TASKS:
+1. BBs interpolation? (run actual nets once in N frames as well, just remmember coordinates and then update them)
 Technically, we want to run NNs only on the frames when we're running defect detection. On the frames between defect detection,
 we should be doing BB interpolation: run NN once in M frames remembering objects location within the frame.
-7. Object tracking (bb overlapping check suggested by Igor) - could be done right in the writer or another
+2. Object tracking (bb overlapping check suggested by Igor) - could be done right in the writer or another
 worker before it.
 Kinda contradicts to the point 6. We want to run NNs on each frame in order to be able to match objects detected on the
 current frame with the objects from previous frames.
-9. We might want to remove NNs and workers from memory in order to get more memory for other tasks. Implement:
-    - Killing workers and NNs
-    - Before serving next request check if they are initialized and ready to server the request
-? Initialize your nets in workers, not in the detector's initializer? What about Qs?
-
-
+________________________________________________________________________________________________________________________
 FROZENS TASKS:
 - Cracks module
 - Subtract other object's boxes from the pillar BB (less noise for cracks detection)

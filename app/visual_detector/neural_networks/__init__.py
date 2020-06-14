@@ -1,4 +1,4 @@
-from .detections_repr import DetectedObject, SubImage
-from .tower_detector import TowerDetector
-from .component_detector import ComponentsDetector
+from .object_detector import DetectedObject, SubImage
+from .object_detector import TowerDetector, ComponentsDetector
 from .dumper_classifier import DumperClassifier
+from .wood_classifier import WoodCrackSegmenter

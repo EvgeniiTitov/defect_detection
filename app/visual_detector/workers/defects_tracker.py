@@ -32,9 +32,11 @@ class DefectTrackingThread(threading.Thread):
 
             input_ = self.Q_in.get()
             if input_ == "STOP":
+                self.Q_out.put("STOP")
                 break
 
             if input_ == "END":
+                self.Q_out.put("END")
                 continue
 
             try:
@@ -76,8 +78,6 @@ class DefectTrackingThread(threading.Thread):
             #       You can drop from here, but trigger JSON generation from result processor ! Good idea actually
 
             # TODO: Wood integration.
-            # TODO: Dumper preprocessing
-            # TODO: Dumper model retraining
             # TODO: Tests
 
             # print('\n\n')

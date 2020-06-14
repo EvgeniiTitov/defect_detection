@@ -3,7 +3,9 @@ from app.visual_detector.workers import (
     DefectTrackingThread, ResultsProcessorThread, TiltDetectorThread, DumperClassifierThread,
     WoodCracksDetectorThread
 )
-from app.visual_detector.neural_networks import TowerDetector, ComponentsDetector, DumperClassifier
+from app.visual_detector.neural_networks import (
+    TowerDetector, ComponentsDetector, DumperClassifier, WoodCrackSegmenter
+)
 from app.visual_detector.defect_detectors import DefectDetector, LineModifier, ConcretePoleHandler
 from app.visual_detector.utils import Drawer, ResultSaver, ObjectTracker
 import queue
@@ -60,8 +62,11 @@ class MainDetector:
 
         # Initialize detectors and auxiliary modules
         try:
+            # Object detectors
             self.pole_detector = TowerDetector()
             self.component_detector = ComponentsDetector()
+
+            # Defect detectors
             self.defect_detector = DefectDetector(
                 tilt_detector=(self.to_tilt_detector, self.from_tilt_detector),
                 dumpers_defect_detector=(self.to_dumper_classifier, self.from_dumper_classifier),
@@ -69,12 +74,14 @@ class MainDetector:
                 concrete_cracks_detector=None,
                 insulators_defect_detector=None
             )
+            self.wood_tower_segment = WoodCrackSegmenter()
+            self.dumper_classifier = DumperClassifier()
 
+            # Auxiliary modules
             self.drawer = Drawer(save_path=save_path)
             self.result_saver = ResultSaver()
             self.object_tracker = ObjectTracker()
 
-            self.dumper_classifier = DumperClassifier()
         except Exception as e:
             print(f"Failed during detectors initialization. Error: {e}")
             raise e
@@ -137,6 +144,7 @@ class MainDetector:
                 in_queue=self.to_wood_cracks_detector,
                 out_queue=self.from_wood_cracks_detector,
                 wood_cracks_detector=None,
+                wood_tower_segment=self.wood_tower_segment,
                 progress=self.progress
             )
         except Exception as e:

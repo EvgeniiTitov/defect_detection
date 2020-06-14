@@ -1,20 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/yolo.py" line="247" mnemonic="3" />
+    <bookmark url="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/yolo/yolo.py" line="247" mnemonic="3" />
     <bookmark url="file://$PROJECT_DIR$/app/visual_detector/utils/tensor_manager.py" line="213" />
-    <bookmark url="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" line="53" />
+    <bookmark url="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" line="58" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/visual_detector/TODO" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/TODO" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/visual_detector/defect_detectors/defect_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/defect_detectors/defect_detector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/detections_repr.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/detections_repr.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/component_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/component_detector.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/detections_repr.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/detections_repr.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/dumper_classifier/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/dumper_classifier/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/utils/drawer.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/utils/drawer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/tower_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/tower_detector.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/yolo/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/darknet_torch.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/yolo/darknet_torch.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/old_detectors.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/yolo/old_detectors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/old_models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/yolo/old_models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/yolo.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/yolo/yolo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/defects_tracker.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/defects_tracker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/dumpers_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/dumpers_classifier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/results_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/results_processor.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/dev.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/dev.py" afterDir="false" />
@@ -29,14 +41,14 @@
     <favorites_list name="defect_detection" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.5012931">
+    <splitter split-orientation="horizontal" split-proportion="0.5212702">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="482">
-                  <caret line="85" column="77" selection-start-line="85" selection-start-column="77" selection-end-line="85" selection-end-column="77" />
+                <state>
+                  <caret line="93" column="14" selection-start-line="93" selection-start-column="14" selection-end-line="93" selection-end-column="14" />
                   <folding>
                     <element signature="e#0#16#0" expanded="true" />
                   </folding>
@@ -47,8 +59,8 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/defect_detector.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="632">
-                  <caret line="97" column="82" selection-start-line="97" selection-start-column="82" selection-end-line="97" selection-end-column="82" />
+                <state relative-caret-position="184">
+                  <caret line="45" column="21" selection-start-line="45" selection-start-column="21" selection-end-line="45" selection-end-column="21" />
                   <folding>
                     <element signature="e#0#16#0" expanded="true" />
                   </folding>
@@ -59,93 +71,20 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="206">
-                  <caret line="43" column="65" selection-start-line="43" selection-start-column="65" selection-end-line="43" selection-end-column="65" />
+                <state relative-caret-position="-1103">
+                  <caret line="146" column="29" selection-start-line="146" selection-start-column="29" selection-end-line="146" selection-end-column="29" />
+                  <folding>
+                    <element signature="e#0#257#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/defects_tracker.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="83">
-                  <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/tilt_detector.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="325">
-                  <caret line="26" selection-start-line="26" selection-end-line="26" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/dumpers_classifier.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="441">
-                  <caret line="36" column="46" selection-start-line="36" selection-start-column="46" selection-end-line="36" selection-end-column="46" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/config/dev.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="60">
-                  <caret line="3" column="14" selection-start-line="3" selection-start-column="14" selection-end-line="3" selection-end-column="14" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-        </leaf>
-      </split-first>
-      <split-second>
-        <leaf>
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/defect_detector.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="252">
-                  <caret line="64" column="44" selection-start-line="64" selection-start-column="44" selection-end-line="64" selection-end-column="44" />
-                  <folding>
-                    <element signature="e#1#30#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/app/visual_detector/TODO">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="78">
-                  <caret line="14" column="58" selection-start-line="14" selection-start-column="58" selection-end-line="14" selection-end-column="58" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/app/visual_detector/utils/drawer.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1066">
-                  <caret line="115" column="84" selection-start-line="115" selection-start-column="84" selection-end-line="115" selection-end-column="84" />
-                  <folding>
-                    <element signature="e#0#10#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/dumper_classifier/model.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="75">
-                  <caret line="68" column="9" selection-start-line="68" selection-start-column="9" selection-end-line="68" selection-end-column="9" />
-                  <folding>
-                    <element signature="e#0#12#0" expanded="true" />
-                  </folding>
+                <state relative-caret-position="486">
+                  <caret line="71" column="45" lean-forward="true" selection-start-line="71" selection-start-column="45" selection-end-line="71" selection-end-column="45" />
                 </state>
               </provider>
             </entry>
@@ -153,8 +92,51 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="500">
-                  <caret line="25" column="21" selection-start-line="25" selection-start-column="21" selection-end-line="25" selection-end-column="21" />
+                <state relative-caret-position="142">
+                  <caret line="51" lean-forward="true" selection-start-line="51" selection-end-line="51" />
+                  <folding>
+                    <element signature="e#0#16#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/neural_net.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="345">
+                  <caret line="23" column="13" lean-forward="true" selection-start-line="23" selection-start-column="13" selection-end-line="23" selection-end-column="13" />
+                  <folding>
+                    <element signature="e#0#32#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/test.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="314">
+                  <caret line="31" selection-start-line="31" selection-end-line="31" />
+                  <folding>
+                    <element signature="e#0#91#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-first>
+      <split-second>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/model.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="210">
+                  <caret line="17" column="29" selection-start-line="17" selection-start-column="29" selection-end-line="17" selection-end-column="29" />
+                  <folding>
+                    <element signature="e#0#72#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -162,8 +144,8 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/utils/tensor_manager.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="508">
-                  <caret line="429" column="28" lean-forward="true" selection-start-line="429" selection-start-column="28" selection-end-line="429" selection-end-column="28" />
+                <state relative-caret-position="4309">
+                  <caret line="429" column="28" selection-start-line="429" selection-start-column="28" selection-end-line="429" selection-end-column="28" />
                   <folding>
                     <element signature="e#0#34#0" expanded="true" />
                   </folding>
@@ -203,13 +185,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/darknet_torch.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/detectors.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/__init__.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/utils.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/utils/metadata_extractor.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/workers/pole_detector.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/DELETEME.py" />
         <option value="$PROJECT_DIR$/app/__init__.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/pole_detector.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/routes.py" />
@@ -226,8 +201,6 @@
         <option value="$PROJECT_DIR$/app/visual_detector/workers/worker.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/workers/abs_worker.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/line_modifier.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/__init__.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/model.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/concrete_classifier/__init__.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/concrete_classifier/model.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/defect_detectors/defect_managing_hub.py" />
@@ -240,27 +213,36 @@
         <option value="$PROJECT_DIR$/app/visual_detector/utils/result_saver.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/utils/object_tracker.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/utils/__init__.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/model.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/workers/defect_detector.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/utils/drawer.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/detections_repr.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/workers/defects_tracker.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/defect_detectors/defect_detector.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/workers/dumpers_classifier.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/workers/results_processor.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/dumper_classifier/model.py" />
-        <option value="$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py" />
         <option value="$PROJECT_DIR$/config/dev.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/workers/results_processor.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" />
         <option value="$PROJECT_DIR$/app/visual_detector/TODO" />
+        <option value="$PROJECT_DIR$/app/visual_detector/workers/defects_tracker.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/__init__.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/__init__.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/dumper_classifier/model.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/postprocess.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/image_manipulator.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/defect_detectors/defect_detector.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/__init__.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/__init__.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/model.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/test.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/model.py" />
+        <option value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/neural_net.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-2568" />
+    <option name="x" value="-1928" />
     <option name="y" value="-8" />
-    <option name="width" value="2576" />
+    <option name="width" value="1936" />
     <option name="height" value="1056" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -269,6 +251,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -299,14 +282,6 @@
               <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
               <item name="app" type="462c0819:PsiDirectoryNode" />
               <item name="visual_detector" type="462c0819:PsiDirectoryNode" />
-              <item name="defect_detectors" type="462c0819:PsiDirectoryNode" />
-              <item name="tilt_detector" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
-              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
-              <item name="app" type="462c0819:PsiDirectoryNode" />
-              <item name="visual_detector" type="462c0819:PsiDirectoryNode" />
               <item name="neural_networks" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -315,7 +290,15 @@
               <item name="app" type="462c0819:PsiDirectoryNode" />
               <item name="visual_detector" type="462c0819:PsiDirectoryNode" />
               <item name="neural_networks" type="462c0819:PsiDirectoryNode" />
-              <item name="dumper_classifier" type="462c0819:PsiDirectoryNode" />
+              <item name="object_detector" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
+              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+              <item name="visual_detector" type="462c0819:PsiDirectoryNode" />
+              <item name="neural_networks" type="462c0819:PsiDirectoryNode" />
+              <item name="wood_classifier" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
@@ -340,30 +323,29 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="TEXT" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../Machine_Learning_NNs/work_related_models" />
+    <property name="last_opened_file_path" value="D:/Desktop/crack_wood" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="editor.preferences.fonts.default" />
   </component>
   <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\neural_networks\object_detector" />
+      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\neural_networks" />
+      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\neural_networks\yolo" />
+      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\defect_detectors\inclination_detection" />
+      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\visual_detector" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\dependencies" />
       <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\neural_networks" />
       <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection" />
       <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\weights_configs" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\neural_networks" />
-      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\neural_networks\yolo" />
-      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\app\visual_detector\defect_detectors\inclination_detection" />
-      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\visual_detector" />
-      <recent name="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -378,7 +360,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.run">
+  <component name="RunManager" selected="Python.test">
     <configuration name="DELETEME" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="defect_detection" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -421,27 +403,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="model" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="defect_detection" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/defect_detection" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\Users\Evgenii\Desktop\Python_Programming\Python_Projects\defect_detection\defect_detection\visual_detector\model.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="run" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="defect_detection" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -455,6 +416,27 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/run.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="defect_detection" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -486,11 +468,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.run" />
         <item itemvalue="Python.DELETEME" />
         <item itemvalue="Python.yolo" />
         <item itemvalue="Python.delete_me" />
-        <item itemvalue="Python.model" />
       </list>
     </recent_temporary>
   </component>
@@ -529,23 +511,32 @@
     <option name="localTasksCounter" value="4" />
     <servers />
   </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
   <component name="ToolWindowManager">
-    <frame x="-2568" y="-8" width="2576" height="1056" extended-state="6" />
+    <frame x="-1928" y="-8" width="1936" height="1056" extended-state="6" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" weight="0.32978722" />
-      <window_info content_ui="combo" id="Project" order="1" visible="true" weight="0.085894406" />
+      <window_info content_ui="combo" id="Project" order="1" visible="true" weight="0.12065332" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="0" weight="0.4288889" />
+      <window_info anchor="bottom" id="Terminal" order="0" weight="0.38777778" />
       <window_info anchor="bottom" id="Event Log" order="1" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="2" weight="0.35555556" />
       <window_info anchor="bottom" id="Message" order="3" />
       <window_info anchor="bottom" id="Find" order="4" weight="0.42222223" />
       <window_info anchor="bottom" id="Version Control" order="5" weight="0.5411111" />
-      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.6622222" />
+      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.50333333" />
       <window_info anchor="bottom" id="Debug" order="7" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="8" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="9" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="10" />
+      <window_info anchor="bottom" id="TODO" order="10" weight="0.15777777" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -616,58 +607,6 @@
     <option name="LAST_COMMIT_MESSAGE" value="cleanup" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/other_detector/routes.py" />
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/utils.py" />
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/utils/metadata_extractor.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="22">
-          <caret line="1" lean-forward="true" selection-start-line="1" selection-end-line="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="66">
-          <caret line="3" column="49" lean-forward="true" selection-start-line="3" selection-start-column="49" selection-end-line="3" selection-end-column="49" />
-          <folding>
-            <element signature="e#0#53#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://D:/Evgenii/Programming/Anaconda/Lib/site-packages/torchvision/transforms/functional.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="52">
-          <caret line="228" selection-start-line="228" selection-end-line="228" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/DELETEME.py" />
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/darknet_torch.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="712">
-          <caret line="284" column="44" selection-start-line="284" selection-start-column="44" selection-end-line="284" selection-end-column="44" />
-          <folding>
-            <element signature="e#0#32#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/routes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="21" column="29" selection-start-line="21" selection-start-column="29" selection-end-line="21" selection-end-column="29" />
-          <folding>
-            <element signature="e#0#41#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://D:/Desktop/darknet-master/build/darknet/x64/yolo-obj.cfg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-15083" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/dependencies/poles.txt">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -701,7 +640,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/yolo/yolo.py">
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/yolo/yolo.py">
       <provider selected="true" editor-type-id="text-editor">
         <state>
           <caret line="104" selection-start-line="104" selection-end-line="104" />
@@ -711,9 +650,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/vibr_dump_classifier/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/vibr_dump_classifier/__init__.py" />
     <entry file="file://$PROJECT_DIR$/app/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="460">
@@ -751,16 +688,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/concrete_classifier/model.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/concrete_classifier/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/model.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/line_modifier.py">
@@ -769,26 +700,6 @@
           <caret line="94" lean-forward="true" selection-start-line="94" selection-end-line="94" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/component_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3231">
-          <caret line="68" column="54" selection-start-line="68" selection-start-column="54" selection-end-line="68" selection-end-column="54" />
-          <folding>
-            <element signature="e#0#88#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/tower_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="68" selection-start-line="68" selection-end-line="68" />
-          <folding>
-            <element signature="e#0#88#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -820,16 +731,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/tower_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-179">
-          <caret line="4" column="11" lean-forward="true" selection-start-line="4" selection-start-column="11" selection-end-line="4" selection-end-column="11" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="160">
@@ -840,34 +741,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/component_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="11" column="20" lean-forward="true" selection-start-line="11" selection-start-column="20" selection-end-line="11" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/defect_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="632">
-          <caret line="97" column="82" selection-start-line="97" selection-start-column="82" selection-end-line="97" selection-end-column="82" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="482">
-          <caret line="85" column="77" selection-start-line="85" selection-start-column="77" selection-end-line="85" selection-end-column="77" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/detections_repr.py">
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/detections_repr.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-1675">
           <caret line="37" column="13" selection-start-line="37" selection-start-column="13" selection-end-line="37" selection-end-column="13" />
@@ -876,108 +750,253 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/utils/drawer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1066">
-          <caret line="115" column="84" selection-start-line="115" selection-start-column="84" selection-end-line="115" selection-end-column="84" />
+        <state relative-caret-position="393">
+          <caret line="179" column="82" lean-forward="true" selection-start-line="179" selection-start-column="82" selection-end-line="179" selection-end-column="82" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/tower_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="546">
+          <caret line="33" column="21" selection-start-line="33" selection-start-column="21" selection-end-line="33" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/component_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="415">
+          <caret line="26" column="32" selection-start-line="26" selection-start-column="32" selection-end-line="26" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/frame_reader.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="93" column="14" selection-start-line="93" selection-start-column="14" selection-end-line="93" selection-end-column="14" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config/dev.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="3" column="14" selection-start-line="3" selection-start-column="14" selection-end-line="3" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/tilt_detector.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="325">
+        <state relative-caret-position="-7">
           <caret line="26" selection-start-line="26" selection-end-line="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="32">
+          <caret line="2" column="53" selection-start-line="2" selection-start-column="53" selection-end-line="2" selection-end-column="53" />
+          <folding>
+            <element signature="e#0#50#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/TODO">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="17" column="10" selection-start-line="17" selection-start-column="10" selection-end-line="17" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="598">
+          <caret line="58" column="33" selection-start-line="58" selection-start-column="33" selection-end-line="58" selection-end-column="33" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/results_processor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="161">
-          <caret line="97" column="12" selection-start-line="97" selection-start-column="14" selection-end-line="100" selection-end-column="27" />
+        <state relative-caret-position="544">
+          <caret line="34" column="28" selection-start-line="34" selection-start-column="28" selection-end-line="34" selection-end-column="28" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
-            <marker date="1591674745314" expanded="true" signature="3375:3506" ph="..." />
+            <marker date="1591770965983" expanded="true" signature="3217:3348" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/defects_tracker.py">
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="83">
-          <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
+        <state>
+          <caret column="29" selection-start-column="29" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/postprocess.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://D:/Evgenii/Programming/Anaconda/Lib/site-packages/PIL/Image.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="1867" selection-start-line="1867" selection-end-line="1867" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/image_manipulator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="12" column="14" selection-start-line="12" selection-start-column="14" selection-end-line="12" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/dumpers_classifier.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="540">
+          <caret line="36" column="46" selection-start-line="36" selection-start-column="46" selection-end-line="36" selection-end-column="46" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/utils/tensor_manager.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="508">
-          <caret line="429" column="28" lean-forward="true" selection-start-line="429" selection-start-column="28" selection-end-line="429" selection-end-column="28" />
+        <state relative-caret-position="4309">
+          <caret line="429" column="28" selection-start-line="429" selection-start-column="28" selection-end-line="429" selection-end-column="28" />
           <folding>
             <element signature="e#0#34#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://D:/Evgenii/Programming/Anaconda/Lib/site-packages/tensorflow/python/keras/backend.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15574">
+          <caret line="2938" selection-start-line="2938" selection-end-line="2938" />
+          <folding>
+            <element signature="e#825#863#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/dumper_classifier/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="68" column="9" selection-start-line="68" selection-start-column="9" selection-end-line="68" selection-end-column="9" />
+        <state relative-caret-position="198">
+          <caret line="15" column="16" lean-forward="true" selection-start-line="15" selection-start-column="16" selection-end-line="15" selection-end-column="16" />
           <folding>
-            <element signature="e#0#12#0" expanded="true" />
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/tower_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="434">
+          <caret line="68" selection-start-line="68" selection-end-line="68" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/component_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2171">
+          <caret line="68" lean-forward="true" selection-start-line="68" selection-end-line="68" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="37" selection-start-column="37" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="47" selection-start-line="3" selection-start-column="47" selection-end-line="3" selection-end-column="47" />
+          <folding>
+            <element signature="e#0#53#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/defects_tracker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-257">
+          <caret line="36" selection-start-line="36" selection-end-line="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/defect_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="184">
+          <caret line="45" column="21" selection-start-line="45" selection-start-column="21" selection-end-line="45" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/defect_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="486">
+          <caret line="71" column="45" lean-forward="true" selection-start-line="71" selection-start-column="45" selection-end-line="71" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1103">
+          <caret line="146" column="29" selection-start-line="146" selection-start-column="29" selection-end-line="146" selection-end-column="29" />
+          <folding>
+            <element signature="e#0#257#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="500">
-          <caret line="25" column="21" selection-start-line="25" selection-start-column="21" selection-end-line="25" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="202">
-          <caret line="45" column="21" selection-start-line="45" selection-start-column="21" selection-end-line="45" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/defect_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="64" column="44" selection-start-line="64" selection-start-column="44" selection-end-line="64" selection-end-column="44" />
+        <state relative-caret-position="142">
+          <caret line="51" lean-forward="true" selection-start-line="51" selection-end-line="51" />
           <folding>
-            <element signature="e#1#30#0" expanded="true" />
+            <element signature="e#0#16#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/dumpers_classifier.py">
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="441">
-          <caret line="36" column="46" selection-start-line="36" selection-start-column="46" selection-end-line="36" selection-end-column="46" />
+        <state relative-caret-position="210">
+          <caret line="17" column="29" selection-start-line="17" selection-start-column="29" selection-end-line="17" selection-end-column="29" />
+          <folding>
+            <element signature="e#0#72#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/model.py">
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/nn/neural_net.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="206">
-          <caret line="43" column="65" selection-start-line="43" selection-start-column="65" selection-end-line="43" selection-end-column="65" />
+        <state relative-caret-position="345">
+          <caret line="23" column="13" lean-forward="true" selection-start-line="23" selection-start-column="13" selection-end-line="23" selection-end-column="13" />
+          <folding>
+            <element signature="e#0#32#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/config/dev.py">
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
-          <caret line="3" column="14" selection-start-line="3" selection-start-column="14" selection-end-line="3" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/TODO">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="78">
-          <caret line="14" column="58" selection-start-line="14" selection-start-column="58" selection-end-line="14" selection-end-column="58" />
+        <state relative-caret-position="314">
+          <caret line="31" selection-start-line="31" selection-end-line="31" />
+          <folding>
+            <element signature="e#0#91#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

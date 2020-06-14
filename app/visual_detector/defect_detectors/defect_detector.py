@@ -100,7 +100,8 @@ class DefectDetector:
         """
         output = dict()
         for class_name, elements in detections.items():
-            output[class_name] = list()
+            if not class_name in output.keys():
+                output[class_name] = list()
             # Do not have any processors for these classes
             if class_name == "concrete":
                 continue
@@ -115,13 +116,14 @@ class DefectDetector:
                     TensorManager.modify_pillar_bb(pillar=element, image=image_on_gpu)
 
                 # Get object's coordinates and slice out the tensor
-                left = element.left
-                top = element.top
-                right = element.right
-                bot = element.bottom
+                left = element.BB_left
+                top = element.BB_top
+                right = element.BB_right
+                bot = element.BB_bottom
+
 
                 # Tilt detecting algorithm is done on CPU, so slice out numpy array instead
-                if class_name == "pillar":
+                if class_name in ["pillar", "wood"]:
                     element_bb_image = TensorManager.slice_out_np_array(
                         image=image_on_cpu,
                         coordinates=[left, top, right, bot]
@@ -138,7 +140,7 @@ class DefectDetector:
 
     def sort_objects(self, towers: list, components: list) -> Dict[str, List[DetectedObject]]:
         """
-
+        Receives lists of detected towers and components and sorts them by their class.
         :param towers:
         :param components:
         :return:

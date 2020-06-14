@@ -1,11 +1,10 @@
-from app.visual_detector.neural_networks.detections_repr import DetectedObject, SubImage
+from app.visual_detector.neural_networks.object_detector.detections_repr import DetectedObject
 from typing import List, Tuple, Dict
-from app.visual_detector.neural_networks.yolo.yolo import YOLOv3
+from app.visual_detector.neural_networks.object_detector.yolo.yolo import YOLOv3
 from app.visual_detector.utils import TensorManager
 import numpy as np
 import os
 import torch
-import sys
 
 
 class ComponentsDetector:

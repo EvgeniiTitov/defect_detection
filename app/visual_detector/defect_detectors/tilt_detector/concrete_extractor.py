@@ -51,7 +51,12 @@ class ConcretePoleHandler:
     hough_max_line_gap = 100
     mask_iterations = 5
 
-    time_out_line_generation = 7  # in seconds
+    # if detected lines are not within the threshold, do not calculate angle. It is likely that the algorithm
+    # failed to extract the pole edges which are almost parallel
+    confidence_thresh = 2.5
+    # time out edge generating/filtering algorith in N seconds. Can get stuck for high res images with
+    # complex backgrounds
+    time_out_line_generation = 30
 
     def __init__(self, line_modifier):
         self.line_modifier = line_modifier
@@ -227,6 +232,9 @@ class ConcretePoleHandler:
             x2_2 = the_lines[1][1][0]
             y2_2 = the_lines[1][1][1]
             angle_2 = round(90 - np.rad2deg(np.arctan2(abs(y2_2 - y1_2), abs(x2_2 - x1_2))), 2)
+
+            if abs(angle_2 - angle_1) < self.confidence_thresh:
+                return None
 
             the_angle = round((angle_1 + angle_2) / 2, 2)
             assert 0 <= the_angle <= 90, "ERROR: Wrong angle value calculated"

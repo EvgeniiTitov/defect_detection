@@ -22,7 +22,6 @@ class ResultsProcessorThread(threading.Thread):
 
         self.video_writer = None
         self.previous_id = None
-        self.folder_created = False
 
     def run(self) -> None:
 
@@ -32,10 +31,10 @@ class ResultsProcessorThread(threading.Thread):
             # Check if video is over or it is time to kill the workers
             if input_ == "STOP":
                 break
+
             if input_ == "END":
                 if self.previous_id:
                     self.clean_video_writer()  # Video's over. Delete current video writer
-                    self.folder_created = False
                 continue
 
             # Read data from defect detector
@@ -59,10 +58,9 @@ class ResultsProcessorThread(threading.Thread):
                 self.previous_id = file_id
 
             # Check if the folder to which results will be saved exists
-            if not self.folder_created and not os.path.exists(store_path):
+            if not os.path.exists(store_path):
                 try:
                     os.mkdir(store_path)
-                    self.folder_created = True
                 except Exception as e:
                     print(f"Failed to create a folder to save processed images. Error: {e}")
                     raise e
