@@ -91,7 +91,8 @@ class DefectDetectorThread(threading.Thread):
                     image_on_cpu=batch_frame[index_frame_check_defects],
                     image_on_gpu=gpu_batch_frame[index_frame_check_defects],
                     towers=towers[index_frame_check_defects],
-                    components=components[index_frame_check_defects]
+                    components=components[index_frame_check_defects],
+                    file_id=file_id
                 )
             del gpu_batch_frame
 

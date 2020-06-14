@@ -1,5 +1,4 @@
 from app.visual_detector.neural_networks.wood_classifier.nn import Model
-from keras.models import load_model
 from PIL import Image
 from typing import List
 import torch.nn.functional as F
@@ -15,9 +14,11 @@ class WoodCrackSegmenter:
 
     def __init__(self):
         try:
-            self._model = Model(self.IMG_HEIGHT, self.IMG_WIDTH)
-            self._model.compile()
-            self._model.load_weights(weights_path=self.path_to_weights)
+            self._model = Model(
+                self.IMG_HEIGHT,
+                self.IMG_WIDTH,
+                self.path_to_weights
+            )
         except Exception as e:
             print(f"\nFailed during WoodCrackDetector initialization. Error: {e}")
             raise e
@@ -67,7 +68,8 @@ class WoodCrackSegmenter:
             if width > height:
                 image_left = image[0: height, 0: int(width / 2)]
                 image_right = image[0: height, int(width / 2) + 1: width]
-                images_to_process.extend([image_left, image_right])
+                images_to_process.append(image_left)
+                images_to_process.append(image_right)
                 continue
             images_to_process.append(image)
 
@@ -91,13 +93,19 @@ class WoodCrackSegmenter:
                 )
                 normalized_image = np.array([image_resized / 255.0])
             except Exception as e:
-                print(f"Failed during image preprocessing in WoodCrackDetector. Error: {e}")
+                print(f"Failed during image preprocessing in WoodCrackSegment. Error: {e}")
                 continue
             towers_to_remove_background.append(normalized_image)
 
-        # TODO: Timeit + consider timeouting.
-        # Get masks
-        masks = self._model.predict(towers_to_remove_background)
+        # Concatenate images into one array
+        try:
+            batch_images = np.concatenate(towers_to_remove_background)
+        except Exception as e:
+            print(f"Failed during np.ndarray concatination in WoodCrackSegment. Error: {e}")
+            raise e
+
+        # Run inference to get masks
+        masks = self._model.predict(batch_images)
 
         # Postprocess results
         assert len(masks) == len(images_on_cpu), "Nb of images != nb of detected masks"

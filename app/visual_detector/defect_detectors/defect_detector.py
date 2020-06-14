@@ -29,7 +29,8 @@ class DefectDetector:
             image_on_cpu: np.ndarray,
             image_on_gpu: torch.Tensor,
             towers: list,
-            components: list
+            components: list,
+            file_id: int
     ) -> None:
         """
 
@@ -72,7 +73,7 @@ class DefectDetector:
                 threads_to_wait.append(self.Q_from_tilt_detector)
 
             elif class_name == "wood":
-                self.Q_to_wood_cracks_detector.put(elements)
+                self.Q_to_wood_cracks_detector.put((file_id, elements))
                 threads_to_wait.append(self.Q_from_wood_cracks_detector)
 
             else:

@@ -31,6 +31,7 @@ class WoodCracksDetectorThread(threading.Thread):
             if input_ == "END":
                 break
 
+            file_id, items = input_
             '''
             2. После сегментационной нейронки, режим столбы на части. 
             3. Находим трещины. 
@@ -38,23 +39,18 @@ class WoodCracksDetectorThread(threading.Thread):
 
             # Collect sliced out bb of wood towers
             images_to_preprocess = list()
-            for obj, np_array in input_:
+            for obj, np_array in items:
                 assert isinstance(np_array, np.ndarray), "Wood tower subimage is not np.ndarray"
                 images_to_preprocess.append(np_array)
 
-                # cv2.imwrite(
-                #     os.path.join(
-                #         r"D:\Desktop\system_output\Wood_Crack_Test",
-                #         f"{str(random.randint(0, 1000))}_out.jpg"
-                #     ),
-                #     np_array
-                # )
-
             masks = self.wood_tower_segmentation.process_batch(images_to_preprocess)
 
+            name = os.path.splitext(os.path.basename(self.progress[file_id]['path_to_file']))[0]
             for i, mask in enumerate(masks):
                 cv2.imwrite(
-                    os.path.join("D:\Desktop\system_output\OUTPUT", f"{i}_out.jpg"),
+                    os.path.join(
+                        "D:\Desktop\system_output\OUTPUT\segmentations",
+                        f"{name}_{i}_out.jpg"),
                     mask
                 )
 
