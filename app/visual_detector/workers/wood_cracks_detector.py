@@ -32,10 +32,6 @@ class WoodCracksDetectorThread(threading.Thread):
                 break
 
             file_id, items = input_
-            '''
-            2. После сегментационной нейронки, режим столбы на части. 
-            3. Находим трещины. 
-            '''
 
             # Collect sliced out bb of wood towers
             images_to_preprocess = list()
@@ -53,6 +49,9 @@ class WoodCracksDetectorThread(threading.Thread):
                         f"{name}_{i}_out.jpg"),
                     mask
                 )
+
+            # TODO: Cut images
+            # TODO: Find cracks (create a separate class for this)
 
             self.Q_out.put("Success")
 

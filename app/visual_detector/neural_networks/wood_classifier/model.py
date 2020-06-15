@@ -86,6 +86,7 @@ class WoodCrackSegmenter:
         towers_to_remove_background = list()
         for image in images_on_cpu:
             try:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # probably unnecessary
                 image_resized = cv2.resize(
                     image,
                     (self.IMG_WIDTH, self.IMG_HEIGHT),
@@ -127,11 +128,12 @@ class WoodCrackSegmenter:
         binarized_image = self.binarize_mask(mask)
 
         # Fill background colour
-        output_image = self.fill_background(image, binarized_image)
+        #output_image = self.fill_background(image, binarized_image)
+        output_image = self.fill_background_v2(image, binarized_image)
 
         return output_image
 
-    def binarize_mask(self, mask):
+    def binarize_mask(self, mask) -> np.ndarray:
         """
 
         :param mask:
@@ -143,6 +145,18 @@ class WoodCrackSegmenter:
         mask = np.asarray([np.array(r, dtype=np.uint8) for r in mask])
 
         return mask
+
+    def fill_background_v2(self, image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+        """
+
+        :param image:
+        :param mask:
+        :return:
+        """
+        mask = Image.fromarray(mask).convert('L').resize((image.shape[1], image.shape[0]), Image.ANTIALIAS)
+        masked_image = self.apply_mask_v2(image, mask)
+
+        return masked_image
 
     def fill_background(self, image: np.ndarray, mask: np.ndarray) -> np.ndarray:
         """
@@ -157,6 +171,17 @@ class WoodCrackSegmenter:
         masked_image = self.apply_mask(np.asarray(resized_image), np.asarray(mask))
 
         return cv2.resize(masked_image, (image.shape[1], image.shape[0]))
+
+    def apply_mask_v2(self, img: np.ndarray, mask: Image) -> np.ndarray:
+        """
+
+        :param img:
+        :param mask:
+        :return:
+        """
+        background = Image.new("RGB", (img.shape[1], img.shape[0]), self.background_colour)
+        combined_image = Image.composite(Image.fromarray(img), background, mask).resize((img.shape[1], img.shape[0]))
+        return np.asarray(combined_image)
 
     def apply_mask(self, img: np.ndarray, mask: Image):
         result = []

@@ -7,6 +7,7 @@ import torchvision
 class DumperClassifier:
 
     path_to_weights = r"D:\Desktop\system_output\dumper_training\decent\resnet18_Acc1.0_Ftuned1_Pretrained1_OptimizerADAM.pth"
+    #path_to_weights = r"D:\Desktop\system_output\dumper_training\model.pth"
     classes = ["defected", "healthy"]
     img_size = 256, 256
 
