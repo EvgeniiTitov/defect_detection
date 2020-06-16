@@ -2,9 +2,13 @@
   <dictionary name="Evgenii">
     <words>
       <w>coef</w>
+      <w>hough</w>
+      <w>imgs</w>
       <w>insl</w>
       <w>neuralnet</w>
       <w>postprocess</w>
+      <w>preproccessing</w>
+      <w>segmenter</w>
       <w>subimage</w>
       <w>yolo</w>
     </words>

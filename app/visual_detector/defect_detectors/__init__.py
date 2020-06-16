@@ -1,2 +1,5 @@
-from .defect_managing_hub import DefectDetector
-from .inclination_detection import ConcreteExtractor, LineModifier
+from .defect_detector import DefectDetector
+from .tilt_detector import ConcretePoleHandler, LineModifier
+from .wood_cracks_detector import WoodCracksDetector, WoodCrackSegmenter
+from .dumper_classifier import DumperClassifier
+from .object_detector import TowerDetector, ComponentsDetector

@@ -20,7 +20,4 @@ def create_app(config_type):
     from app.magnetic_detector import magnetic
     app.register_blueprint(magnetic)
 
-    from app.other_detector import other
-    app.register_blueprint(other)
-
     return app

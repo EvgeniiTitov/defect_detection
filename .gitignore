@@ -1,4 +1,4 @@
 *.pyc
 *.weights
 venv/
-.idea
+.idea/

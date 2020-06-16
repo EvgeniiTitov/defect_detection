@@ -1,11 +1,19 @@
-from app.visual_detector.workers import FrameReaderThread, ObjectDetectorThread
-from app.visual_detector.workers import DefectDetectorThread, ResultsProcessorThread
-from app.visual_detector.neural_networks import PolesDetector, ComponentsDetector
-from app.visual_detector.defect_detectors import DefectDetector, LineModifier, ConcreteExtractor
-from app.visual_detector.utils import ResultsHandler
+from app.visual_detector.workers import (
+    FrameReaderThread, TowerDetectorThread, ComponentDetectorThread, DefectDetectorThread,
+    DefectTrackingThread, ResultsProcessorThread, TiltDetectorThread, DumperClassifierThread,
+    WoodCracksDetectorThread
+)
+from app.visual_detector.defect_detectors import (
+    TowerDetector, ComponentsDetector, DumperClassifier, WoodCrackSegmenter,
+    DefectDetector, LineModifier, ConcretePoleHandler, WoodCracksDetector
+)
+from app.visual_detector.utils import (
+    Drawer, ResultSaver, ObjectTracker
+)
 import queue
 import os
 import uuid
+import time
 
 
 class MainDetector:
@@ -13,13 +21,13 @@ class MainDetector:
     def __init__(
             self,
             save_path: str,
-            db=None,
-            search_defects: bool = True
+            batch_size: int,
+            search_defects: bool = True,
+            db=None
     ):
         # Path on the server where processed data gets stored
         self.save_path = save_path
         self.search_defects = search_defects
-
         # To keep track of file processing
         self.progress = dict()
 
@@ -29,56 +37,122 @@ class MainDetector:
         else:
             self.check_defects = False
 
-        # Initialize detectors and auxiliary modules
-        self.results_processor = ResultsHandler(save_path=save_path)
-        self.pole_detector = PolesDetector()
-        self.component_detector = ComponentsDetector()
-        self.defect_detector = DefectDetector(
-            line_modifier=LineModifier,
-            concrete_extractor=ConcreteExtractor,
-            cracks_detector=None,
-            dumpers_defect_detector=None,
-            insulators_defect_detector=None
-        )
-
         # Initialize Qs and workers
-        self.files_to_process_Q = queue.Queue()
-        self.frame_to_block1 = queue.Queue(maxsize=24)
-        self.block1_to_block2 = queue.Queue(maxsize=6)
-        self.block2_to_writer = queue.Queue(maxsize=10)
+        try:
+            # --- video / image processors ---
+            self.files_to_process_Q = queue.Queue()
+            self.frame_to_pole_detector = queue.Queue(maxsize=3)
+            self.pole_to_comp_detector = queue.Queue(maxsize=3)
+            self.comp_to_defect_detector = queue.Queue(maxsize=3)
+            self.defect_det_to_defect_tracker = queue.Queue(maxsize=3)
+            self.defect_tracker_to_writer = queue.Queue(maxsize=3)
 
-        self.frame_reader_thread = FrameReaderThread(
-            in_queue=self.files_to_process_Q,
-            out_queue=self.frame_to_block1,
-            progress=self.progress
-        )
+            # --- dumper classifier ---
+            self.to_dumper_classifier = queue.Queue(maxsize=3)
+            self.from_dumper_classifier = queue.Queue(maxsize=3)
+            # --- tilt detector ---
+            self.to_tilt_detector = queue.Queue(maxsize=3)
+            self.from_tilt_detector = queue.Queue(maxsize=3)
+            # --- wood tower cracks ---
+            self.to_wood_cracks_detector = queue.Queue(maxsize=3)
+            self.from_wood_cracks_detector = queue.Queue(maxsize=3)
+            # --- conrete tower cracks ---
+            pass
+        except Exception as e:
+            print(f"Failed during queue initialization. Error: {e}")
+            raise e
 
-        self.object_detector_thread = ObjectDetectorThread(
-            in_queue=self.frame_to_block1,
-            out_queue=self.block1_to_block2,
-            poles_detector=self.pole_detector,
-            components_detector=self.component_detector,
-            progress=self.progress,
-            batch_size=3
-        )
+        # Initialize detectors and auxiliary modules
+        try:
+            # Object detectors
+            self.pole_detector = TowerDetector()
+            self.component_detector = ComponentsDetector()
 
-        self.defect_detector_thread = DefectDetectorThread(
-            in_queue=self.block1_to_block2,
-            out_queue=self.block2_to_writer,
-            defect_detector=self.defect_detector,
-            progress=self.progress,
-            check_defects=search_defects
-        )
+            # Defect detectors
+            self.defect_detector = DefectDetector(
+                tilt_detector=(self.to_tilt_detector, self.from_tilt_detector),
+                dumpers_defect_detector=(self.to_dumper_classifier, self.from_dumper_classifier),
+                wood_crack_detector=(self.to_wood_cracks_detector, self.from_wood_cracks_detector),
+                concrete_cracks_detector=None,
+                insulators_defect_detector=None
+            )
+            self.wood_tower_segment = WoodCrackSegmenter()
+            self.dumper_classifier = DumperClassifier()
 
-        self.results_processor_thread = ResultsProcessorThread(
-            in_queue=self.block2_to_writer,
-            save_path=save_path,
-            results_processor=self.results_processor,
-            progress=self.progress,
-            database=db
-        )
+            # Auxiliary modules
+            self.drawer = Drawer(save_path=save_path)
+            self.result_saver = ResultSaver()
+            self.object_tracker = ObjectTracker()
 
-        # Launch threads and wait for a request
+        except Exception as e:
+            print(f"Failed during detectors initialization. Error: {e}")
+            raise e
+
+        try:
+            self.frame_reader_thread = FrameReaderThread(
+                batch_size=batch_size,
+                in_queue=self.files_to_process_Q,
+                out_queue=self.frame_to_pole_detector,
+                progress=self.progress
+            )
+            self.pole_detector_thread = TowerDetectorThread(
+                in_queue=self.frame_to_pole_detector,
+                out_queue=self.pole_to_comp_detector,
+                poles_detector=self.pole_detector,
+                progress=self.progress
+            )
+            self.component_detector_thread = ComponentDetectorThread(
+                in_queue=self.pole_to_comp_detector,
+                out_queue=self.comp_to_defect_detector,
+                component_detector=self.component_detector,
+                progress=self.progress
+            )
+            self.defect_detector_thread = DefectDetectorThread(
+                in_queue=self.comp_to_defect_detector,
+                out_queue=self.defect_det_to_defect_tracker,
+                defect_detector=self.defect_detector,
+                progress=self.progress,
+                check_defects=search_defects
+            )
+            self.defect_tracker = DefectTrackingThread(
+                in_queue=self.defect_det_to_defect_tracker,
+                out_queue=self.defect_tracker_to_writer,
+                object_tracker=self.object_tracker,
+                results_saver=self.result_saver,
+                progress=self.progress,
+                database=db
+            )
+            self.results_processor_thread = ResultsProcessorThread(
+                in_queue=self.defect_tracker_to_writer,
+                save_path=save_path,
+                drawer=self.drawer,
+                progress=self.progress
+            )
+
+            # ------ DEFECT DETECTORS ------
+            self.dumper_classifier_thread = DumperClassifierThread(
+                in_queue=self.to_dumper_classifier,
+                out_queue=self.from_dumper_classifier,
+                dumper_classifier=self.dumper_classifier,
+                progress=self.progress
+            )
+            self.tilt_detector_thread = TiltDetectorThread(
+                in_queue=self.to_tilt_detector,
+                out_queue=self.from_tilt_detector,
+                tilt_detector=ConcretePoleHandler(line_modifier=LineModifier),
+                progress=self.progress
+            )
+            self.wood_cracks_thread = WoodCracksDetectorThread(
+                in_queue=self.to_wood_cracks_detector,
+                out_queue=self.from_wood_cracks_detector,
+                wood_cracks_detector=WoodCracksDetector,
+                wood_tower_segment=self.wood_tower_segment,
+                progress=self.progress
+            )
+        except Exception as e:
+            print(f"Failed during workers initialization. Error: {e}")
+            raise e
+
         self.start()
 
     def predict(
@@ -89,8 +163,10 @@ class MainDetector:
     ) -> dict:
         """
         API endpoint - parses input data, puts files provided to the Q if of appropriate extension
-        :param path_to_data: Path to data to process - image, video, folder with images, video
-        :return: dictionary {filename : ID, }
+        :param request_id:
+        :param path_to_data:
+        :param pole_number:
+        :return:
         """
         file_IDS = {}
 
@@ -147,7 +223,7 @@ class MainDetector:
                 request_id=request_id
             )
         else:
-            print(f"\nERROR: file {filename} cannot be processed, wrong extension")
+            print(f"ERROR: file {filename}'s extension is not supported")
             return "None"
 
     def process_file(
@@ -158,14 +234,16 @@ class MainDetector:
             request_id: str
     ) -> str:
         """
+
         :param path_to_file:
         :param pole_number:
+        :param file_type:
+        :param request_id:
         :return:
         """
         # Each file to process gets a unique ID number to track its progress
         file_id = str(uuid.uuid4())
 
-        # TODO: Store what needs to be done to a file: angle or defects calculations
         # Keep track of processing progress
         self.progress[file_id] = {
             "status": "Awaiting processing",
@@ -178,27 +256,36 @@ class MainDetector:
             "processed": 0,
             "defects": []
         }
-
         self.files_to_process_Q.put(file_id)
 
         return file_id
 
-    def start(self):
+    def start(self) -> None:
         for thread in (
             self.frame_reader_thread,
-            self.object_detector_thread,
+            self.pole_detector_thread,
+            self.component_detector_thread,
             self.defect_detector_thread,
-            self.results_processor_thread
+            self.defect_tracker,
+            self.results_processor_thread,
+            self.dumper_classifier_thread,
+            self.tilt_detector_thread,
+            self.wood_cracks_thread
         ):
             thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self.files_to_process_Q.put("STOP")
         # Wait until all threads complete their job and exit
         for thread in (
             self.frame_reader_thread,
-            self.object_detector_thread,
+            self.pole_detector_thread,
+            self.component_detector_thread,
             self.defect_detector_thread,
-            self.results_processor_thread
+            self.defect_tracker,
+            self.results_processor_thread,
+            self.dumper_classifier_thread,
+            self.tilt_detector_thread,
+            self.wood_cracks_thread
         ):
             thread.join()

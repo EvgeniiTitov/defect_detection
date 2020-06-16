@@ -1,0 +1,2 @@
+from .model import DumperClassifier
+from app.visual_detector.defect_detectors.dumper_classifier import DumperClassifier
