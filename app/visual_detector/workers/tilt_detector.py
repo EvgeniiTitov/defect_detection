@@ -27,8 +27,8 @@ class TiltDetectorThread(threading.Thread):
 
             # Collect sliced out numpy arrays to get processed
             pillars_to_process = list()
-            for obj, pillar in input_:
-                pillars_to_process.append(pillar)
+            for obj, pillar_array in input_:
+                pillars_to_process.append(pillar_array)
 
             # Get results from the detector
             output = self.detector.find_pole_edges_calculate_angle(pillars=pillars_to_process)
@@ -36,6 +36,7 @@ class TiltDetectorThread(threading.Thread):
 
             for i in range(len(output)):
                 angle = output[i][0]
+                # If failed to calculate pillar's tilt, the angle is None
                 if angle:
                     input_[i][0].inclination = angle
                     input_[i][0].edges.append(output[i][1])

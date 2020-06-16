@@ -6,7 +6,9 @@ from app.visual_detector.workers import (
 from app.visual_detector.neural_networks import (
     TowerDetector, ComponentsDetector, DumperClassifier, WoodCrackSegmenter
 )
-from app.visual_detector.defect_detectors import DefectDetector, LineModifier, ConcretePoleHandler
+from app.visual_detector.defect_detectors import (
+    DefectDetector, LineModifier, ConcretePoleHandler, WoodCracksDetector
+)
 from app.visual_detector.utils import Drawer, ResultSaver, ObjectTracker
 import queue
 import os
@@ -143,7 +145,7 @@ class MainDetector:
             self.wood_cracks_thread = WoodCracksDetectorThread(
                 in_queue=self.to_wood_cracks_detector,
                 out_queue=self.from_wood_cracks_detector,
-                wood_cracks_detector=None,
+                wood_cracks_detector=WoodCracksDetector,
                 wood_tower_segment=self.wood_tower_segment,
                 progress=self.progress
             )

@@ -56,7 +56,7 @@ class ConcretePoleHandler:
     confidence_thresh = 2.5
     # time out edge generating/filtering algorith in N seconds. Can get stuck for high res images with
     # complex backgrounds
-    time_out_line_generation = 30
+    time_out_line_generation = 7
 
     def __init__(self, line_modifier):
         self.line_modifier = line_modifier
@@ -190,6 +190,7 @@ class ConcretePoleHandler:
 
             # Rewrite lines in a proper form (x1,y1), (x2,y2) if any found. List of lists
             if raw_lines is None:
+                print("WARNING: Failed to generate any lines.")
                 output.append([None, None])
                 continue
 
@@ -203,14 +204,22 @@ class ConcretePoleHandler:
                 print("WARNING: Only one edge detected!")
                 the_lines = merged_lines
             else:
-                print("WARNING: No edges detected")
+                print("WARNING: No edges left after the filtering step")
+                output.append([None, None])
                 continue
 
             msg = "ERROR: Wrong number of lines detected. Sorting algorithm failed"
             assert the_lines and 1 <= len(the_lines) <= 2, msg
+
+            if None in the_lines:
+                print("WARNING: Sorting algorithm failed. None returned")
+                output.append([None, None])
+                continue
+
             # Calculate angle, save results
             angle = self.calculate_angle(the_lines)
             output.append([angle, the_lines])
+
 
         return output
 
@@ -233,7 +242,9 @@ class ConcretePoleHandler:
             y2_2 = the_lines[1][1][1]
             angle_2 = round(90 - np.rad2deg(np.arctan2(abs(y2_2 - y1_2), abs(x2_2 - x1_2))), 2)
 
-            if abs(angle_2 - angle_1) < self.confidence_thresh:
+            # Discard lines if difference of their angles > thresh => filtering algorithm failed,
+            # picked up something else but the pillar's edges
+            if abs(angle_2 - angle_1) > self.confidence_thresh:
                 return None
 
             the_angle = round((angle_1 + angle_2) / 2, 2)
@@ -353,6 +364,7 @@ class ConcretePoleHandler:
                         continue
 
                     optimal_lines = delta, left_line, right_line
+
 
         return [optimal_lines[1], optimal_lines[2]]
 

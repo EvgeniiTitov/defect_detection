@@ -39,19 +39,24 @@ class WoodCracksDetectorThread(threading.Thread):
                 assert isinstance(np_array, np.ndarray), "Wood tower subimage is not np.ndarray"
                 images_to_preprocess.append(np_array)
 
+            # Extract masks of wood towers without background
             masks = self.wood_tower_segmentation.process_batch(images_to_preprocess)
 
+            # Run crack detecting algorithm on the extracted masks
+            results = list()
+            for mask in masks:
+                # TODO: IMPORTANT - consider slciing masks into N parts to improve
+                #       crack detection algorithm. How to keep track of results?
+                results.append(self.crack_detector.detect_cracks(mask))
+
             name = os.path.splitext(os.path.basename(self.progress[file_id]['path_to_file']))[0]
-            for i, mask in enumerate(masks):
+            for i, mask in enumerate(results):
                 cv2.imwrite(
                     os.path.join(
-                        "D:\Desktop\system_output\OUTPUT\segmentations",
-                        f"{name}_{i}_out.jpg"),
+                        "D:\Desktop\system_output\OUTPUT\segmentations", f"{name}_{i}_out.jpg"
+                    ),
                     mask
                 )
-
-            # TODO: Cut images
-            # TODO: Find cracks (create a separate class for this)
 
             self.Q_out.put("Success")
 
