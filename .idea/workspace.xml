@@ -6,14 +6,7 @@
     <bookmark url="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" line="58" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/defect_detectors/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/defect_detectors/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/utils/drawer.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/utils/drawer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/tilt_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/tilt_detector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py" afterDir="false" />
-    </list>
+    <list default="true" id="a1f3ccf5-a5ce-4b64-b3fb-c55d0e5a4bcc" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +56,7 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="261">
+                <state relative-caret-position="895">
                   <caret line="59" lean-forward="true" selection-start-line="59" selection-end-line="59" />
                   <folding>
                     <element signature="e#0#16#0" expanded="true" />
@@ -73,9 +66,18 @@
             </entry>
           </file>
           <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/component_detector.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="1632">
+                  <caret line="108" column="47" selection-start-line="108" selection-start-column="47" selection-end-line="108" selection-end-column="47" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/tilt_detector.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="55">
+                <state relative-caret-position="528">
                   <caret line="33" selection-start-line="33" selection-end-line="33" />
                 </state>
               </provider>
@@ -130,7 +132,7 @@
       </split-first>
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="true">
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/defect_detectors/tilt_detector/concrete_extractor.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="72">
@@ -154,8 +156,17 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/detections_repr.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="125">
+                <state relative-caret-position="1008">
                   <caret line="63" lean-forward="true" selection-start-line="63" selection-end-line="63" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/tower_detector.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="1008">
+                  <caret line="68" selection-start-line="68" selection-end-line="68" />
                 </state>
               </provider>
             </entry>
@@ -246,7 +257,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="-2568" />
     <option name="y" value="-8" />
     <option name="width" value="1296" />
@@ -275,6 +286,21 @@
               <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
               <item name="app" type="462c0819:PsiDirectoryNode" />
               <item name="visual_detector" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
+              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+              <item name="visual_detector" type="462c0819:PsiDirectoryNode" />
+              <item name="neural_networks" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
+              <item name="defect_detection" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+              <item name="visual_detector" type="462c0819:PsiDirectoryNode" />
+              <item name="neural_networks" type="462c0819:PsiDirectoryNode" />
+              <item name="object_detector" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="defect_detection" type="b2602c69:ProjectViewProjectNode" />
@@ -484,18 +510,19 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-2568" y="-8" width="1296" height="1056" extended-state="1" />
+    <frame x="-2568" y="-8" width="2576" height="1056" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" weight="0.32978722" />
-      <window_info content_ui="combo" id="Project" order="1" visible="true" weight="0.2337043" />
+      <window_info active="true" content_ui="combo" id="Project" order="1" visible="true" weight="0.11583924" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="0" weight="0.033333335" />
+      <window_info anchor="bottom" id="Terminal" order="0" visible="true" weight="0.24555555" />
       <window_info anchor="bottom" id="Event Log" order="1" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="2" weight="0.35555556" />
       <window_info anchor="bottom" id="Message" order="3" />
       <window_info anchor="bottom" id="Find" order="4" weight="0.42222223" />
       <window_info anchor="bottom" id="Version Control" order="5" weight="0.5411111" />
-      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.80333334" />
+      <window_info anchor="bottom" id="Run" order="6" weight="0.80333334" />
       <window_info anchor="bottom" id="Debug" order="7" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="8" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="9" weight="0.4" />
@@ -736,13 +763,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/tower_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="434">
-          <caret line="68" selection-start-line="68" selection-end-line="68" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/wood_classifier/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state>
@@ -790,13 +810,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state>
           <caret line="31" selection-start-line="31" selection-end-line="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/component_detector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
-          <caret line="108" column="47" selection-start-line="108" selection-start-column="47" selection-end-line="108" selection-end-column="47" />
         </state>
       </provider>
     </entry>
@@ -941,16 +954,16 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/detections_repr.py">
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/tilt_detector.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="125">
-          <caret line="63" lean-forward="true" selection-start-line="63" selection-end-line="63" />
+        <state relative-caret-position="528">
+          <caret line="33" selection-start-line="33" selection-end-line="33" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/wood_cracks_detector.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
+        <state relative-caret-position="895">
           <caret line="59" lean-forward="true" selection-start-line="59" selection-end-line="59" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
@@ -958,10 +971,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/visual_detector/workers/tilt_detector.py">
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/component_detector.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="55">
-          <caret line="33" selection-start-line="33" selection-end-line="33" />
+        <state relative-caret-position="1632">
+          <caret line="108" column="47" selection-start-line="108" selection-start-column="47" selection-end-line="108" selection-end-column="47" />
         </state>
       </provider>
     </entry>
@@ -969,6 +982,20 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="72">
           <caret line="217" lean-forward="true" selection-start-line="217" selection-end-line="217" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/detections_repr.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1008">
+          <caret line="63" lean-forward="true" selection-start-line="63" selection-end-line="63" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/visual_detector/neural_networks/object_detector/tower_detector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1008">
+          <caret line="68" selection-start-line="68" selection-end-line="68" />
         </state>
       </provider>
     </entry>
