@@ -18,6 +18,7 @@ class DumperClassifierThread(threading.Thread):
         self.Q_out = out_queue
         self.dumper_classifier = dumper_classifier
         self.progress = progress
+        print("DumperClassifierThread started")
 
     def run(self) -> None:
 

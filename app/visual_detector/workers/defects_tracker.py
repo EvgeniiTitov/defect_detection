@@ -107,4 +107,4 @@ class DefectTrackingThread(threading.Thread):
 
             self.Q_out.put((batch_frames, file_id, detections))
 
-        print("DefectTrackingThread successfully killed")
+        print("DefectTrackingThread killed")

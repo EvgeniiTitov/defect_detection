@@ -39,6 +39,7 @@ class DefectDetectorThread(threading.Thread):
 
             if input_ == "STOP":
                 self.Q_out.put("STOP")
+                self.defect_detector.kill_defect_detecting_threads()
                 break
 
             if input_ == "END":
@@ -60,7 +61,6 @@ class DefectDetectorThread(threading.Thread):
             3. Makes sense to handle any detected defects here, result processor just draws boxes, saves results
             4. Combine towers and components in one dictionary 
             '''
-
             # 1. Check if any objects've been detected and number of objects on each frame.
             # 2. Collect all detections in one dictionary to send it to the results processor
             detections_summary = {i: set() for i in range(len(batch_frame))}
@@ -85,7 +85,6 @@ class DefectDetectorThread(threading.Thread):
                     if len(detections) > most_detections:
                         most_detections = len(detections)
                         index_frame_check_defects = i
-
                 # Does not return anything - modifies DetectedObject instances state to declare them defected
                 self.defect_detector.search_defects_on_frame(
                     image_on_cpu=batch_frame[index_frame_check_defects],

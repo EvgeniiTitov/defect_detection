@@ -109,8 +109,8 @@ class Drawer:
                     for edge in edges[0]:
                         p1 = edge[0]
                         p2 = edge[1]
-                        p1 = p1[0] + element.BB_left, p1[1] + element.top
-                        p2 = p2[0] + element.BB_left, p2[1] + element.top
+                        p1 = p1[0] + element.left, p1[1] + element.top
+                        p2 = p2[0] + element.left, p2[1] + element.top
                         cv2.line(image, p1, p2, (0, 0, 255), 2)
 
                 label = "{}:{:1.2f}".format(element.object_name, element.confidence)

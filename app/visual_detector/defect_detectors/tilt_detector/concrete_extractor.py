@@ -53,7 +53,7 @@ class ConcretePoleHandler:
 
     # if detected lines are not within the threshold, do not calculate angle. It is likely that the algorithm
     # failed to extract the pole edges which are almost parallel
-    confidence_thresh = 2.5
+    confidence_thresh = 2
     # time out edge generating/filtering algorith in N seconds. Can get stuck for high res images with
     # complex backgrounds
     time_out_line_generation = 7

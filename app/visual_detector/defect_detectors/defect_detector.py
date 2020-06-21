@@ -3,18 +3,23 @@ from .object_detector import DetectedObject
 from app.visual_detector.utils import TensorManager
 import numpy as np
 import torch
+import random
+import cv2
+import os
 
 
 class DefectDetector:
 
     def __init__(
             self,
+            running_detectors: List[str],
             tilt_detector=None,
             concrete_cracks_detector=None,
             dumpers_defect_detector=None,
             insulators_defect_detector=None,
             wood_crack_detector=None
     ):
+        self.running_detectors = running_detectors
         self.Q_to_tilt_detector, self.Q_from_tilt_detector = tilt_detector
         self.Q_to_dumper_classifier, self.Q_from_dumper_classifier = dumpers_defect_detector
         self.Q_to_wood_cracks_detector, self.Q_from_wood_cracks_detector = wood_crack_detector
@@ -22,7 +27,18 @@ class DefectDetector:
         self.concrete_crack_classifier = concrete_cracks_detector
         self.insulator_classifier = insulators_defect_detector
 
+        # To kill threads if signalled so
+        self.Qs_to = [
+            self.Q_to_wood_cracks_detector,
+            self.Q_to_tilt_detector,
+            self.Q_to_dumper_classifier
+        ]
+
         print("Defect detector successfully initialized")
+
+    def kill_defect_detecting_threads(self):
+        for q in self.Qs_to:
+            q.put("STOP")
 
     def search_defects_on_frame(
             self,
@@ -64,15 +80,15 @@ class DefectDetector:
         # Send sliced out tensors + objects they belong to corresponding detector
         threads_to_wait = list()
         for class_name, elements in sliced_tensors.items():
-            if class_name == "dumper":
+            if class_name == "dumper" and "dumper" in self.running_detectors:
                 self.Q_to_dumper_classifier.put(elements)
                 threads_to_wait.append(self.Q_from_dumper_classifier)
 
-            elif class_name == "pillar":
+            elif class_name == "pillar" and "pillar" in self.running_detectors:
                 self.Q_to_tilt_detector.put(elements)
                 threads_to_wait.append(self.Q_from_tilt_detector)
 
-            elif class_name == "wood":
+            elif class_name == "wood" and "wood" in self.running_detectors:
                 self.Q_to_wood_cracks_detector.put((file_id, elements))
                 threads_to_wait.append(self.Q_from_wood_cracks_detector)
 
@@ -92,18 +108,20 @@ class DefectDetector:
             detections: Dict[str, List[DetectedObject]],
             image_on_gpu: torch.Tensor,
             image_on_cpu: np.ndarray
-    ) -> dict:
+    ) -> Dict[str, list]:
         """
 
         :param detections:
         :param image_on_gpu:
+        :param image_on_cpu:
         :return:
         """
         output = dict()
         for class_name, elements in detections.items():
             if not class_name in output.keys():
                 output[class_name] = list()
-            # Do not have any processors for these classes
+
+            # Do not have any processors for these classes yet
             if class_name == "concrete":
                 continue
             elif class_name == "insulator":
@@ -117,11 +135,15 @@ class DefectDetector:
                     TensorManager.modify_pillar_bb(pillar=element, image=image_on_gpu)
 
                 # Get object's coordinates and slice out the tensor
-                left = element.BB_left
                 top = element.BB_top
-                right = element.BB_right
                 bot = element.BB_bottom
-
+                # Get modified bb coordinates in the pillar's case
+                if class_name == "pillar":
+                    left = element.left
+                    right = element.right
+                else:
+                    left = element.BB_left
+                    right = element.BB_right
 
                 # Tilt detecting algorithm is done on CPU, so slice out numpy array instead
                 if class_name in ["pillar", "wood"]:
@@ -129,6 +151,15 @@ class DefectDetector:
                         image=image_on_cpu,
                         coordinates=[left, top, right, bot]
                     )
+
+                    # save_path = r"D:\Desktop\system_output\wood_bb\from_spark"
+                    # name = f"{random.randint(0, 10**5)}_out.jpg"
+                    # try:
+                    #     cv2.imwrite(os.path.join(save_path, name), element_bb_image)
+                    # except Exception as e:
+                    #     print(f"Failed while saving image. Error: {e}")
+                    #     pass
+
                 else:
                     element_bb_image = TensorManager.slice_out_tensor(
                         image=image_on_gpu,

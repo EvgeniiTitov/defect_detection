@@ -17,7 +17,4 @@ def create_app(config_type):
     from app.visual_detector import visual
     app.register_blueprint(visual)
 
-    from app.magnetic_detector import magnetic
-    app.register_blueprint(magnetic)
-
     return app

@@ -10,6 +10,7 @@ from app.visual_detector.defect_detectors import (
 from app.visual_detector.utils import (
     Drawer, ResultSaver, ObjectTracker
 )
+from typing import List
 import queue
 import os
 import uuid
@@ -22,6 +23,7 @@ class MainDetector:
             self,
             save_path: str,
             batch_size: int,
+            detectors_to_run: List[str],
             search_defects: bool = True,
             db=None
     ):
@@ -41,11 +43,11 @@ class MainDetector:
         try:
             # --- video / image processors ---
             self.files_to_process_Q = queue.Queue()
-            self.frame_to_pole_detector = queue.Queue(maxsize=3)
-            self.pole_to_comp_detector = queue.Queue(maxsize=3)
+            self.frame_to_pole_detector = queue.Queue(maxsize=2)
+            self.pole_to_comp_detector = queue.Queue(maxsize=2)
             self.comp_to_defect_detector = queue.Queue(maxsize=3)
-            self.defect_det_to_defect_tracker = queue.Queue(maxsize=3)
-            self.defect_tracker_to_writer = queue.Queue(maxsize=3)
+            self.defect_det_to_defect_tracker = queue.Queue(maxsize=2)
+            self.defect_tracker_to_writer = queue.Queue(maxsize=2)
 
             # --- dumper classifier ---
             self.to_dumper_classifier = queue.Queue(maxsize=3)
@@ -70,14 +72,13 @@ class MainDetector:
 
             # Defect detectors
             self.defect_detector = DefectDetector(
+                running_detectors=detectors_to_run,
                 tilt_detector=(self.to_tilt_detector, self.from_tilt_detector),
                 dumpers_defect_detector=(self.to_dumper_classifier, self.from_dumper_classifier),
                 wood_crack_detector=(self.to_wood_cracks_detector, self.from_wood_cracks_detector),
                 concrete_cracks_detector=None,
                 insulators_defect_detector=None
             )
-            self.wood_tower_segment = WoodCrackSegmenter()
-            self.dumper_classifier = DumperClassifier()
 
             # Auxiliary modules
             self.drawer = Drawer(save_path=save_path)
@@ -88,6 +89,8 @@ class MainDetector:
             print(f"Failed during detectors initialization. Error: {e}")
             raise e
 
+        # Initialize threads
+        self.threads_to_run_and_join = list()
         try:
             self.frame_reader_thread = FrameReaderThread(
                 batch_size=batch_size,
@@ -95,18 +98,24 @@ class MainDetector:
                 out_queue=self.frame_to_pole_detector,
                 progress=self.progress
             )
+            self.threads_to_run_and_join.append(self.frame_reader_thread)
+
             self.pole_detector_thread = TowerDetectorThread(
                 in_queue=self.frame_to_pole_detector,
                 out_queue=self.pole_to_comp_detector,
                 poles_detector=self.pole_detector,
                 progress=self.progress
             )
+            self.threads_to_run_and_join.append(self.pole_detector_thread)
+
             self.component_detector_thread = ComponentDetectorThread(
                 in_queue=self.pole_to_comp_detector,
                 out_queue=self.comp_to_defect_detector,
                 component_detector=self.component_detector,
                 progress=self.progress
             )
+            self.threads_to_run_and_join.append(self.component_detector_thread)
+
             self.defect_detector_thread = DefectDetectorThread(
                 in_queue=self.comp_to_defect_detector,
                 out_queue=self.defect_det_to_defect_tracker,
@@ -114,7 +123,9 @@ class MainDetector:
                 progress=self.progress,
                 check_defects=search_defects
             )
-            self.defect_tracker = DefectTrackingThread(
+            self.threads_to_run_and_join.append(self.defect_detector_thread)
+
+            self.defect_tracker_thread = DefectTrackingThread(
                 in_queue=self.defect_det_to_defect_tracker,
                 out_queue=self.defect_tracker_to_writer,
                 object_tracker=self.object_tracker,
@@ -122,37 +133,52 @@ class MainDetector:
                 progress=self.progress,
                 database=db
             )
+            self.threads_to_run_and_join.append(self.defect_tracker_thread)
+
             self.results_processor_thread = ResultsProcessorThread(
                 in_queue=self.defect_tracker_to_writer,
                 save_path=save_path,
                 drawer=self.drawer,
                 progress=self.progress
             )
+            self.threads_to_run_and_join.append(self.results_processor_thread)
 
-            # ------ DEFECT DETECTORS ------
-            self.dumper_classifier_thread = DumperClassifierThread(
-                in_queue=self.to_dumper_classifier,
-                out_queue=self.from_dumper_classifier,
-                dumper_classifier=self.dumper_classifier,
-                progress=self.progress
-            )
-            self.tilt_detector_thread = TiltDetectorThread(
-                in_queue=self.to_tilt_detector,
-                out_queue=self.from_tilt_detector,
-                tilt_detector=ConcretePoleHandler(line_modifier=LineModifier),
-                progress=self.progress
-            )
-            self.wood_cracks_thread = WoodCracksDetectorThread(
-                in_queue=self.to_wood_cracks_detector,
-                out_queue=self.from_wood_cracks_detector,
-                wood_cracks_detector=WoodCracksDetector,
-                wood_tower_segment=self.wood_tower_segment,
-                progress=self.progress
-            )
+            # -------------- DEFECT DETECTORS ---------------
+            if "dumper" in detectors_to_run:
+                dumper_classifier = DumperClassifier()
+                self.dumper_classifier_thread = DumperClassifierThread(
+                    in_queue=self.to_dumper_classifier,
+                    out_queue=self.from_dumper_classifier,
+                    dumper_classifier=dumper_classifier,
+                    progress=self.progress
+                )
+                self.threads_to_run_and_join.append(self.dumper_classifier_thread)
+
+            if "pillar" in detectors_to_run:
+                self.tilt_detector_thread = TiltDetectorThread(
+                    in_queue=self.to_tilt_detector,
+                    out_queue=self.from_tilt_detector,
+                    tilt_detector=ConcretePoleHandler(line_modifier=LineModifier),
+                    progress=self.progress
+                )
+                self.threads_to_run_and_join.append(self.tilt_detector_thread)
+
+            if "wood" in detectors_to_run:
+                wood_tower_segment = WoodCrackSegmenter()
+                self.wood_cracks_thread = WoodCracksDetectorThread(
+                    in_queue=self.to_wood_cracks_detector,
+                    out_queue=self.from_wood_cracks_detector,
+                    wood_cracks_detector=WoodCracksDetector,
+                    wood_tower_segment=wood_tower_segment,
+                    progress=self.progress
+                )
+                self.threads_to_run_and_join.append(self.wood_cracks_thread)
+
         except Exception as e:
             print(f"Failed during workers initialization. Error: {e}")
             raise e
 
+        # Start the app by launching all workers
         self.start()
 
     def predict(
@@ -261,31 +287,11 @@ class MainDetector:
         return file_id
 
     def start(self) -> None:
-        for thread in (
-            self.frame_reader_thread,
-            self.pole_detector_thread,
-            self.component_detector_thread,
-            self.defect_detector_thread,
-            self.defect_tracker,
-            self.results_processor_thread,
-            self.dumper_classifier_thread,
-            self.tilt_detector_thread,
-            self.wood_cracks_thread
-        ):
+        for thread in self.threads_to_run_and_join:
             thread.start()
 
     def stop(self) -> None:
+        """Wait until all threads complete their job and exit"""
         self.files_to_process_Q.put("STOP")
-        # Wait until all threads complete their job and exit
-        for thread in (
-            self.frame_reader_thread,
-            self.pole_detector_thread,
-            self.component_detector_thread,
-            self.defect_detector_thread,
-            self.defect_tracker,
-            self.results_processor_thread,
-            self.dumper_classifier_thread,
-            self.tilt_detector_thread,
-            self.wood_cracks_thread
-        ):
+        for thread in self.threads_to_run_and_join:
             thread.join()

@@ -17,6 +17,7 @@ class TiltDetectorThread(threading.Thread):
         self.Q_out = out_queue
         self.detector = tilt_detector
         self.progress = progress
+        print("TiltDetectorThread started")
 
     def run(self) -> None:
         while True:
@@ -43,4 +44,4 @@ class TiltDetectorThread(threading.Thread):
 
             self.Q_out.put("Success")
 
-        print("TiltDetectorThread successfully killed")
+        print("TiltDetectorThread killed")

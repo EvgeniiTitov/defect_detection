@@ -2,6 +2,7 @@ from typing import List
 import torch
 import torch.nn.functional as F
 import torchvision
+from app.visual_detector.utils import TensorManager
 
 
 class DumperClassifier:
@@ -22,21 +23,22 @@ class DumperClassifier:
                 raise e
 
             self.model.cuda()
-            print("Dumpers classifier initialized")
 
         # Load state dict
         else:
             # Use model class and statedict data provided to load the model
             raise NotImplementedError
 
-    def predict(self, images_on_gpu: List[torch.Tensor]) -> list:
+    def predict(self, images_on_gpu: List[torch.Tensor]) -> List[list]:
         """
         Receives a batch of sliced tensors (not preprocessed in any way) of vibration dumpers and classifies them.
         :param images_on_gpu:
         :return:
         """
+        #TensorManager.visualise_sliced_img(images_on_gpu)
+
         dumpers_to_classify = list()
-        # Resize images to the expected size
+        # Preprocess images to the expected format
         for image in images_on_gpu:
             # Normalize image
             try:
@@ -44,7 +46,7 @@ class DumperClassifier:
             except Exception as e:
                 print(f"Failed during image normalization for dumper classification. Error: {e}")
                 raise e
-
+            # Resize image
             try:
                 resized_image = F.interpolate(
                     image.unsqueeze_(0),
@@ -82,7 +84,7 @@ class DumperClassifier:
         ])
         return image_transform(image)
 
-    def run_forward_pass(self, batch: torch.Tensor) -> list:
+    def run_forward_pass(self, batch: torch.Tensor) -> List[list]:
         """
 
         :param batch:

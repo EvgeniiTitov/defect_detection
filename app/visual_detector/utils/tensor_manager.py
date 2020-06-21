@@ -138,7 +138,7 @@ class TensorManager:
         return res, (tensor_height, tensor_width)
 
     @staticmethod
-    def slice_out_tensor(image: torch.Tensor, coordinates: list) -> torch.Tensor:
+    def slice_out_tensor(image: torch.Tensor, coordinates: List[int]) -> torch.Tensor:
         """
         Slices out a tensor using the coordinates provided
         :param image:
@@ -163,7 +163,7 @@ class TensorManager:
         return subimage
 
     @staticmethod
-    def slice_out_np_array(image: np.ndarray, coordinates: list) -> np.ndarray:
+    def slice_out_np_array(image: np.ndarray, coordinates: List[int]) -> np.ndarray:
         """
 
         :param image:
@@ -180,9 +180,9 @@ class TensorManager:
         assert all((left < right, top < bot)), "Coordinates provided are incorrect"
 
         try:
-            subimage = np.array(image[top:bot, left:right])
+            subimage = np.array(image[top:bot, left:right, :])
         except Exception as e:
-            print(f"Failed while scicing out a bb numpy array. Error: {e}")
+            print(f"Failed while slicing out a bb numpy array. Error: {e}")
             raise e
 
         return subimage
@@ -383,10 +383,8 @@ class TensorManager:
         :return:
         """
         img_height, img_width = image.shape[1:3]
-
         new_left = int(pillar.BB_left * 0.96)
         new_right = int(pillar.BB_right * 1.04) if int(pillar.BB_right * 1.04) < img_width else img_width - 2
-
         assert all((new_left > 0, new_right > 0)), "Wrong coordinates"
         assert new_left < new_right, "Wrong coordinates"
 
@@ -419,13 +417,14 @@ class TensorManager:
 
     @staticmethod
     def visualise_sliced_img(images: torch.Tensor, name=None) -> None:
+        from random import randint
         for i, image in enumerate(images):
             image = image.permute(1, 2, 0)
             image = image.cpu().numpy()
             #image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            save_path = r"D:\Desktop\system_output\OUTPUT"
-            cv2.imwrite(os.path.join(save_path, f"{name}_{i}.jpg"), image)
+            save_path = r"D:\Desktop\system_output\OUTPUT\dumpers"
+            cv2.imwrite(os.path.join(save_path, f"{name}_{str(randint(0, 1000))}_{i}.jpg"), image)
             # cv2.imshow("window", image)
             # cv2.waitKey(0)
 

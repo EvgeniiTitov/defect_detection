@@ -23,12 +23,13 @@ class WoodCracksDetectorThread(threading.Thread):
         self.wood_tower_segmentation = wood_tower_segment
         self.crack_detector = wood_cracks_detector
         self.progress = progress
+        print("WoodCracksDetectorThread started")
 
     def run(self) -> None:
         while True:
 
             input_ = self.Q_in.get()
-            if input_ == "END":
+            if input_ == "STOP":
                 break
 
             file_id, items = input_
@@ -60,4 +61,4 @@ class WoodCracksDetectorThread(threading.Thread):
 
             self.Q_out.put("Success")
 
-        print("WoodCracksDetectorThread successfully killed")
+        print("WoodCracksDetectorThread killed")
